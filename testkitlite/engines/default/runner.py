@@ -308,33 +308,37 @@ class TRunner:
                         print "[ remove empty set: %s ]" % empty_set
                         test_xml_set_list.remove(empty_set)
                         self.resultfiles.discard(empty_set)
+                    current = 1
                     # create temporary parameter
-                    from testkithttpd import check_server_running
                     for test_xml_set in test_xml_set_list:
                         print "\n[ run set: %s ]" % test_xml_set
-                        if self.first_run:
-                            exe_sequence_tmp = []
-                            exe_sequence_tmp.append(webapi_total_file)
-                            testresult_dict_tmp = {}
-                            testresult_dict_item_tmp = []
-                            testresult_dict_item_tmp.append(test_xml_set)
-                            testresult_dict_tmp[webapi_total_file] = testresult_dict_item_tmp
-                            # start server with temporary parameter
-                            self.execute_external_test(testresult_dict_tmp, exe_sequence_tmp, test_xml_set)
-                        else:
-                            xml_package = (test_xml_set, webapi_total_file, test_xml_set)
-                            self.reload_xml_to_server(xml_package)
+                        #init stub and get the session_id
+                        current_set_index = current
+                        total_set_num = len(test_xml_set_list)
+                        exe_sequence_tmp = []
+                        exe_sequence_tmp.append(webapi_total_file)
+                        testresult_dict_tmp = {}
+                        testresult_dict_item_tmp = []
+                        testresult_dict_item_tmp.append(test_xml_set)
+                        testresult_dict_tmp[webapi_total_file] = testresult_dict_item_tmp
+                        # start server with temporary parameter
+                        self.execute_external_test(testresult_dict_tmp, exe_sequence_tmp, test_xml_set,current_set_index,total_set_num)
+                        #else:
+                        #    xml_package = (test_xml_set, webapi_total_file, test_xml_set)
+                        #    self.reload_xml_to_server(xml_package)
                         while True:
                             time.sleep(5)
-                            if check_server_running():
-                                break
+                            #get_status(session_id)                            
+                            break
+                        current += 1
                 except Exception, e:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % e
         # shut down server
         try:
             if not self.first_run:
-                from testkithttpd import shut_down_server
-                shut_down_server()
+                print "not first_run"
+                #shut_down_server()
+                #is here to add end_stub?
         except Exception, e:
             print "[ Error: fail to close webapi http server, error: %s ]" % e
         
@@ -611,25 +615,27 @@ class TRunner:
         t = minidom.parseString(rawstr)
         open(resultfile, 'w+').write(t.toprettyxml(indent="  "))
 
-    def execute_external_test(self, testsuite, exe_sequence, resultfile):
+    def execute_external_test(self, testsuite, exe_sequence, resultfile,current,total):
         """Run external test"""
-        from testkithttpd import startup
         if self.bdryrun:
             print "[ WRTLauncher mode does not support dryrun ]"
             return True
-        # start http server in here
+        # start http server in here,
         try:
             parameters = {}
-            parameters.setdefault("pid_log", self.pid_log)
-            parameters.setdefault("testsuite", testsuite)
-            parameters.setdefault("exe_sequence", exe_sequence)
-            parameters.setdefault("client_command", self.external_test)
-            if self.fullscreen:
-                parameters.setdefault("hidestatus", "1")
-            else:
-                parameters.setdefault("hidestatus", "0")
-            parameters.setdefault("resultfile", resultfile)
-            parameters.setdefault("enable_memory_collection", self.enable_memory_collection)
+            #orginal parameters
+            #parameters.setdefault("pid_log", self.pid_log)
+            #parameters.setdefault("testsuite", testsuite)
+            #parameters.setdefault("exe_sequence", exe_sequence)
+            #parameters.setdefault("client_command", self.external_test)
+            #if self.fullscreen:
+            #    parameters.setdefault("hidestatus", "1")
+            #else:
+            #    parameters.setdefault("hidestatus", "0")
+            #parameters.setdefault("resultfile", resultfile)
+            #parameters.setdefault("enable_memory_collection", self.enable_memory_collection)
+            parameters.setdefault("total", total)
+            parameters.setdefault("current", current)
             # kill existing http server
             http_server_pid = "none"
             fi, fo, fe = os.popen3("netstat -tpa | grep 8000")
@@ -645,19 +651,42 @@ class TRunner:
             else:
                 print "[ start new http server in 3 seconds ]"
                 time.sleep(3)
-            self.first_run = False
-            startup(parameters)
+            xml_set_tmp = resultfile            
+            #get case parameters
+            try:
+                ep = etree.parse(xml_set_tmp)
+                rt = ep.getroot()
+                case_tmp = []
+                for tsuite in rt.getiterator('suite'):
+                    suite_name = tsuite.get('name')
+                    for tset in tsuite.getiterator('set'):
+                        case_list = tset.getiterator('testcase')
+                        case_total = len(case_list)
+                        case_order = 1
+                        parameters.setdefault("count", case_total)
+                        for tc in case_list:
+                            case_detail_tmp = {}
+                            parameters.setdefault("execution_type", tc.get('execution_type'))
+                            parameters.setdefault("type", tc.get('type'))
+                            case_detail_tmp.setdefault("id", tc.get('id'))
+                            case_detail_tmp.setdefault("purpose", tc.get('purpose'))
+                            case_detail_tmp.setdefault("order", case_order)
+                            testentry_elm = tc.find('description/test_script_entry')
+                            if testentry_elm is not None:
+                                test_script_entry = testentry_elm.text
+                                case_detail_tmp.setdefault("test_script_entry", test_script_entry)
+                            case_tmp.append(case_detail_tmp)
+                            case_order +=1
+                parameters.setdefault("cases", case_tmp)
+            except Exception, e:
+                print "[ Error: fail to prepare cases parameters, error: %s ]\n" % e
+                return False
+            print "all parameters ---------------------------------------\n"
+            print parameters
+            #send JSON Data to com_module
+            #startup(parameters)
         except Exception, e:
             print "[ Error: fail to start http server, error: %s ]\n" % e
-        return True
-
-    def reload_xml_to_server(self, xml_package):
-        from testkithttpd import reload_xml
-        try:
-            print "[ reload xml file to the http server ]"
-            reload_xml(xml_package)
-        except Exception, e:
-            print "[ Error: fail to reload xml to the http server, error: %s ]\n" % e
         return True
 
     def apply_filter(self, rt):
