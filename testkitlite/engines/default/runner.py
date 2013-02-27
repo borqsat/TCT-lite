@@ -38,6 +38,7 @@ from shutil import move
 from os import remove
 import re
 import subprocess
+import json
 
 _j = os.path.join
 _d = os.path.dirname
@@ -89,6 +90,9 @@ class TRunner:
 
     def set_resultfile(self, resultfile):
         self.resultfile = resultfile
+
+    def set_deviceid(self,device_serial):
+        self.deviceid = device_serial
 
     def set_external_test(self, exttest):
         self.external_test = exttest
@@ -328,7 +332,8 @@ class TRunner:
                         #    self.reload_xml_to_server(xml_package)
                         while True:
                             time.sleep(5)
-                            #get_status(session_id)                            
+                            #get_status(session_id)
+                            #get_result,write_result to set                          
                             break
                         current += 1
                 except Exception, e:
@@ -682,6 +687,7 @@ class TRunner:
                 print "[ Error: fail to prepare cases parameters, error: %s ]\n" % e
                 return False
             print "all parameters ---------------------------------------\n"
+            parameters = json.dumps(parameters)
             print parameters
             #send JSON Data to com_module
             #startup(parameters)
@@ -967,3 +973,5 @@ class TRunner:
                 out.append(measure)
         return out
 
+    def write_set_result(self,testxmlfile,result):
+        return True

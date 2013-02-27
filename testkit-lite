@@ -186,6 +186,8 @@ try:
                                 help="Show version information"),
                     make_option("--internal-version", dest="internal_version_info", action="store_true",
                                 help="Show internal version information"),
+                    make_option("--deviceid",dest="device_serial", action="store",
+                                help="set sdb device serial information" )
                   ]
     
     option_list.extend(map(lambda flt: \
@@ -251,6 +253,10 @@ Note: \n\
     # apply user specify test result file
     if options.resultfile:
         runner.set_resultfile(options.resultfile)
+    # set device_id 
+    if options.device_serial:
+        print options.device_serial
+        runner.set_deviceid(options.device_serial)
 
     # apply filter
     wfilters = {}
