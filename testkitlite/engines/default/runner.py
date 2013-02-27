@@ -312,13 +312,10 @@ class TRunner:
                         print "[ remove empty set: %s ]" % empty_set
                         test_xml_set_list.remove(empty_set)
                         self.resultfiles.discard(empty_set)
-                    current = 1
                     # create temporary parameter
                     for test_xml_set in test_xml_set_list:
                         print "\n[ run set: %s ]" % test_xml_set
                         #init stub and get the session_id
-                        current_set_index = current
-                        total_set_num = len(test_xml_set_list)
                         exe_sequence_tmp = []
                         exe_sequence_tmp.append(webapi_total_file)
                         testresult_dict_tmp = {}
@@ -326,7 +323,7 @@ class TRunner:
                         testresult_dict_item_tmp.append(test_xml_set)
                         testresult_dict_tmp[webapi_total_file] = testresult_dict_item_tmp
                         # start server with temporary parameter
-                        self.execute_external_test(testresult_dict_tmp, exe_sequence_tmp, test_xml_set,current_set_index,total_set_num)
+                        self.execute_external_test(testresult_dict_tmp, exe_sequence_tmp, test_xml_set)
                         #else:
                         #    xml_package = (test_xml_set, webapi_total_file, test_xml_set)
                         #    self.reload_xml_to_server(xml_package)
@@ -335,7 +332,6 @@ class TRunner:
                             #get_status(session_id)
                             #get_result,write_result to set                          
                             break
-                        current += 1
                 except Exception, e:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % e
         # shut down server
@@ -620,7 +616,7 @@ class TRunner:
         t = minidom.parseString(rawstr)
         open(resultfile, 'w+').write(t.toprettyxml(indent="  "))
 
-    def execute_external_test(self, testsuite, exe_sequence, resultfile,current,total):
+    def execute_external_test(self, testsuite, exe_sequence, resultfile):
         """Run external test"""
         if self.bdryrun:
             print "[ WRTLauncher mode does not support dryrun ]"
@@ -639,8 +635,6 @@ class TRunner:
             #    parameters.setdefault("hidestatus", "0")
             #parameters.setdefault("resultfile", resultfile)
             #parameters.setdefault("enable_memory_collection", self.enable_memory_collection)
-            parameters.setdefault("total", total)
-            parameters.setdefault("current", current)
             # kill existing http server
             http_server_pid = "none"
             fi, fo, fe = os.popen3("netstat -tpa | grep 8000")
@@ -668,20 +662,43 @@ class TRunner:
                         case_list = tset.getiterator('testcase')
                         case_total = len(case_list)
                         case_order = 1
-                        parameters.setdefault("count", case_total)
+                        parameters.setdefault("casecount", case_total)
                         for tc in case_list:
                             case_detail_tmp = {}
-                            parameters.setdefault("execution_type", tc.get('execution_type'))
+                            parameters.setdefault("exetype", tc.get('execution_type'))
                             parameters.setdefault("type", tc.get('type'))
-                            case_detail_tmp.setdefault("id", tc.get('id'))
+                            case_detail_tmp.setdefault("case_id", tc.get('id'))
                             case_detail_tmp.setdefault("purpose", tc.get('purpose'))
                             case_detail_tmp.setdefault("order", case_order)
                             testentry_elm = tc.find('description/test_script_entry')
                             if testentry_elm is not None:
                                 test_script_entry = testentry_elm.text
                                 case_detail_tmp.setdefault("test_script_entry", test_script_entry)
+                            for this_step in tc.getiterator("step"):
+                                step_desc = "none"
+                                expected = "none"
+                                stepdesc_elm = this_step.find("step_desc")
+                                expected_elm = this_step.find("expected")
+                                if stepdesc_elm is not None:
+                                    step_desc = stepdesc_elm.text                                    
+                                if expected_elm is not None:
+                                    expected = expected_elm.text
+                                case_detail_tmp.setdefault("expected", expected)
+                                case_detail_tmp.setdefault("step_desc", step_desc)
+
+                            pre_condition = "none"
+                            post_condition = "none"
+                            precondition_elm = tc.find('description/pre_condition')
+                            postcondition_elm = tc.find('description/post_condition')
+                            if precondition_elm is not None:
+                                pre_condition = precondition_elm.text
+                            if postcondition_elm is not None:
+                                post_condition = postcondition_elm.text
+                            case_detail_tmp.setdefault("pre_condition", pre_condition)
+                            case_detail_tmp.setdefault("post_condition", post_condition)
                             case_tmp.append(case_detail_tmp)
                             case_order +=1
+
                 parameters.setdefault("cases", case_tmp)
             except Exception, e:
                 print "[ Error: fail to prepare cases parameters, error: %s ]\n" % e
