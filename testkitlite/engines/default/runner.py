@@ -19,6 +19,7 @@
 # Authors:
 #              Zhang, Huihui <huihuix.zhang@intel.com>
 #              Wendong,Sui  <weidongx.sun@intel.com>
+#              Yuanyuan,Zou  <yuanyuan.zou@borqs.com>
 
 import os
 import platform
@@ -32,12 +33,12 @@ import ConfigParser
 from xml.dom import minidom
 from tempfile import mktemp
 from testkitlite.common.str2 import *
-from testkitlite.common.autoexec import shell_exec
 from testkitlite.common.killall import killall
 from shutil import move
 from os import remove
 import re
 import subprocess
+import json
 
 _j = os.path.join
 _d = os.path.dirname
@@ -90,6 +91,9 @@ class TRunner:
     def set_resultfile(self, resultfile):
         self.resultfile = resultfile
 
+    def set_deviceid(self,device_serial):
+        self.deviceid = device_serial
+
     def set_external_test(self, exttest):
         self.external_test = exttest
 
@@ -101,6 +105,9 @@ class TRunner:
 
     def set_fullscreen(self, state):
         self.fullscreen = state
+
+    def set_session_id(self,session_id):
+        self.session_id = session_id
 
     def prepare_run(self, testxmlfile, resultdir=None):
         """
@@ -309,35 +316,40 @@ class TRunner:
                         test_xml_set_list.remove(empty_set)
                         self.resultfiles.discard(empty_set)
                     # create temporary parameter
-                    from testkithttpd import check_server_running
                     for test_xml_set in test_xml_set_list:
                         print "\n[ run set: %s ]" % test_xml_set
-                        if self.first_run:
-                            exe_sequence_tmp = []
-                            exe_sequence_tmp.append(webapi_total_file)
-                            testresult_dict_tmp = {}
-                            testresult_dict_item_tmp = []
-                            testresult_dict_item_tmp.append(test_xml_set)
-                            testresult_dict_tmp[webapi_total_file] = testresult_dict_item_tmp
-                            # start server with temporary parameter
-                            self.execute_external_test(testresult_dict_tmp, exe_sequence_tmp, test_xml_set)
-                        else:
-                            xml_package = (test_xml_set, webapi_total_file, test_xml_set)
-                            self.reload_xml_to_server(xml_package)
+                        #init stub and get the session_id
+                        #from com_module import init_test
+                        #session_id = init_test(self.deviceid)  #will return session id
+                        #self.set_session_id(session id)              
+                        exe_sequence_tmp = []
+                        exe_sequence_tmp.append(webapi_total_file)
+                        testresult_dict_tmp = {}
+                        testresult_dict_item_tmp = []
+                        testresult_dict_item_tmp.append(test_xml_set)
+                        testresult_dict_tmp[webapi_total_file] = testresult_dict_item_tmp
+                        # start server with temporary parameter
+                        self.execute_external_test(testresult_dict_tmp, exe_sequence_tmp, test_xml_set)
                         while True:
                             time.sleep(5)
-                            if check_server_running():
+                            #check the test status ,if the set finished,get the set_result,and finalize_test
+                            if self.check_test_status():
+                                #from com_module import get_test_result
+                                #set_result = get_test_result(self.deviceid,self.session_id)
+                                #write_result to set_xml
+                                #self.write_set_result(test_xml_set,set_result)
+
+                                # shut down server
+                                try:
+                                    print 'show down server'
+                                    #finalize_test(self.deviceid)
+                                except Exception, e:
+                                    print "[ Error: fail to close webapi http server, error: %s ]" % e                  
+                                
                                 break
                 except Exception, e:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % e
-        # shut down server
-        try:
-            if not self.first_run:
-                from testkithttpd import shut_down_server
-                shut_down_server()
-        except Exception, e:
-            print "[ Error: fail to close webapi http server, error: %s ]" % e
-        
+               
         # run core manual cases
         self.core_manual_files.sort()
         for core_manual_file in self.core_manual_files:
@@ -613,23 +625,12 @@ class TRunner:
 
     def execute_external_test(self, testsuite, exe_sequence, resultfile):
         """Run external test"""
-        from testkithttpd import startup
         if self.bdryrun:
             print "[ WRTLauncher mode does not support dryrun ]"
             return True
-        # start http server in here
+        # start http server in here,
         try:
             parameters = {}
-            parameters.setdefault("pid_log", self.pid_log)
-            parameters.setdefault("testsuite", testsuite)
-            parameters.setdefault("exe_sequence", exe_sequence)
-            parameters.setdefault("client_command", self.external_test)
-            if self.fullscreen:
-                parameters.setdefault("hidestatus", "1")
-            else:
-                parameters.setdefault("hidestatus", "0")
-            parameters.setdefault("resultfile", resultfile)
-            parameters.setdefault("enable_memory_collection", self.enable_memory_collection)
             # kill existing http server
             http_server_pid = "none"
             fi, fo, fe = os.popen3("netstat -tpa | grep 8000")
@@ -645,19 +646,67 @@ class TRunner:
             else:
                 print "[ start new http server in 3 seconds ]"
                 time.sleep(3)
-            self.first_run = False
-            startup(parameters)
+            xml_set_tmp = resultfile
+            # split set_xml by <case> get case parameters
+            print "[ split xml: %s by <case> ]" % xml_set_tmp
+            print "[ this might take some time, please wait ]"
+            try:
+                ep = etree.parse(xml_set_tmp)
+                rt = ep.getroot()
+                case_tmp = []
+                for tsuite in rt.getiterator('suite'):
+                    suite_name = tsuite.get('name')
+                    for tset in tsuite.getiterator('set'):
+                        case_list = tset.getiterator('testcase')
+                        case_total = len(case_list)
+                        case_order = 1
+                        parameters.setdefault("casecount", case_total)
+                        for tc in case_list:
+                            case_detail_tmp = {}
+                            parameters.setdefault("exetype", tc.get('execution_type'))
+                            parameters.setdefault("type", tc.get('type'))
+                            case_detail_tmp.setdefault("case_id", tc.get('id'))
+                            case_detail_tmp.setdefault("purpose", tc.get('purpose'))
+                            case_detail_tmp.setdefault("order", case_order)
+                            testentry_elm = tc.find('description/test_script_entry')
+                            if testentry_elm is not None:
+                                test_script_entry = testentry_elm.text
+                                case_detail_tmp.setdefault("test_script_entry", test_script_entry)
+                            for this_step in tc.getiterator("step"):
+                                step_desc = "none"
+                                expected = "none"
+                                stepdesc_elm = this_step.find("step_desc")
+                                expected_elm = this_step.find("expected")
+                                if stepdesc_elm is not None:
+                                    step_desc = stepdesc_elm.text                                    
+                                if expected_elm is not None:
+                                    expected = expected_elm.text
+                                case_detail_tmp.setdefault("expected", expected)
+                                case_detail_tmp.setdefault("step_desc", step_desc)
+
+                            pre_condition = "none"
+                            post_condition = "none"
+                            precondition_elm = tc.find('description/pre_condition')
+                            postcondition_elm = tc.find('description/post_condition')
+                            if precondition_elm is not None:
+                                pre_condition = precondition_elm.text
+                            if postcondition_elm is not None:
+                                post_condition = postcondition_elm.text
+                            case_detail_tmp.setdefault("pre_condition", pre_condition)
+                            case_detail_tmp.setdefault("post_condition", post_condition)
+                            case_tmp.append(case_detail_tmp)
+                            case_order +=1
+
+                parameters.setdefault("cases", case_tmp)
+            except Exception, e:
+                print "[ Error: fail to prepare cases parameters, error: %s ]\n" % e
+                return False
+            parameters = json.dumps(parameters)
+            self.parameters = parameters
+            #send set JSON Data to com_module
+            #run_test(self.deviceid,self.parameters)
         except Exception, e:
             print "[ Error: fail to start http server, error: %s ]\n" % e
-        return True
-
-    def reload_xml_to_server(self, xml_package):
-        from testkithttpd import reload_xml
-        try:
-            print "[ reload xml file to the http server ]"
-            reload_xml(xml_package)
-        except Exception, e:
-            print "[ Error: fail to reload xml to the http server, error: %s ]\n" % e
         return True
 
     def apply_filter(self, rt):
@@ -723,12 +772,8 @@ class TRunner:
                         print "[ Warnning: test script is empty, please check your test xml file ]"
                     else:
                         try:
-                            if testentry_elm.get('timeout'):
-                                return_code, stdout, stderr = \
-                                shell_exec(testentry_elm.text, "no_log", str2number(testentry_elm.get('timeout')), False)
-                            else:
-                                return_code, stdout, stderr = \
-                                shell_exec(testentry_elm.text, "no_log", 90, False)
+                            #run auto core test here
+                            #
                             if return_code is not None:
                                 actual_result = str(return_code)
                             print "Script Return Code: %s" % actual_result
@@ -937,4 +982,34 @@ class TRunner:
             if measure['name'] != '':
                 out.append(measure)
         return out
+
+    def write_set_result(self,testxmlfile,result):
+        set_result_json = result
+        set_result_xml = testxmlfile
+        #covert JOSN to python dict string
+        set_result = json.loads(set_result_json)
+        case_result = set_result["cases"]
+        try:
+            ep = etree.parse(set_result_xml)
+            rt = ep.getroot()
+            for tsuite in rt.getiterator('suite'):
+                suite_name = tsuite.get('name')
+                for tset in tsuite.getiterator('set'):
+                    case_list = tset.getiterator('testcase')
+                    for tc in case_list:
+                        for t in case_result:
+                            case_id = t['case_id']
+                            if tc.get("id") == case_id:
+                                #tc.set('result',t['expected'])
+                                tc.set('result','PASS')           
+            ep.write(set_result_xml)
+            print "[ cases result saved to resultfile ]\n"
+        except Exception, e:
+            print "[ Error: fail to write cases result, error: %s ]\n" % e
+
+    def check_test_status(self):
+        #get_test_status(self.session_id)
+        #if the status id end return True ,else return False
+        return True
+    
 
