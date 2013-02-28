@@ -14,7 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc.,
+# 51 Franklin Street, 
+# Fifth Floor,
+# Boston, MA  02110-1301, USA.
 #
 # Authors:
 #              Zhang, Huihui <huihuix.zhang@intel.com>
@@ -32,7 +35,6 @@ import xml.etree.ElementTree as etree
 import ConfigParser
 from xml.dom import minidom
 from tempfile import mktemp
-from testkitlite.common.str2 import *
 from testkitlite.common.killall import killall
 from shutil import move
 from os import remove
@@ -72,9 +74,14 @@ class TRunner:
         self.skip_all_manual = False
         self.testsuite_dict = {}
         self.exe_sequence = []
-        self.testresult_dict = {"pass" : 0, "fail" : 0, "block" : 0, "not_run" : 0}
+        self.testresult_dict = {"pass" : 0, "fail" : 0, 
+                                "block" : 0, "not_run" : 0}
         self.current_test_xml = "none"
         self.first_run = True
+        self.deviceid = None
+        self.session_id = None
+        self.pid_log = None
+        self.set_parameters = {}
 
     def set_pid_log(self, pid_log):
         self.pid_log = pid_log
@@ -91,7 +98,7 @@ class TRunner:
     def set_resultfile(self, resultfile):
         self.resultfile = resultfile
 
-    def set_deviceid(self,device_serial):
+    def set_deviceid(self, device_serial):
         self.deviceid = device_serial
 
     def set_external_test(self, exttest):
@@ -106,7 +113,7 @@ class TRunner:
     def set_fullscreen(self, state):
         self.fullscreen = state
 
-    def set_session_id(self,session_id):
+    def set_session_id(self, session_id):
         self.session_id = session_id
 
     def prepare_run(self, testxmlfile, resultdir=None):
@@ -153,7 +160,8 @@ class TRunner:
                             tree = etree.ElementTree(element=suiteparent)
                             tree.write(output)
                     except IOError, e:
-                        print "[ Error: create filtered result file: %s failed, error: %s ]" % (resultfile, e)
+                        print "[ Error: create filtered result file: %s failed,\
+                            error: %s ]" % (resultfile, e)
                 except Exception, e:
                     print e
                     return False
@@ -695,16 +703,16 @@ class TRunner:
                             case_detail_tmp.setdefault("pre_condition", pre_condition)
                             case_detail_tmp.setdefault("post_condition", post_condition)
                             case_tmp.append(case_detail_tmp)
-                            case_order +=1
+                            case_order += 1
 
                 parameters.setdefault("cases", case_tmp)
             except Exception, e:
                 print "[ Error: fail to prepare cases parameters, error: %s ]\n" % e
                 return False
             parameters = json.dumps(parameters)
-            self.parameters = parameters
+            self.set_parameters = parameters
             #send set JSON Data to com_module
-            #run_test(self.deviceid,self.parameters)
+            #run_test(self.deviceid,self.set_parameters)
         except Exception, e:
             print "[ Error: fail to start http server, error: %s ]\n" % e
         return True
@@ -798,8 +806,8 @@ class TRunner:
             stderr_elm.text = stderr
 
             # sdx@kooltux.org: add notes to xml result
-            self.insert_notes(case,stdout)
-            self.insert_measures(case,stdout)
+            self.insert_notes(case, stdout)
+            self.insert_measures(case, stdout)
 
             # handle manual core cases
             if case.get('execution_type') == 'manual':
@@ -919,44 +927,44 @@ class TRunner:
             print "[ Error: fail to replace cdata in the result file, error: %s ]\n" % e
 
     # sdx@kooltux.org: parse notes in buffer and insert them in XML result
-    def insert_notes(self,case,buf,pattern="###[NOTE]###"):
-        desc=case.find('description')
+    def insert_notes(self, case, buf, pattern="###[NOTE]###"):
+        desc = case.find('description')
         if desc is None:
             return
 
-        notes_elm=desc.find('notes')
+        notes_elm = desc.find('notes')
         if notes_elm is None:
-           notes_elm=etree.Element('notes')
+           notes_elm = etree.Element('notes')
            desc.append(notes_elm)
         if notes_elm.text is None:
-           notes_elm.text = self._extract_notes(buf,pattern)
+           notes_elm.text = self._extract_notes(buf, pattern)
         else:
-           notes_elm.text += "\n"+self._extract_notes(buf,pattern)
+           notes_elm.text += "\n"+self._extract_notes(buf, pattern)
 
-    def _extract_notes(self,buf,pattern):
+    def _extract_notes(self, buf, pattern):
         # util func to split lines in buffer, search for pattern on each line
         # then concatenate remaining content in output buffer
-        out="" 
+        out = "" 
         for line in buf.split("\n"):
-           pos=line.find(pattern)
-           if pos>=0:
-              out+=line[pos+len(pattern):]+"\n"
+           pos = line.find(pattern)
+           if pos >= 0:
+              out += line[pos + len(pattern):] + "\n"
         return out
 
     # sdx@kooltux.org: parse measures returned by test script and insert in XML result
     # see xsd/test_definition.xsd: measurementType
-    _MEASURE_ATTRIBUTES=['name','value','unit','target','failure','power']
+    _MEASURE_ATTRIBUTES = ['name', 'value', 'unit', 'target', 'failure', 'power']
 
-    def insert_measures(self,case,buf,pattern="###[MEASURE]###",field_sep=":"): 
+    def insert_measures(self, case, buf, pattern = "###[MEASURE]###", field_sep = ":"): 
         # get measures
-        measures=self._extract_measures(buf,pattern,field_sep)
+        measures = self._extract_measures(buf, pattern, field_sep)
         for m in measures:
-            m_elm=etree.Element('measurement')
+            m_elm = etree.Element('measurement')
             for k in m:
-                m_elm.attrib[k]=m[k]
+                m_elm.attrib[k] = m[k]
             case.append(m_elm)
          
-    def _extract_measures(self,buf,pattern,field_sep): 
+    def _extract_measures(self, buf, pattern, field_sep): 
         """ 
         This function extracts lines from <buf> containing the defined <pattern>.
         For each line containing the pattern, it extracts the string to the end of line
@@ -964,26 +972,27 @@ class TRunner:
         and maps the fields to measurement attributes defined in xsd
         Finally, a list containing all measurement objects found in input buffer is returned
         """
-        out=[]
+        out = []
         for line in buf.split("\n"):
-            pos=line.find(pattern)
-            if pos<0:
+            pos = line.find(pattern)
+            if pos < 0:
                 continue
 
-            measure={}
-            elts=collections.deque(line[pos+len(pattern):].split(':'))
+            measure = {}
+            elts = collections.deque(line[pos + len(pattern):].split(':'))
             for k in self._MEASURE_ATTRIBUTES:
                 if len(elts) == 0:
-                    measure[k]=''
+                    measure[k] = ''
                 else:
-                    measure[k]=elts.popleft()
+                    measure[k] = elts.popleft()
                     
             # don't accept unnamed measure
             if measure['name'] != '':
                 out.append(measure)
         return out
 
-    def write_set_result(self,testxmlfile,result):
+    def write_set_result(self, testxmlfile, result):
+        # write the set_result to set_xml
         set_result_json = result
         set_result_xml = testxmlfile
         #covert JOSN to python dict string
@@ -995,11 +1004,9 @@ class TRunner:
             for tsuite in rt.getiterator('suite'):
                 suite_name = tsuite.get('name')
                 for tset in tsuite.getiterator('set'):
-                    case_list = tset.getiterator('testcase')
-                    for tc in case_list:
+                    for tc in tset.getiterator('testcase'):
                         for t in case_result:
-                            case_id = t['case_id']
-                            if tc.get("id") == case_id:
+                            if tc.get("id") == t['case_id']:
                                 #tc.set('result',t['expected'])
                                 tc.set('result','PASS')           
             ep.write(set_result_xml)
@@ -1008,7 +1015,18 @@ class TRunner:
             print "[ Error: fail to write cases result, error: %s ]\n" % e
 
     def check_test_status(self):
-        #get_test_status(self.session_id)
+        #check test running or end
+        #import get_test_status from com_module
+        #session_status_json = get_test_status(self.session_id)
+        #session_status = json.loads(session_status_json)
+        #if session_status["status"] == "running":
+        #    print "[ case execute information : %s ]\n" %session_status["msg"]
+        #    return False
+        #elif session_status["status"] == "end":
+        #    return True
+        #else :
+        #    print "[ session status error ,pls finilize test ]\n"
+        #    return False
         #if the status id end return True ,else return False
         return True
     
