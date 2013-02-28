@@ -19,6 +19,7 @@
 # Authors:
 #              Zhang, Huihui <huihuix.zhang@intel.com>
 #              Wendong,Sui  <weidongx.sun@intel.com>
+#              Yuanyuan,Zou  <yuanyuan.zou@borqs.com>
 
 import os
 import platform
@@ -32,7 +33,6 @@ import ConfigParser
 from xml.dom import minidom
 from tempfile import mktemp
 from testkitlite.common.str2 import *
-from testkitlite.common.autoexec import shell_exec
 from testkitlite.common.killall import killall
 from shutil import move
 from os import remove
@@ -105,6 +105,9 @@ class TRunner:
 
     def set_fullscreen(self, state):
         self.fullscreen = state
+
+    def set_session_id(self,session_id):
+        self.session_id = session_id
 
     def prepare_run(self, testxmlfile, resultdir=None):
         """
@@ -316,6 +319,9 @@ class TRunner:
                     for test_xml_set in test_xml_set_list:
                         print "\n[ run set: %s ]" % test_xml_set
                         #init stub and get the session_id
+                        #from com_module import init_test
+                        #session_id = init_test(self.deviceid)  #will return session id
+                        #self.set_session_id(session id)              
                         exe_sequence_tmp = []
                         exe_sequence_tmp.append(webapi_total_file)
                         testresult_dict_tmp = {}
@@ -324,26 +330,26 @@ class TRunner:
                         testresult_dict_tmp[webapi_total_file] = testresult_dict_item_tmp
                         # start server with temporary parameter
                         self.execute_external_test(testresult_dict_tmp, exe_sequence_tmp, test_xml_set)
-                        #else:
-                        #    xml_package = (test_xml_set, webapi_total_file, test_xml_set)
-                        #    self.reload_xml_to_server(xml_package)
                         while True:
                             time.sleep(5)
-                            #get_status(session_id)                            
-                            #get_result,write_result to set
-                            self.write_set_result(test_xml_set,self.parameters)                          
-                            break
+                            #check the test status ,if the set finished,get the set_result,and finalize_test
+                            if self.check_test_status():
+                                #from com_module import get_test_result
+                                #set_result = get_test_result(self.deviceid,self.session_id)
+                                #write_result to set_xml
+                                #self.write_set_result(test_xml_set,set_result)
+
+                                # shut down server
+                                try:
+                                    print 'show down server'
+                                    #finalize_test(self.deviceid)
+                                except Exception, e:
+                                    print "[ Error: fail to close webapi http server, error: %s ]" % e                  
+                                
+                                break
                 except Exception, e:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % e
-        # shut down server
-        try:
-            if not self.first_run:
-                print "not first_run"
-                #shut_down_server()
-                #is here to add end_stub?
-        except Exception, e:
-            print "[ Error: fail to close webapi http server, error: %s ]" % e
-        
+               
         # run core manual cases
         self.core_manual_files.sort()
         for core_manual_file in self.core_manual_files:
@@ -625,17 +631,6 @@ class TRunner:
         # start http server in here,
         try:
             parameters = {}
-            #orginal parameters
-            #parameters.setdefault("pid_log", self.pid_log)
-            #parameters.setdefault("testsuite", testsuite)
-            #parameters.setdefault("exe_sequence", exe_sequence)
-            #parameters.setdefault("client_command", self.external_test)
-            #if self.fullscreen:
-            #    parameters.setdefault("hidestatus", "1")
-            #else:
-            #    parameters.setdefault("hidestatus", "0")
-            #parameters.setdefault("resultfile", resultfile)
-            #parameters.setdefault("enable_memory_collection", self.enable_memory_collection)
             # kill existing http server
             http_server_pid = "none"
             fi, fo, fe = os.popen3("netstat -tpa | grep 8000")
@@ -706,12 +701,10 @@ class TRunner:
             except Exception, e:
                 print "[ Error: fail to prepare cases parameters, error: %s ]\n" % e
                 return False
-            print "all parameters ---------------------------------------\n"
             parameters = json.dumps(parameters)
-            #print parameters
             self.parameters = parameters
-            #send JSON Data to com_module
-            #startup(parameters)
+            #send set JSON Data to com_module
+            #run_test(self.deviceid,self.parameters)
         except Exception, e:
             print "[ Error: fail to start http server, error: %s ]\n" % e
         return True
@@ -779,12 +772,8 @@ class TRunner:
                         print "[ Warnning: test script is empty, please check your test xml file ]"
                     else:
                         try:
-                            if testentry_elm.get('timeout'):
-                                return_code, stdout, stderr = \
-                                shell_exec(testentry_elm.text, "no_log", str2number(testentry_elm.get('timeout')), False)
-                            else:
-                                return_code, stdout, stderr = \
-                                shell_exec(testentry_elm.text, "no_log", 90, False)
+                            #run auto core test here
+                            #
                             if return_code is not None:
                                 actual_result = str(return_code)
                             print "Script Return Code: %s" % actual_result
@@ -1017,5 +1006,10 @@ class TRunner:
             print "[ cases result saved to resultfile ]\n"
         except Exception, e:
             print "[ Error: fail to write cases result, error: %s ]\n" % e
+
+    def check_test_status(self):
+        #get_test_status(self.session_id)
+        #if the status id end return True ,else return False
+        return True
     
 
