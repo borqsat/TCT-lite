@@ -77,7 +77,7 @@ class sdbCommSync:
 class tizenMobile:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
 
-    def __init(self, deviceId):
+    def __init__(self, deviceId):
         pass
 
     def __shell_command(self, cmd=None):
@@ -105,9 +105,30 @@ class tizenMobile:
         return result
 
     def get_device_ids(self):
+        cmd = "sdb devices"
+        ret = __shell_command(cmd)
         return ret
 
-    def get_device_info(self, deviceId=None):
-        cmd = "sdb -s %s shell" % deviceId
-        ret =  __shell_command("sdb devices")
+    def get_device_info(self, deviceid=None):
+        cmd = "sdb -s %s shell rpm -qa | grep cts" % deviceid
+        ret =  __shell_command(cmd)
         return ret
+
+    def install_package(self, deviceid, pkgpath):
+        filename = os.path.split(pkgpath)[1]
+        devpath = "/tmp/%s" % filename
+        cmd = "sdb -s %s push %s %s" % (deviceid, pkgpath, devpath)
+        ret =  __shell_command(cmd)
+        cmd = "sdb shell rpm -ivh %s" % devpath
+        ret =  __shell_command(cmd)
+        return ret
+
+    def remove_package(self, deviceid, pkgid):
+        cmd = "sdb -s %s shell rpm -e %s" % (deviceid, pkgid)
+        ret =  __shell_command(cmd)
+        return ret
+
+
+
+
+
