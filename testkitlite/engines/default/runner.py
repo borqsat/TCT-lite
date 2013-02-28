@@ -329,8 +329,9 @@ class TRunner:
                         #    self.reload_xml_to_server(xml_package)
                         while True:
                             time.sleep(5)
-                            #get_status(session_id)
-                            #get_result,write_result to set                          
+                            #get_status(session_id)                            
+                            #get_result,write_result to set
+                            self.write_set_result(test_xml_set,self.parameters)                          
                             break
                 except Exception, e:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % e
@@ -650,8 +651,10 @@ class TRunner:
             else:
                 print "[ start new http server in 3 seconds ]"
                 time.sleep(3)
-            xml_set_tmp = resultfile            
-            #get case parameters
+            xml_set_tmp = resultfile
+            # split set_xml by <case> get case parameters
+            print "[ split xml: %s by <case> ]" % xml_set_tmp
+            print "[ this might take some time, please wait ]"
             try:
                 ep = etree.parse(xml_set_tmp)
                 rt = ep.getroot()
@@ -705,7 +708,8 @@ class TRunner:
                 return False
             print "all parameters ---------------------------------------\n"
             parameters = json.dumps(parameters)
-            print parameters
+            #print parameters
+            self.parameters = parameters
             #send JSON Data to com_module
             #startup(parameters)
         except Exception, e:
@@ -991,4 +995,27 @@ class TRunner:
         return out
 
     def write_set_result(self,testxmlfile,result):
-        return True
+        set_result_json = result
+        set_result_xml = testxmlfile
+        #covert JOSN to python dict string
+        set_result = json.loads(set_result_json)
+        case_result = set_result["cases"]
+        try:
+            ep = etree.parse(set_result_xml)
+            rt = ep.getroot()
+            for tsuite in rt.getiterator('suite'):
+                suite_name = tsuite.get('name')
+                for tset in tsuite.getiterator('set'):
+                    case_list = tset.getiterator('testcase')
+                    for tc in case_list:
+                        for t in case_result:
+                            case_id = t['case_id']
+                            if tc.get("id") == case_id:
+                                #tc.set('result',t['expected'])
+                                tc.set('result','PASS')           
+            ep.write(set_result_xml)
+            print "[ cases result saved to resultfile ]\n"
+        except Exception, e:
+            print "[ Error: fail to write cases result, error: %s ]\n" % e
+    
+
