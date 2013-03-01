@@ -40,20 +40,20 @@ except ImportError, e:
     print "try to run command 'export PYTHONPATH=/usr/lib/python2.7/site-packages' to resolve this issue"
     sys.exit(1)
 
-_j = os.path.join
-_e = os.path.exists
-_d = os.path.dirname
-_b = os.path.basename
-_abspath = os.path.abspath
+JOIN = os.path.join
+EXISTS = os.path.exists
+DIRNAME = os.path.dirname
+BASENAME = os.path.basename
+ABSPATH = os.path.abspath
 
 testkit_dir = "/opt/testkit/lite"
 if not platform.system() == "Linux":
-    testkit_dir = _d(_abspath(__file__))
-    sys.path += [_j(testkit_dir)]
-    testkit_dir = _j(testkit_dir , "results")
+    testkit_dir = DIRNAME(ABSPATH(__file__))
+    sys.path += [JOIN(testkit_dir)]
+    testkit_dir = JOIN(testkit_dir , "results")
 
 LOG_DIR = testkit_dir
-PID_FILE = _j(LOG_DIR , "pid.log")
+PID_FILE = JOIN(LOG_DIR , "pid.log")
 COMMON_FILTERS = {
         "suite":          [],
         "set":            [],
@@ -286,10 +286,10 @@ Note: \n\
         session = datetime.today().isoformat('-')
     else:
         session = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
-    log_dir = _j(LOG_DIR, session)
-    latest_dir = _j(LOG_DIR, "latest")
+    log_dir = JOIN(LOG_DIR, session)
+    latest_dir = JOIN(LOG_DIR, "latest")
     try:
-        if _e(latest_dir):
+        if EXISTS(latest_dir):
             os.remove(latest_dir)
         os.makedirs(log_dir)
         if os.name == "posix":
@@ -317,9 +317,9 @@ Note: \n\
                         sys.exit(1)
             else:
                 filename = filename.split('\\')[-2]
-            filename = "%s.total" % _b(filename)
+            filename = "%s.total" % BASENAME(filename)
             resultfile = "%s.xml" % filename
-            resultfile = _j(log_dir, resultfile)
+            resultfile = JOIN(log_dir, resultfile)
             ep = etree.parse(t)
             suiteparent = ep.getroot()
             no_test_definition = 1
@@ -400,9 +400,9 @@ Note: \n\
                     sys.exit(1)
         else:
             filename = filename.split('\\')[-2]
-        filename = "%s.total" % _b(filename)
+        filename = "%s.total" % BASENAME(filename)
         resultfile = "%s.xml" % filename
-        resultfile = _j(log_dir, resultfile)
+        resultfile = JOIN(log_dir, resultfile)
         ep = etree.parse(testxml)
         suiteparent = ep.getroot()
         no_test_definition = 1

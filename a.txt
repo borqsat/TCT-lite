@@ -1,0 +1,378 @@
+************* Module testkitlite.engines.default.runner
+C:183,0: Line too long (82/80)
+C:210,0: Line too long (125/80)
+C:211,0: Line too long (100/80)
+C:214,0: Line too long (86/80)
+C:215,0: Line too long (95/80)
+C:216,0: Line too long (90/80)
+C:218,0: Line too long (92/80)
+C:221,0: Line too long (92/80)
+C:227,0: Line too long (91/80)
+C:228,0: Line too long (86/80)
+C:230,0: Line too long (88/80)
+C:234,0: Line too long (82/80)
+C:281,0: Line too long (91/80)
+C:291,0: Line too long (82/80)
+C:292,0: Line too long (88/80)
+C:308,0: Line too long (93/80)
+C:309,0: Line too long (100/80)
+C:311,0: Line too long (89/80)
+C:313,0: Line too long (93/80)
+C:315,0: Line too long (84/80)
+C:331,0: Line too long (87/80)
+C:338,0: Line too long (89/80)
+C:340,0: Line too long (103/80)
+C:343,0: Line too long (108/80)
+C:346,0: Line too long (92/80)
+C:355,0: Line too long (120/80)
+C:359,0: Line too long (81/80)
+C:385,0: Line too long (95/80)
+C:415,0: Line too long (93/80)
+C:416,0: Line too long (135/80)
+C:417,0: Line too long (89/80)
+C:419,0: Line too long (89/80)
+C:421,0: Line too long (182/80)
+C:426,0: Line too long (94/80)
+C:427,0: Line too long (90/80)
+C:428,0: Line too long (88/80)
+C:429,0: Line too long (82/80)
+C:431,0: Line too long (84/80)
+C:432,0: Line too long (84/80)
+C:440,0: Line too long (83/80)
+C:441,0: Line too long (81/80)
+C:442,0: Line too long (83/80)
+C:443,0: Line too long (81/80)
+C:444,0: Line too long (84/80)
+C:445,0: Line too long (82/80)
+C:446,0: Line too long (82/80)
+C:447,0: Line too long (84/80)
+C:450,0: Line too long (120/80)
+C:468,0: Line too long (93/80)
+C:469,0: Line too long (135/80)
+C:470,0: Line too long (89/80)
+C:472,0: Line too long (89/80)
+C:474,0: Line too long (182/80)
+C:479,0: Line too long (94/80)
+C:480,0: Line too long (90/80)
+C:481,0: Line too long (88/80)
+C:482,0: Line too long (82/80)
+C:484,0: Line too long (84/80)
+C:485,0: Line too long (84/80)
+C:493,0: Line too long (83/80)
+C:494,0: Line too long (81/80)
+C:495,0: Line too long (83/80)
+C:496,0: Line too long (81/80)
+C:497,0: Line too long (84/80)
+C:498,0: Line too long (82/80)
+C:499,0: Line too long (82/80)
+C:500,0: Line too long (84/80)
+C:503,0: Line too long (120/80)
+C:512,0: Line too long (173/80)
+C:515,0: Line too long (140/80)
+C:517,0: Line too long (112/80)
+C:525,0: Line too long (104/80)
+C:526,0: Line too long (100/80)
+C:573,0: Line too long (155/80)
+C:650,0: Line too long (84/80)
+C:674,0: Line too long (86/80)
+C:677,0: Line too long (84/80)
+C:679,0: Line too long (84/80)
+C:682,0: Line too long (98/80)
+C:689,0: Line too long (101/80)
+C:693,0: Line too long (82/80)
+C:697,0: Line too long (83/80)
+C:698,0: Line too long (85/80)
+C:703,0: Line too long (86/80)
+C:704,0: Line too long (88/80)
+C:710,0: Line too long (84/80)
+C:771,0: Line too long (87/80)
+C:772,0: Line too long (201/80)
+C:776,0: Line too long (94/80)
+C:778,0: Line too long (91/80)
+C:780,0: Line too long (99/80)
+C:789,0: Line too long (91/80)
+C:819,0: Line too long (121/80)
+C:838,0: Line too long (125/80)
+C:856,0: Line too long (112/80)
+C:858,0: Line too long (89/80)
+C:865,0: Line too long (126/80)
+C:889,0: Line too long (91/80)
+C:927,0: Line too long (88/80)
+W:937,0: Bad indentation. Found 11 spaces, expected 12
+W:938,0: Bad indentation. Found 11 spaces, expected 12
+W:940,0: Bad indentation. Found 11 spaces, expected 12
+W:942,0: Bad indentation. Found 11 spaces, expected 12
+W:949,0: Bad indentation. Found 11 spaces, expected 12
+W:950,0: Bad indentation. Found 11 spaces, expected 12
+W:951,0: Bad indentation. Found 14 spaces, expected 16
+C:954,0: Line too long (86/80)
+C:956,0: Line too long (81/80)
+C:958,0: Line too long (88/80)
+C:  1,0: Too many lines in module (1031)
+C:  1,0: Missing docstring
+C: 45,0: Invalid name "_j" (should match (([A-Z_][A-Z0-9_]*)|(__.*__))$)
+C: 46,0: Invalid name "_d" (should match (([A-Z_][A-Z0-9_]*)|(__.*__))$)
+C: 47,0: Invalid name "_b" (should match (([A-Z_][A-Z0-9_]*)|(__.*__))$)
+C: 48,0: Invalid name "_e" (should match (([A-Z_][A-Z0-9_]*)|(__.*__))$)
+C: 49,0: Invalid name "_abs" (should match (([A-Z_][A-Z0-9_]*)|(__.*__))$)
+R: 51,0:TRunner: Too many instance attributes (20/7)
+C: 86,4:TRunner.set_pid_log: Missing docstring
+C: 89,4:TRunner.set_dryrun: Missing docstring
+C: 92,4:TRunner.set_non_active: Missing docstring
+C: 95,4:TRunner.set_enable_memory_collection: Missing docstring
+C: 98,4:TRunner.set_resultfile: Missing docstring
+C:101,4:TRunner.set_deviceid: Missing docstring
+C:104,4:TRunner.set_external_test: Missing docstring
+C:113,4:TRunner.set_fullscreen: Missing docstring
+C:116,4:TRunner.set_session_id: Missing docstring
+W:170,20:TRunner.prepare_run: Redefining built-in 'file'
+R:119,4:TRunner.prepare_run: Too many local variables (28/15)
+C:128,8:TRunner.prepare_run: Invalid name "ok" (should match [a-z_][a-z0-9_]{2,30}$)
+W:242,19:TRunner.prepare_run: Catching too general exception Exception
+W:165,23:TRunner.prepare_run: Catching too general exception Exception
+C:146,20:TRunner.prepare_run: Invalid name "ep" (should match [a-z_][a-z0-9_]{2,30}$)
+C:149,24:TRunner.prepare_run: Invalid name "tf" (should match [a-z_][a-z0-9_]{2,30}$)
+C:162,36:TRunner.prepare_run: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+C:165,34:TRunner.prepare_run: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+C:209,48:TRunner.prepare_run: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+C:242,30:TRunner.prepare_run: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+C:245,16:TRunner.prepare_run: Invalid name "ok" (should match [a-z_][a-z0-9_]{2,30}$)
+W:149,24:TRunner.prepare_run: Unused variable 'tf'
+R:119,4:TRunner.prepare_run: Too many branches (39/12)
+R:119,4:TRunner.prepare_run: Too many statements (114/50)
+R:248,4:TRunner.run_and_merge_resultfile: Too many local variables (66/15)
+C:248,4:TRunner.run_and_merge_resultfile: Missing docstring
+W:358,23:TRunner.run_and_merge_resultfile: Catching too general exception Exception
+W:354,39:TRunner.run_and_merge_resultfile: Catching too general exception Exception
+C:354,50:TRunner.run_and_merge_resultfile: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+C:358,34:TRunner.run_and_merge_resultfile: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+W:449,47:TRunner.run_and_merge_resultfile: Catching too general exception Exception
+C:449,58:TRunner.run_and_merge_resultfile: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+W:502,47:TRunner.run_and_merge_resultfile: Catching too general exception Exception
+C:502,58:TRunner.run_and_merge_resultfile: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+C:557,8:TRunner.run_and_merge_resultfile: Invalid name "DECLARATION" (should match [a-z_][a-z0-9_]{2,30}$)
+C:564,24:TRunner.run_and_merge_resultfile: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+W:572,15:TRunner.run_and_merge_resultfile: Catching too general exception Exception
+C:572,26:TRunner.run_and_merge_resultfile: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+W:292,28:TRunner.run_and_merge_resultfile: Unused variable 'test_xml_temp_set'
+R:248,4:TRunner.run_and_merge_resultfile: Too many branches (64/12)
+R:248,4:TRunner.run_and_merge_resultfile: Too many statements (248/50)
+C:575,4:TRunner.get_device_info: Missing docstring
+C:583,8:TRunner.get_device_info: Invalid name "fi" (should match [a-z_][a-z0-9_]{2,30}$)
+C:583,12:TRunner.get_device_info: Invalid name "fo" (should match [a-z_][a-z0-9_]{2,30}$)
+C:583,16:TRunner.get_device_info: Invalid name "fe" (should match [a-z_][a-z0-9_]{2,30}$)
+C:591,8:TRunner.get_device_info: Invalid name "fi" (should match [a-z_][a-z0-9_]{2,30}$)
+C:591,12:TRunner.get_device_info: Invalid name "fo" (should match [a-z_][a-z0-9_]{2,30}$)
+C:591,16:TRunner.get_device_info: Invalid name "fe" (should match [a-z_][a-z0-9_]{2,30}$)
+C:596,8:TRunner.get_device_info: Invalid name "fi" (should match [a-z_][a-z0-9_]{2,30}$)
+C:596,12:TRunner.get_device_info: Invalid name "fo" (should match [a-z_][a-z0-9_]{2,30}$)
+C:596,16:TRunner.get_device_info: Invalid name "fe" (should match [a-z_][a-z0-9_]{2,30}$)
+C:601,8:TRunner.get_device_info: Invalid name "fi" (should match [a-z_][a-z0-9_]{2,30}$)
+C:601,12:TRunner.get_device_info: Invalid name "fo" (should match [a-z_][a-z0-9_]{2,30}$)
+C:601,16:TRunner.get_device_info: Invalid name "fe" (should match [a-z_][a-z0-9_]{2,30}$)
+W:583,16:TRunner.get_device_info: Unused variable 'fe'
+W:583,8:TRunner.get_device_info: Unused variable 'fi'
+R:575,4:TRunner.get_device_info: Method could be a function
+C:615,4:TRunner.get_version_info: Missing docstring
+W:625,15:TRunner.get_version_info: Catching too general exception Exception
+C:625,26:TRunner.get_version_info: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+R:615,4:TRunner.get_version_info: Method could be a function
+C:629,4:TRunner.pretty_print: Invalid name "ep" (should match [a-z_][a-z0-9_]{2,30}$)
+C:629,4:TRunner.pretty_print: Missing docstring
+C:629,27:TRunner.pretty_print: Invalid name "ep" (should match [a-z_][a-z0-9_]{2,30}$)
+C:631,8:TRunner.pretty_print: Invalid name "t" (should match [a-z_][a-z0-9_]{2,30}$)
+R:629,4:TRunner.pretty_print: Method could be a function
+R:634,4:TRunner.execute_external_test: Too many local variables (36/15)
+W:716,15:TRunner.execute_external_test: Catching too general exception Exception
+C:644,12:TRunner.execute_external_test: Invalid name "fi" (should match [a-z_][a-z0-9_]{2,30}$)
+C:644,16:TRunner.execute_external_test: Invalid name "fo" (should match [a-z_][a-z0-9_]{2,30}$)
+C:644,20:TRunner.execute_external_test: Invalid name "fe" (should match [a-z_][a-z0-9_]{2,30}$)
+W:709,19:TRunner.execute_external_test: Catching too general exception Exception
+C:662,16:TRunner.execute_external_test: Invalid name "ep" (should match [a-z_][a-z0-9_]{2,30}$)
+C:663,16:TRunner.execute_external_test: Invalid name "rt" (should match [a-z_][a-z0-9_]{2,30}$)
+C:672,28:TRunner.execute_external_test: Invalid name "tc" (should match [a-z_][a-z0-9_]{2,30}$)
+C:709,30:TRunner.execute_external_test: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+C:716,26:TRunner.execute_external_test: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+W:634,47:TRunner.execute_external_test: Unused argument 'exe_sequence'
+W:666,20:TRunner.execute_external_test: Unused variable 'suite_name'
+W:644,20:TRunner.execute_external_test: Unused variable 'fe'
+W:644,12:TRunner.execute_external_test: Unused variable 'fi'
+W:634,36:TRunner.execute_external_test: Unused argument 'testsuite'
+R:634,4:TRunner.execute_external_test: Too many branches (16/12)
+R:634,4:TRunner.execute_external_test: Too many statements (69/50)
+C:720,4:TRunner.apply_filter: Invalid name "rt" (should match [a-z_][a-z0-9_]{2,30}$)
+C:720,4:TRunner.apply_filter: Missing docstring
+C:720,27:TRunner.apply_filter: Invalid name "rt" (should match [a-z_][a-z0-9_]{2,30}$)
+C:721,8:TRunner.apply_filter.case_check: Invalid name "tc" (should match [a-z_][a-z0-9_]{2,30}$)
+C:721,8:TRunner.apply_filter.case_check: Missing docstring
+C:721,23:TRunner.apply_filter.case_check: Invalid name "tc" (should match [a-z_][a-z0-9_]{2,30}$)
+C:753,16:TRunner.apply_filter: Invalid name "tc" (should match [a-z_][a-z0-9_]{2,30}$)
+R:720,4:TRunner.apply_filter: Too many branches (18/12)
+C:757,4:TRunner.execute: Missing docstring
+R:758,8:TRunner.execute.exec_testcase: Too many local variables (33/15)
+C:758,8:TRunner.execute.exec_testcase: Missing docstring
+W:788,31:TRunner.execute.exec_testcase: Catching too general exception Exception
+C:788,42:TRunner.execute.exec_testcase: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+W:857,23:TRunner.execute.exec_testcase: Catching too general exception Exception
+C:857,34:TRunner.execute.exec_testcase: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+C:879,16:TRunner.execute.exec_testcase: Invalid name "m" (should match [a-z_][a-z0-9_]{2,30}$)
+W:888,27:TRunner.execute.exec_testcase: Catching too general exception Exception
+C:888,38:TRunner.execute.exec_testcase: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+R:758,8:TRunner.execute.exec_testcase: Too many branches (32/12)
+R:758,8:TRunner.execute.exec_testcase: Too many statements (114/50)
+W:909,15:TRunner.execute: Catching too general exception Exception
+C:894,12:TRunner.execute: Invalid name "ep" (should match [a-z_][a-z0-9_]{2,30}$)
+C:895,12:TRunner.execute: Invalid name "rt" (should match [a-z_][a-z0-9_]{2,30}$)
+C:900,24:TRunner.execute: Invalid name "tc" (should match [a-z_][a-z0-9_]{2,30}$)
+C:904,24:TRunner.execute: Invalid name "tc" (should match [a-z_][a-z0-9_]{2,30}$)
+C:909,26:TRunner.execute: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+R:757,4:TRunner.execute: Too many branches (40/12)
+R:757,4:TRunner.execute: Too many statements (126/50)
+C:914,4:TRunner.replace_cdata: Missing docstring
+W:926,15:TRunner.replace_cdata: Catching too general exception Exception
+C:926,26:TRunner.replace_cdata: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+R:914,4:TRunner.replace_cdata: Method could be a function
+C:930,4:TRunner.insert_notes: Missing docstring
+C:944,4:TRunner._extract_notes: Missing docstring
+R:944,4:TRunner._extract_notes: Method could be a function
+C:958,4:TRunner.insert_measures: Missing docstring
+C:961,12:TRunner.insert_measures: Invalid name "m" (should match [a-z_][a-z0-9_]{2,30}$)
+W:967,46:TRunner._extract_measures: Unused argument 'field_sep'
+C:994,4:TRunner.write_set_result: Missing docstring
+W:1012,15:TRunner.write_set_result: Catching too general exception Exception
+C:1002,12:TRunner.write_set_result: Invalid name "ep" (should match [a-z_][a-z0-9_]{2,30}$)
+C:1003,12:TRunner.write_set_result: Invalid name "rt" (should match [a-z_][a-z0-9_]{2,30}$)
+C:1005,20:TRunner.write_set_result: Invalid name "tc" (should match [a-z_][a-z0-9_]{2,30}$)
+C:1006,24:TRunner.write_set_result: Invalid name "t" (should match [a-z_][a-z0-9_]{2,30}$)
+C:1012,26:TRunner.write_set_result: Invalid name "e" (should match [a-z_][a-z0-9_]{2,30}$)
+R:994,4:TRunner.write_set_result: Method could be a function
+C:1015,4:TRunner.check_test_status: Missing docstring
+R:1015,4:TRunner.check_test_status: Method could be a function
+R: 51,0:TRunner: Too many public methods (23/20)
+W: 42,0: Unused import subprocess
+
+
+Report
+======
+814 statements analysed.
+
+Messages by category
+--------------------
+
++-----------+-------+---------+-----------+
+|type       |number |previous |difference |
++===========+=======+=========+===========+
+|convention |192    |192      |=          |
++-----------+-------+---------+-----------+
+|refactor   |24     |24       |=          |
++-----------+-------+---------+-----------+
+|warning    |35     |35       |=          |
++-----------+-------+---------+-----------+
+|error      |0      |0        |=          |
++-----------+-------+---------+-----------+
+
+
+
+Messages
+--------
+
++-----------+------------+
+|message id |occurrences |
++===========+============+
+|C0301      |102         |
++-----------+------------+
+|C0103      |65          |
++-----------+------------+
+|C0111      |24          |
++-----------+------------+
+|W0703      |16          |
++-----------+------------+
+|W0612      |7           |
++-----------+------------+
+|W0311      |7           |
++-----------+------------+
+|R0201      |7           |
++-----------+------------+
+|R0912      |6           |
++-----------+------------+
+|R0915      |5           |
++-----------+------------+
+|R0914      |4           |
++-----------+------------+
+|W0613      |3           |
++-----------+------------+
+|W0622      |1           |
++-----------+------------+
+|W0611      |1           |
++-----------+------------+
+|R0904      |1           |
++-----------+------------+
+|R0902      |1           |
++-----------+------------+
+|C0302      |1           |
++-----------+------------+
+
+
+
+Global evaluation
+-----------------
+Your code has been rated at 6.92/10 (previous run: 6.92/10)
+
+External dependencies
+---------------------
+::
+
+    testkitlite 
+      \-common 
+        \-killall 
+          \-killall (testkitlite.engines.default.runner)
+
+
+
+Raw metrics
+-----------
+
++----------+-------+------+---------+-----------+
+|type      |number |%     |previous |difference |
++==========+=======+======+=========+===========+
+|code      |814    |82.14 |814      |=          |
++----------+-------+------+---------+-----------+
+|docstring |44     |4.44  |44       |=          |
++----------+-------+------+---------+-----------+
+|comment   |58     |5.85  |58       |=          |
++----------+-------+------+---------+-----------+
+|empty     |75     |7.57  |75       |=          |
++----------+-------+------+---------+-----------+
+
+
+
+Duplication
+-----------
+
++-------------------------+------+---------+-----------+
+|                         |now   |previous |difference |
++=========================+======+=========+===========+
+|nb duplicated lines      |0     |0        |=          |
++-------------------------+------+---------+-----------+
+|percent duplicated lines |0.000 |0.000    |=          |
++-------------------------+------+---------+-----------+
+
+
+
+Statistics by type
+------------------
+
++---------+-------+-----------+-----------+------------+---------+
+|type     |number |old number |difference |%documented |%badname |
++=========+=======+===========+===========+============+=========+
+|module   |1      |1          |=          |0.00        |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|class    |1      |1          |=          |100.00      |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|method   |26     |26         |=          |19.23       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|function |2      |2          |=          |0.00        |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+
+
+

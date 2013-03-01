@@ -42,11 +42,11 @@ import re
 import subprocess
 import json
 
-_j = os.path.join
-_d = os.path.dirname
-_b = os.path.basename
-_e = os.path.exists
-_abs = os.path.abspath
+JOIN = os.path.join
+DIRNAME = os.path.dirname
+BASENAME = os.path.basename
+EXISTS = os.path.exists
+ABSPATH = os.path.abspath
 
 class TRunner:
     """
@@ -55,6 +55,9 @@ class TRunner:
     Conduct tests execution.
     """
     def __init__(self):
+        """
+            init all self parameters here
+        """
         # dryrun
         self.bdryrun = False
         # non_active
@@ -84,24 +87,42 @@ class TRunner:
         self.set_parameters = {}
 
     def set_pid_log(self, pid_log):
+        """
+            get pid_log file
+        """
         self.pid_log = pid_log
 
     def set_dryrun(self, bdryrun):
         self.bdryrun = bdryrun
 
     def set_non_active(self, non_active):
+        """
+            Disable set the result of core manual cases from the console
+        """
         self.non_active = non_active
 
     def set_enable_memory_collection(self, enable_memory_collection):
+        """
+            release memory when the free memory is less than 100M
+        """
         self.enable_memory_collection = enable_memory_collection
 
     def set_resultfile(self, resultfile):
+        """
+            if Specify output file for result xml,just set it 
+        """
         self.resultfile = resultfile
 
     def set_deviceid(self, device_serial):
+        """
+            set device_serial
+        """
         self.deviceid = device_serial
 
     def set_external_test(self, exttest):
+        """
+            set the external test WRTLauncher
+        """
         self.external_test = exttest
 
     def add_filter_rules(self, **kargs):
@@ -114,6 +135,9 @@ class TRunner:
         self.fullscreen = state
 
     def set_session_id(self, session_id):
+        """
+            set the set test session id which is get form com_module
+        """
         self.session_id = session_id
 
     def prepare_run(self, testxmlfile, resultdir=None):
@@ -138,8 +162,8 @@ class TRunner:
                     resultfile = "%s.manual.xml" % filename
                 else:
                     resultfile = "%s.auto.xml" % filename
-                resultfile = _j(resultdir, resultfile)
-                if not _e(resultdir):
+                resultfile = JOIN(resultdir, resultfile)
+                if not EXISTS(resultdir):
                     os.mkdir(resultdir)
                 print "[ analysis test xml file: %s ]" % resultfile
                 try:
@@ -167,7 +191,7 @@ class TRunner:
                     return False
                 casefind = etree.parse(resultfile).getiterator('testcase')
                 if casefind:
-                    file = "%s" % _b(resultfile)
+                    file = "%s" % BASENAME(resultfile)
                     file = os.path.splitext(file)[0]
                     testsuite_dict_value_list = []
                     testsuite_dict_add_flag = 0
@@ -199,7 +223,7 @@ class TRunner:
                                 root = etree.Element('test_definition')
                                 suitefilename = os.path.splitext(resultfile)[0]
                                 suitefilename += ".suite_%s.xml" % filename_diff
-                                suitefilename = _j(resultdir, suitefilename)
+                                suitefilename = JOIN(resultdir, suitefilename)
                                 tsuite.tail = "\n"
                                 root.append(tsuite)
                                 try:
@@ -276,10 +300,10 @@ class TRunner:
         for webapi_total_file in self.exe_sequence:
             for webapi_file in self.testsuite_dict[webapi_total_file]:
                 # print identical xml file name
-                if self.current_test_xml != _j(latest_dir, webapi_total_file):
+                if self.current_test_xml != JOIN(latest_dir, webapi_total_file):
                     time.sleep(3)
-                    print "\n[ testing xml: %s.xml ]\n" % _j(latest_dir, webapi_total_file)
-                    self.current_test_xml = _j(latest_dir, webapi_total_file)
+                    print "\n[ testing xml: %s.xml ]\n" % JOIN(latest_dir, webapi_total_file)
+                    self.current_test_xml = JOIN(latest_dir, webapi_total_file)
                 try:
                     # split xml by <set>
                     print "[ split xml: %s by <set> ]" % webapi_file
@@ -377,9 +401,9 @@ class TRunner:
         mergefile = mktemp(suffix='.xml', prefix='tests.', dir=latest_dir)
         mergefile = os.path.splitext(mergefile)[0]
         mergefile = os.path.splitext(mergefile)[0]
-        mergefile = "%s.result" % _b(mergefile)
+        mergefile = "%s.result" % BASENAME(mergefile)
         mergefile = "%s.xml" % mergefile
-        mergefile = _j(latest_dir, mergefile)
+        mergefile = JOIN(latest_dir, mergefile)
         end_time = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
         print "\n[ test complete at time: %s ]" % end_time
         print "[ start merging test result xml files, this might take some time, please wait ]"
@@ -879,7 +903,7 @@ class TRunner:
             for m in measures:
                 ind = m.get('name')
                 fname = m.get('file')
-                if fname and _e(fname):
+                if fname and EXISTS(fname):
                     try:
                         config = ConfigParser.ConfigParser()
                         config.read(fname)
@@ -934,21 +958,21 @@ class TRunner:
 
         notes_elm = desc.find('notes')
         if notes_elm is None:
-           notes_elm = etree.Element('notes')
-           desc.append(notes_elm)
+            notes_elm = etree.Element('notes')
+            desc.append(notes_elm)
         if notes_elm.text is None:
-           notes_elm.text = self._extract_notes(buf, pattern)
+            notes_elm.text = self._extract_notes(buf, pattern)
         else:
-           notes_elm.text += "\n"+self._extract_notes(buf, pattern)
+            notes_elm.text += "\n"+self._extract_notes(buf, pattern)
 
     def _extract_notes(self, buf, pattern):
         # util func to split lines in buffer, search for pattern on each line
         # then concatenate remaining content in output buffer
         out = "" 
         for line in buf.split("\n"):
-           pos = line.find(pattern)
-           if pos >= 0:
-              out += line[pos + len(pattern):] + "\n"
+            pos = line.find(pattern)
+            if pos >= 0:
+                out += line[pos + len(pattern):] + "\n"
         return out
 
     # sdx@kooltux.org: parse measures returned by test script and insert in XML result
@@ -992,29 +1016,37 @@ class TRunner:
         return out
 
     def write_set_result(self, testxmlfile, result):
+        '''
+            get the result JSON form com_module,
+            write them to orignal testxmlfile
+
+        '''
         # write the set_result to set_xml
         set_result_json = result
         set_result_xml = testxmlfile
         #covert JOSN to python dict string
         set_result = json.loads(set_result_json)
-        case_result = set_result["cases"]
+        case_results = set_result["cases"]
         try:
-            ep = etree.parse(set_result_xml)
-            rt = ep.getroot()
-            for tsuite in rt.getiterator('suite'):
-                suite_name = tsuite.get('name')
-                for tset in tsuite.getiterator('set'):
-                    for tc in tset.getiterator('testcase'):
-                        for t in case_result:
-                            if tc.get("id") == t['case_id']:
-                                #tc.set('result',t['expected'])
-                                tc.set('result','PASS')           
-            ep.write(set_result_xml)
+            parse_tree = etree.parse(set_result_xml)
+            root_em = parse_tree.getroot()
+            for tset in root_em.getiterator('set'):
+                for tcase in tset.getiterator('testcase'):
+                    for case_result in case_results:
+                        if tcase.get("id") == case_result['case_id']:
+                            #tc.set('result',t['expected'])
+                            tcase.set('result','PASS')           
+            parse_tree.write(set_result_xml)
             print "[ cases result saved to resultfile ]\n"
-        except Exception, e:
-            print "[ Error: fail to write cases result, error: %s ]\n" % e
+        except Exception, error:
+            print "[ Error: fail to write cases result, error: %s ]\n" % error
 
     def check_test_status(self):
+        '''
+            get_test_status from com_module
+            check the status
+            if end ,return ture; else return False
+        '''
         #check test running or end
         #import get_test_status from com_module
         #session_status_json = get_test_status(self.session_id)
