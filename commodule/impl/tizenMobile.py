@@ -41,11 +41,11 @@ class sdbCommAsync(threading.Thread):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         while True:
-            outLine = process.stdout.readline().rstrip()
+            outLine = proc.stdout.readline().rstrip()
             if outLine:
                 self.stdout.append(outLine)
 
-            errLine = process.stderr.readline().rstrip()
+            errLine = proc.stderr.readline().rstrip()
             if errLine:
                 self.stderr.append(errLine)
 
@@ -54,22 +54,23 @@ class sdbCommAsync(threading.Thread):
 
 class sdbCommSync:
     def __init__(self, cmd=None):
-        self.stdout = []
+        self.stdout = ['test1','test2']
         self.stderr = []
         self.cmd = cmd
 
     def communicate(self):
         result = ""
+        print '%s' % self.cmd
         proc = subprocess.Popen(self.cmd,
                                 shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         while True:
-            outLine = process.stdout.readline().rstrip()
+            outLine = proc.stdout.readline().rstrip()
             if outLine:
                 self.stdout.append(outLine)
 
-            errLine = process.stderr.readline().rstrip()
+            errLine = proc.stderr.readline().rstrip()
             if not proc.poll is None:
                 break
         return self.stdout
@@ -77,7 +78,8 @@ class sdbCommSync:
 class tizenMobile:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
 
-    def __init__(self, deviceId):
+    def __init__(self):
+        print 'init tizenMobile'
         pass
 
     def __shell_command(self, cmd=None):
@@ -91,44 +93,39 @@ class tizenMobile:
         if hport is None: return None
         if dport is None: return None
         cmd = "sdb forward %s:tcp %s:tcp" % (hport, dport)
-        return __shell_command(cmd)
+        return self.__shell_command(cmd)
 
     def __http_request(self, url, xtype="POST", data=None):
         result = None
-        if xtype = "POST":
+        if xtype == "POST":
             headers = {'content-type': 'application/json'}
             ret = requests.post(url, data=json.dumps(data), headers=headers)
             result = ret.json()
-        elif xtype = "GET":
+        elif xtype == "GET":
             ret = requests.get(url, params=data)
             result = ret.json()
         return result
 
     def get_device_ids(self):
         cmd = "sdb devices"
-        ret = __shell_command(cmd)
+        ret = self.__shell_command(cmd)
         return ret
 
     def get_device_info(self, deviceid=None):
         cmd = "sdb -s %s shell rpm -qa | grep cts" % deviceid
-        ret =  __shell_command(cmd)
+        ret =  self.__shell_command(cmd)
         return ret
 
     def install_package(self, deviceid, pkgpath):
         filename = os.path.split(pkgpath)[1]
         devpath = "/tmp/%s" % filename
         cmd = "sdb -s %s push %s %s" % (deviceid, pkgpath, devpath)
-        ret =  __shell_command(cmd)
+        ret =  self.__shell_command(cmd)
         cmd = "sdb shell rpm -ivh %s" % devpath
-        ret =  __shell_command(cmd)
+        ret =  self.__shell_command(cmd)
         return ret
 
     def remove_package(self, deviceid, pkgid):
         cmd = "sdb -s %s shell rpm -e %s" % (deviceid, pkgid)
-        ret =  __shell_command(cmd)
+        ret =  self.__shell_command(cmd)
         return ret
-
-
-
-
-

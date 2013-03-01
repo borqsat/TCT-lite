@@ -14,93 +14,95 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor,Boston, MA 02110-1301,USA.
 #
 # Authors:
 #              Liu,chengtao <liux.chengtao@intel.com>
 
-import os
-import re
 import sys
-import threading
-import time
-import json
-from impl import tizenMobile
 
 class Connector:
-    '''Communication module for automatic test'''
-
-    def __init__(self,config):
-        if "tizenMobile" in config:
-            self.impl = tizenMobile()
-        else
-            self.impl = None
+    """Communication module for automatic test"""
+    def __init__(self, config):
+        self.__impl = None
+        if 'tizenMobile' in config:
+            try:
+                from impl.tizenMobile import tizenMobile
+                self.__impl = tizenMobile()
+            except Exception, e:
+                print e
 
     def get_device_ids(self):
         """list the ids of device available"""
-        if not self.impl is None:
-            return self.impl.get_device_ids()
-        else
+        if not self.__impl is None:
+            return self.__impl.get_device_ids()
+        else:
             return None
 
     def get_device_info(self, deviceid):
         """get device information by device id"""
-        if not self.impl is None:
-            return self.impl.get_device_info(deviceid)
-        else
+        if not self.__impl is None:
+            return self.__impl.get_device_info(deviceid)
+        else:
             return None
 
     def install_package(self, deviceid, pkgpath=None):
         """install a package to remote test terminal"""
-        if not self.impl is None:
-            return self.impl.install_package()
-        else
+        if not self.__impl is None:
+            return self.__impl.install_package(deviceid, pkgpath)
+        else:
             return None
 
     def remove_package(self, deviceid, pkgname):
         """remove a package from remote test terminal"""
-        if not self.impl is None:
-            return self.impl.get_device_ids()
-        else
+        if not self.__impl is None:
+            return self.__impl.get_device_ids(deviceid, pkgname)
+        else:
             return None
 
     def init_test(self, deviceid, params):
         """Init the test environment"""
-        if not self.impl is None:
-            return self.impl.get_device_ids()
-        else
+        if not self.__impl is None:
+            return self.__impl.get_device_ids(deviceid, params)
+        else:
             return None
 
     def run_test(self, sessionid, test_set=None):
         """send the test set data to remote test stub/container"""
-        if not self.impl is None:
-            return self.impl.send_test_data()
-        else
+        if not self.__impl is None:
+            return self.__impl.send_test_data(sessionid, test_set)
+        else:
             return None
 
     def get_test_status(self, sessionid):
         """get test status from remote test terminal"""
-        if not self.impl is None:
-            return self.impl.get_test_status()
-        else
+        if not self.__impl is None:
+            return self.__impl.get_test_status(sessionid)
+        else:
             return None
 
     def get_test_result(self, sessionid):
         """get test result from remote test terminal"""
-        if not self.impl is None:
-            return self.impl.get_test_status()
-        else
+        if not self.__impl is None:
+            return self.__impl.get_test_status(sessionid)
+        else:
             return None
 
     def finalize_test(self, sessionid):
         """send the test set data to remote test stub"""
-        if not self.impl is None:
-            return self.impl.finalize_test()
-        else
+        if not self.__impl is None:
+            return self.__impl.finalize_test(sessionid)
+        else:
             return None
 
 def main(argvs):
-    pass
+    """commanline entry for invoke Connector apis"""
+    if len(argvs) < 2:
+        print "No parameter provided."
+    conn = Connector({'tizenMobile':'yes'})
+    ret = conn.get_device_ids()
+    for l in ret:
+        print 'id = %s' % l
 
-if (__name__ == '__main__'):
+if __name__ == '__main__':
     main(sys.argv)
