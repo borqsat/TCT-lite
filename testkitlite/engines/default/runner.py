@@ -23,6 +23,7 @@
 #              Zhang, Huihui <huihuix.zhang@intel.com>
 #              Wendong,Sui  <weidongx.sun@intel.com>
 #              Yuanyuan,Zou  <yuanyuan.zou@borqs.com>
+""" prepare run , split xml ,run case , merge result """
 
 import os
 import platform
@@ -92,6 +93,7 @@ class TRunner:
         self.pid_log = pid_log
 
     def set_dryrun(self, bdryrun):
+        """ bdryrun mode"""
         self.bdryrun = bdryrun
 
     def set_non_active(self, non_active):
@@ -131,6 +133,7 @@ class TRunner:
         self.filter_rules = kargs
 
     def set_fullscreen(self, state):
+        """ fullscreen run"""
         self.fullscreen = state
 
     def set_session_id(self, session_id):
@@ -148,8 +151,8 @@ class TRunner:
         # resultdir is set to current directory by default
         if not resultdir:
             resultdir = os.getcwd()
-        ok = True
-        if ok:
+        ok_prepare = True
+        if ok_prepare:
             try:
                 filename = testxmlfile
                 filename = os.path.splitext(filename)[0]
@@ -166,15 +169,15 @@ class TRunner:
                     os.mkdir(resultdir)
                 print "[ analysis test xml file: %s ]" % resultfile
                 try:
-                    ep = etree.parse(testxmlfile)
-                    suiteparent = ep.getroot()
+                    parse_tree = etree.parse(testxmlfile)
+                    suiteparent = parse_tree.getroot()
                     no_test_definition = 1
-                    for tf in ep.getiterator('test_definition'):
+                    if parse_tree.getiterator('test_definition'):
                         no_test_definition = 0
                     if no_test_definition:
                         suiteparent = etree.Element('test_definition')
                         suiteparent.tail = "\n"
-                        for suite in ep.getiterator('suite'):
+                        for suite in parse_tree.getiterator('suite'):
                             suite.tail = "\n"
                             suiteparent.append(suite)
                     self.apply_filter(suiteparent)
@@ -190,8 +193,8 @@ class TRunner:
                     return False
                 casefind = etree.parse(resultfile).getiterator('testcase')
                 if casefind:
-                    file = "%s" % BASENAME(resultfile)
-                    file = os.path.splitext(file)[0]
+                    test_file_name = "%s" % BASENAME(resultfile)
+                    test_file_name = os.path.splitext(test_file_name)[0]
                     testsuite_dict_value_list = []
                     testsuite_dict_add_flag = 0
                     execute_suite_one_way = 1
@@ -214,7 +217,7 @@ class TRunner:
                         elif suite_total_count == suite_wrt_launcher_count:
                             testsuite_dict_value_list.append(resultfile) 
                             testsuite_dict_add_flag = 1
-                            self.exe_sequence.append(file)
+                            self.exe_sequence.append(test_file_name)
                         else:
                             filename_diff = 1
                             execute_suite_one_way = 0
@@ -229,8 +232,9 @@ class TRunner:
                                     with open(suitefilename, 'w') as output:
                                         tree = etree.ElementTree(element=root)
                                         tree.write(output)
-                                except IOError, e:
-                                    print "[ Error: create filtered result file: %s failed, error: %s ]" % (suitefilename, e)
+                                except IOError, error:
+                                    print "[ Error: create filtered result file: %s failed,\
+                                     error: %s ]" % (suitefilename, error)
                                 case_suite_find = etree.parse(suitefilename).getiterator('testcase')
                                 if case_suite_find:
                                     if tsuite.get('launcher'):
@@ -254,7 +258,7 @@ class TRunner:
                                         self.resultfiles.add(suitefilename)
                                 filename_diff += 1
                         if testsuite_dict_add_flag:
-                            self.testsuite_dict[file] = testsuite_dict_value_list 
+                            self.testsuite_dict[test_file_name] = testsuite_dict_value_list 
                     else:
                         if self.filter_rules["execution_type"] == ["auto"]:
                             self.core_auto_files.append(resultfile)
@@ -262,11 +266,11 @@ class TRunner:
                             self.core_manual_files.append(resultfile)
                     if execute_suite_one_way:
                         self.resultfiles.add(resultfile)
-            except Exception, e:
+            except Exception, error:
                 traceback.print_exc()
-                print e
-                ok &= False
-        return ok
+                print error
+                ok_prepare &= False
+        return ok_prepare
 
     def run_case(self, latest_dir):
         """ run case """
@@ -368,12 +372,12 @@ class TRunner:
                                 try:
                                     print 'show down server'
                                     #finalize_test(self.deviceid)
-                                except Exception, e:
-                                    print "[ Error: fail to close webapi http server, error: %s ]" % e                  
+                                except Exception, error:
+                                    print "[ Error: fail to close webapi http server, error: %s ]" % error                  
                                 
                                 break
-                except Exception, e:
-                    print "[ Error: fail to run webapi test xml, error: %s ]" % e
+                except Exception, error:
+                    print "[ Error: fail to run webapi test xml, error: %s ]" % error
                
         # run core manual cases
         self.core_manual_files.sort()
@@ -465,8 +469,8 @@ class TRunner:
                                             if result_case.get('result') == "N/A":
                                                 self.testresult_dict["not_run"] += 1
                                             total_set.append(result_case)
-                                        except Exception, e:
-                                            print "[ Error: fail to append %s, error: %s ]" % (result_case.get('id'), e)
+                                        except Exception, error:
+                                            print "[ Error: fail to append %s, error: %s ]" % (result_case.get('id'), error)
             total_xml.write(totalfile)
             totals.add(totalfile)
         # merge webapi result files
@@ -518,8 +522,8 @@ class TRunner:
                                             if result_case.get('result') == "N/A":
                                                 self.testresult_dict["not_run"] += 1
                                             total_set.append(result_case)
-                                        except Exception, e:
-                                            print "[ Error: fail to append %s, error: %s ]" % (result_case.get('id'), e)
+                                        except Exception, error:
+                                            print "[ Error: fail to append %s, error: %s ]" % (result_case.get('id'), error)
             total_xml.write(totalfile)
             totals.add(totalfile)
         for total in totals:
@@ -573,26 +577,27 @@ class TRunner:
         root.insert(0, summary)
         root.insert(0, environment)
         # add XSL support to testkit-lite
-        DECLARATION = """<?xml version="1.0" encoding="UTF-8"?>
+        declaration_text = """<?xml version="1.0" encoding="UTF-8"?>
         <?xml-stylesheet type="text/xsl" href="testresult.xsl"?>\n"""
         try:
             with open(mergefile, 'w') as output:
-                output.write(DECLARATION)
+                output.write(declaration_text)
                 tree = etree.ElementTree(element=root)
                 tree.write(output, xml_declaration=False, encoding='utf-8')
-        except IOError, e:
-            print "[ Error: merge result file failed, error: %s ]" % e
+        except IOError, error:
+            print "[ Error: merge result file failed, error: %s ]" % error
         # change &lt;![CDATA[]]&gt; to <![CDATA[]]>
         self.replace_cdata(mergefile)
         # copy result to -o option
         try:
             if self.resultfile:
                 copyfile(mergefile, self.resultfile)
-        except Exception, e:
-            print "[ Error: fail to copy the result file to: %s, please check if you have created its parent directory, error: %s ]" % (self.resultfile, e)
+        except Exception, error:
+            print "[ Error: fail to copy the result file to: %s, please check if you have created its parent directory, error: %s ]" % (self.resultfile, error)
 
 
     def get_device_info(self):
+        """ get devices information """
         device_info = {}
         resolution_str = "Empty resolution"
         screen_size_str = "Empty screen_size"
@@ -600,26 +605,26 @@ class TRunner:
         device_name_str = "Empty device_name"
         os_version_str = ""
         # get resolution and screen size
-        fi, fo, fe = os.popen3("xrandr")
-        for line in fo.readlines():
+        fin, fout, ferr = os.popen3("xrandr")
+        for line in fout.readlines():
             pattern = re.compile('connected (\d+)x(\d+).* (\d+mm) x (\d+mm)')
             match = pattern.search(line)
             if match:
                 resolution_str = "%s x %s" % (match.group(1), match.group(2))
                 screen_size_str = "%s x %s" % (match.group(3), match.group(4))
         # get architecture
-        fi, fo, fe = os.popen3("uname -m")
-        device_model_str_tmp = fo.readline()
+        fin, fout, ferr = os.popen3("uname -m")
+        device_model_str_tmp = fout.readline()
         if len(device_model_str_tmp) > 1:
             device_model_str = device_model_str_tmp[0:-1]
         # get hostname
-        fi, fo, fe = os.popen3("uname -n")
-        device_name_str_tmp = fo.readline()
+        fin, fout, ferr = os.popen3("uname -n")
+        device_name_str_tmp = fout.readline()
         if len(device_name_str_tmp) > 1:
             device_name_str = device_name_str_tmp[0:-1]
         # get os version
-        fi, fo, fe = os.popen3("cat /etc/issue")
-        for line in fo.readlines():
+        fin, fout, ferr = os.popen3("cat /etc/issue")
+        for line in fout.readlines():
             if len(line) > 1:
                 os_version_str = "%s %s" % (os_version_str, line)
         os_version_str = os_version_str[0:-1]
@@ -633,6 +638,10 @@ class TRunner:
         return device_info
 
     def get_version_info(self):
+        """
+            get testkit tool version ,just read the version in VERSION file
+            VERSION file must put in /opt/testkit/lite/
+        """
         try:
             config = ConfigParser.ConfigParser()
             if platform.system() == "Linux":
@@ -642,14 +651,15 @@ class TRunner:
                 config.read(version_file)
             version = config.get('public_version', 'version')
             return version
-        except Exception, e:
-            print "[ Error: fail to parse version info, error: %s ]\n" % e
+        except Exception, error:
+            print "[ Error: fail to parse version info, error: %s ]\n" % error
             return ""
 
-    def pretty_print(self, ep, resultfile):
-        rawstr = etree.tostring(ep.getroot(), 'utf-8')
-        t = minidom.parseString(rawstr)
-        open(resultfile, 'w+').write(t.toprettyxml(indent="  "))
+    def pretty_print(self, parse_tree, resultfile):
+        """xml pretty prepared"""
+        rawstr = etree.tostring(parse_tree.getroot(), 'utf-8')
+        parse_xml = minidom.parseString(rawstr)
+        open(resultfile, 'w+').write(parse_xml.toprettyxml(indent="  "))
 
     def execute_external_test(self, resultfile):
         """Run external test"""
@@ -712,21 +722,22 @@ class TRunner:
             return False
         return True
 
-    def apply_filter(self, rt):
+    def apply_filter(self, root_em):
         """ apply filter """
-        def case_check(tc):
+        def case_check(tcase):
+            """filter cases"""
             rules = self.filter_rules
             for key in rules.iterkeys():
                 if key in ["suite", "set"]:
                     continue
                 # Check attribute
-                t_val = tc.get(key)
+                t_val = tcase.get(key)
                 if t_val:
                     if not t_val in rules[key]:
                         return False
                 else:
                     # Check sub-element
-                    items = tc.getiterator(key)
+                    items = tcase.getiterator(key)
                     if items: 
                         t_val = []
                         for i in items:
@@ -736,22 +747,24 @@ class TRunner:
             return True
         
         rules = self.filter_rules
-        for tsuite in rt.getiterator('suite'):
+        for tsuite in root_em.getiterator('suite'):
             if rules.get('suite'):
                 if tsuite.get('name') not in rules['suite']:
-                    rt.remove(tsuite)
+                    root_em.remove(tsuite)
             for tset in tsuite.getiterator('set'):
                 if rules.get('set'):
                     if tset.get('name') not in rules['set']:
                         tsuite.remove(tset)
                        
-        for tset in rt.getiterator('set'):
-            for tc in tset.getiterator('testcase'):
-                if not case_check(tc):
-                    tset.remove(tc)
+        for tset in root_em.getiterator('set'):
+            for tcase in tset.getiterator('testcase'):
+                if not case_check(tcase):
+                    tset.remove(tcase)
 
     def execute(self, testxmlfile, resultfile):
+        """core test cases execute"""
         def exec_testcase(case, total_number, current_number):
+            """ run core test cases """
             case_result = "BLOCK"
             return_code = None
             stderr = "none"
@@ -784,8 +797,8 @@ class TRunner:
                             if return_code is not None:
                                 actual_result = str(return_code)
                             print "Script Return Code: %s" % actual_result
-                        except Exception, e:
-                            print "[ Error: fail to execute test script, error: %s ]\n" % e
+                        except Exception, error:
+                            print "[ Error: fail to execute test script, error: %s ]\n" % error
             # Construct result info node
             resinfo_elm = etree.Element('result_info')
             res_elm = etree.Element('actual_result')
@@ -853,8 +866,8 @@ class TRunner:
                                 break
                             else:
                                 print "[ Warnning: you input: '%s' is invalid, please try again ]" % test_result
-                except Exception, e:
-                    print "[ Error: fail to get core manual test step, error: %s ]\n" % e
+                except Exception, error:
+                    print "[ Error: fail to get core manual test step, error: %s ]\n" % error
             # handle auto core cases
             else:
                 case_result = "BLOCK"
@@ -875,42 +888,43 @@ class TRunner:
             print "Case Result: %s" % case_result
             # Check performance test
             measures = case.getiterator('measurement')
-            for m in measures:
-                ind = m.get('name')
-                fname = m.get('file')
+            for measure in measures:
+                ind = measure.get('name')
+                fname = measure.get('file')
                 if fname and EXISTS(fname):
                     try:
                         config = ConfigParser.ConfigParser()
                         config.read(fname)
                         val = config.get(ind, 'value')
-                        m.set('value', val)
-                    except Exception, e:
-                        print "[ Error: fail to parse performance value, error: %s ]\n" % e
+                        measure.set('value', val)
+                    except Exception, error:
+                        print "[ Error: fail to parse performance value, error: %s ]\n" % error
             # record end time
             end_elm.text = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
         # execute cases
         try:
-            ep = etree.parse(testxmlfile)
-            rt = ep.getroot()
+            parse_tree = etree.parse(testxmlfile)
+            root_em = parse_tree.getroot()
             total_number = 0
             current_number = 0
-            for tsuite in rt.getiterator('suite'):
+            for tsuite in root_em.getiterator('suite'):
                 for tset in tsuite.getiterator('set'):
-                    for tc in tset.getiterator('testcase'):
+                    for tcase in tset.getiterator('testcase'):
                         total_number += 1
-            for tsuite in rt.getiterator('suite'):
+            for tsuite in root_em.getiterator('suite'):
                 for tset in tsuite.getiterator('set'):
-                    for tc in tset.getiterator('testcase'):
+                    for tcase in tset.getiterator('testcase'):
                         current_number += 1
-                        exec_testcase(tc, total_number, current_number)
-            ep.write(resultfile)
+                        exec_testcase(tcase, total_number, current_number)
+            parse_tree.write(resultfile)
             return True
-        except Exception, e:
-            print "[ Error: fail to run core test case, error: %s ]\n" % e
+        except Exception, error:
+            print "[ Error: fail to run core test case, error: %s ]\n" % error
             traceback.print_exc()
             return False
 
     def replace_cdata(self, file_name):
+        """ replace some character"""
         try:
             abs_path = mktemp()
             new_file = open(abs_path, 'w')
@@ -922,11 +936,12 @@ class TRunner:
             old_file.close()
             remove(file_name)
             move(abs_path, file_name)
-        except Exception, e:
-            print "[ Error: fail to replace cdata in the result file, error: %s ]\n" % e
+        except Exception, error:
+            print "[ Error: fail to replace cdata in the result file, error: %s ]\n" % error
 
     # sdx@kooltux.org: parse notes in buffer and insert them in XML result
     def insert_notes(self, case, buf, pattern="###[NOTE]###"):
+        """ insert notes"""
         desc = case.find('description')
         if desc is None:
             return
@@ -941,8 +956,8 @@ class TRunner:
             notes_elm.text += "\n"+self._extract_notes(buf, pattern)
 
     def _extract_notes(self, buf, pattern):
-        # util func to split lines in buffer, search for pattern on each line
-        # then concatenate remaining content in output buffer
+        """util func to split lines in buffer, search for pattern on each line
+        then concatenate remaining content in output buffer"""
         out = "" 
         for line in buf.split("\n"):
             pos = line.find(pattern)
@@ -955,12 +970,12 @@ class TRunner:
     _MEASURE_ATTRIBUTES = ['name', 'value', 'unit', 'target', 'failure', 'power']
 
     def insert_measures(self, case, buf, pattern = "###[MEASURE]###", field_sep = ":"): 
-        # get measures
+        """ get measures """
         measures = self._extract_measures(buf, pattern, field_sep)
-        for m in measures:
+        for measure in measures:
             m_elm = etree.Element('measurement')
-            for k in m:
-                m_elm.attrib[k] = m[k]
+            for key in measure:
+                m_elm.attrib[key] = measure[key]
             case.append(m_elm)
          
     def _extract_measures(self, buf, pattern, field_sep): 
@@ -1021,7 +1036,6 @@ class TRunner:
                 for tcase in tset.getiterator('testcase'):
                     for case_result in case_results:
                         if tcase.get("id") == case_result['case_id']:
-                            #tc.set('result',t['expected'])
                             tcase.set('result','PASS')           
             parse_tree.write(set_result_xml)
             print "[ cases result saved to resultfile ]\n"
