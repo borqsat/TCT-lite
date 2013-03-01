@@ -35,12 +35,11 @@ import xml.etree.ElementTree as etree
 import ConfigParser
 from xml.dom import minidom
 from tempfile import mktemp
-from testkitlite.common.killall import killall
 from shutil import move
 from os import remove
 import re
-import subprocess
 import json
+
 
 JOIN = os.path.join
 DIRNAME = os.path.dirname
@@ -183,11 +182,11 @@ class TRunner:
                         with open(resultfile, 'w') as output:
                             tree = etree.ElementTree(element=suiteparent)
                             tree.write(output)
-                    except IOError, e:
+                    except IOError, error:
                         print "[ Error: create filtered result file: %s failed,\
-                            error: %s ]" % (resultfile, e)
-                except Exception, e:
-                    print e
+                            error: %s ]" % (resultfile, error)
+                except Exception, error:
+                    print error
                     return False
                 casefind = etree.parse(resultfile).getiterator('testcase')
                 if casefind:
@@ -269,7 +268,8 @@ class TRunner:
                 ok &= False
         return ok
 
-    def run_and_merge_resultfile(self, start_time, latest_dir):
+    def run_case(self, latest_dir):
+        """ run case """
         # run core auto cases
         self.core_auto_files.sort()
         for core_auto_file in self.core_auto_files:
@@ -350,18 +350,11 @@ class TRunner:
                     # create temporary parameter
                     for test_xml_set in test_xml_set_list:
                         print "\n[ run set: %s ]" % test_xml_set
-                        #init stub and get the session_id
-                        #from com_module import init_test
-                        #session_id = init_test(self.deviceid)  #will return session id
-                        #self.set_session_id(session id)              
-                        exe_sequence_tmp = []
-                        exe_sequence_tmp.append(webapi_total_file)
-                        testresult_dict_tmp = {}
-                        testresult_dict_item_tmp = []
-                        testresult_dict_item_tmp.append(test_xml_set)
-                        testresult_dict_tmp[webapi_total_file] = testresult_dict_item_tmp
-                        # start server with temporary parameter
-                        self.execute_external_test(testresult_dict_tmp, exe_sequence_tmp, test_xml_set)
+
+                        #init test here
+                        self.init_com_module()
+                        # prepare the test JSON
+                        self.execute_external_test(test_xml_set)
                         while True:
                             time.sleep(5)
                             #check the test status ,if the set finished,get the set_result,and finalize_test
@@ -398,6 +391,8 @@ class TRunner:
                 self.skip_all_manual = True
             self.execute(core_manual_file, core_manual_file)
             
+    def merge_resultfile(self, start_time, latest_dir):
+        """ merge_result_file """
         mergefile = mktemp(suffix='.xml', prefix='tests.', dir=latest_dir)
         mergefile = os.path.splitext(mergefile)[0]
         mergefile = os.path.splitext(mergefile)[0]
@@ -579,7 +574,7 @@ class TRunner:
         root.insert(0, environment)
         # add XSL support to testkit-lite
         DECLARATION = """<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="testresult.xsl"?>\n"""
+        <?xml-stylesheet type="text/xsl" href="testresult.xsl"?>\n"""
         try:
             with open(mergefile, 'w') as output:
                 output.write(DECLARATION)
@@ -595,6 +590,7 @@ class TRunner:
                 copyfile(mergefile, self.resultfile)
         except Exception, e:
             print "[ Error: fail to copy the result file to: %s, please check if you have created its parent directory, error: %s ]" % (self.resultfile, e)
+
 
     def get_device_info(self):
         device_info = {}
@@ -655,93 +651,69 @@ class TRunner:
         t = minidom.parseString(rawstr)
         open(resultfile, 'w+').write(t.toprettyxml(indent="  "))
 
-    def execute_external_test(self, testsuite, exe_sequence, resultfile):
+    def execute_external_test(self, resultfile):
         """Run external test"""
         if self.bdryrun:
             print "[ WRTLauncher mode does not support dryrun ]"
             return True
-        # start http server in here,
+        parameters = {}
+        xml_set_tmp = resultfile
+        # split set_xml by <case> get case parameters
+        print "[ split xml: %s by <case> ]" % xml_set_tmp
+        print "[ this might take some time, please wait ]"
         try:
-            parameters = {}
-            # kill existing http server
-            http_server_pid = "none"
-            fi, fo, fe = os.popen3("netstat -tpa | grep 8000")
-            for line in fo.readlines():
-                pattern = re.compile('([0-9]*)\/python')
-                match = pattern.search(line)
-                if match:
-                    http_server_pid = match.group(1)
-                    print "[ kill existing http server, pid: %s ]" % http_server_pid
-                    killall(http_server_pid)
-            if http_server_pid == "none":
-                print "[ start new http server ]"
-            else:
-                print "[ start new http server in 3 seconds ]"
-                time.sleep(3)
-            xml_set_tmp = resultfile
-            # split set_xml by <case> get case parameters
-            print "[ split xml: %s by <case> ]" % xml_set_tmp
-            print "[ this might take some time, please wait ]"
-            try:
-                ep = etree.parse(xml_set_tmp)
-                rt = ep.getroot()
-                case_tmp = []
-                for tsuite in rt.getiterator('suite'):
-                    suite_name = tsuite.get('name')
-                    for tset in tsuite.getiterator('set'):
-                        case_list = tset.getiterator('testcase')
-                        case_total = len(case_list)
-                        case_order = 1
-                        parameters.setdefault("casecount", case_total)
-                        for tc in case_list:
-                            case_detail_tmp = {}
-                            parameters.setdefault("exetype", tc.get('execution_type'))
-                            parameters.setdefault("type", tc.get('type'))
-                            case_detail_tmp.setdefault("case_id", tc.get('id'))
-                            case_detail_tmp.setdefault("purpose", tc.get('purpose'))
-                            case_detail_tmp.setdefault("order", case_order)
-                            testentry_elm = tc.find('description/test_script_entry')
-                            if testentry_elm is not None:
-                                test_script_entry = testentry_elm.text
-                                case_detail_tmp.setdefault("test_script_entry", test_script_entry)
-                            for this_step in tc.getiterator("step"):
-                                step_desc = "none"
-                                expected = "none"
-                                stepdesc_elm = this_step.find("step_desc")
-                                expected_elm = this_step.find("expected")
-                                if stepdesc_elm is not None:
-                                    step_desc = stepdesc_elm.text                                    
-                                if expected_elm is not None:
-                                    expected = expected_elm.text
-                                case_detail_tmp.setdefault("expected", expected)
-                                case_detail_tmp.setdefault("step_desc", step_desc)
-
-                            pre_condition = "none"
-                            post_condition = "none"
-                            precondition_elm = tc.find('description/pre_condition')
-                            postcondition_elm = tc.find('description/post_condition')
-                            if precondition_elm is not None:
-                                pre_condition = precondition_elm.text
-                            if postcondition_elm is not None:
-                                post_condition = postcondition_elm.text
-                            case_detail_tmp.setdefault("pre_condition", pre_condition)
-                            case_detail_tmp.setdefault("post_condition", post_condition)
-                            case_tmp.append(case_detail_tmp)
-                            case_order += 1
-
-                parameters.setdefault("cases", case_tmp)
-            except Exception, e:
-                print "[ Error: fail to prepare cases parameters, error: %s ]\n" % e
-                return False
-            parameters = json.dumps(parameters)
-            self.set_parameters = parameters
+            parse_tree = etree.parse(xml_set_tmp)
+            root_em = parse_tree.getroot()
+            case_tmp = []
+            for tset in root_em.getiterator('set'):
+                case_total = len(tset.getiterator('testcase'))
+                case_order = 1
+                parameters.setdefault("casecount", case_total)
+                for tcase in tset.getiterator('testcase'):
+                    case_detail_tmp = {}
+                    parameters.setdefault("exetype", tcase.get('execution_type'))
+                    parameters.setdefault("type", tcase.get('type'))
+                    case_detail_tmp.setdefault("case_id", tcase.get('id'))
+                    case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
+                    case_detail_tmp.setdefault("order", case_order)
+                    testentry_elm = tcase.find('description/test_script_entry')
+                    if testentry_elm is not None:
+                        test_script_entry = testentry_elm.text
+                        case_detail_tmp.setdefault("test_script_entry", test_script_entry)
+                    for this_step in tcase.getiterator("step"):
+                        step_desc = "none"
+                        expected = "none"
+                        stepdesc_elm = this_step.find("step_desc")
+                        expected_elm = this_step.find("expected")
+                        if stepdesc_elm is not None:
+                            step_desc = stepdesc_elm.text                                    
+                        if expected_elm is not None:
+                            expected = expected_elm.text
+                        case_detail_tmp.setdefault("expected", expected)
+                        case_detail_tmp.setdefault("step_desc", step_desc)
+                    pre_condition = "none"
+                    post_condition = "none"
+                    precondition_elm = tcase.find('description/pre_condition')
+                    postcondition_elm = tcase.find('description/post_condition')
+                    if precondition_elm is not None:
+                        pre_condition = precondition_elm.text
+                    if postcondition_elm is not None:
+                        post_condition = postcondition_elm.text
+                    case_detail_tmp.setdefault("pre_condition", pre_condition)
+                    case_detail_tmp.setdefault("post_condition", post_condition)
+                    case_tmp.append(case_detail_tmp)
+                    case_order += 1
+            parameters.setdefault("cases", case_tmp)
+            self.set_parameters = json.dumps(parameters)            
             #send set JSON Data to com_module
             #run_test(self.deviceid,self.set_parameters)
-        except Exception, e:
-            print "[ Error: fail to start http server, error: %s ]\n" % e
+        except Exception, error:
+            print "[ Error: fail to prepare cases parameters, error: %s ]\n" % error
+            return False
         return True
 
     def apply_filter(self, rt):
+        """ apply filter """
         def case_check(tc):
             rules = self.filter_rules
             for key in rules.iterkeys():
@@ -805,6 +777,9 @@ class TRunner:
                     else:
                         try:
                             #run auto core test here
+                            # if testentry_elm.get("timeout")
+                            #    case = testentry_elm.text
+                            #    time_out = str2number(testentry_elm.get("timeout"))
                             #
                             if return_code is not None:
                                 actual_result = str(return_code)
@@ -1015,6 +990,18 @@ class TRunner:
                 out.append(measure)
         return out
 
+    def init_com_module(self):
+        """
+            send init test to com_module
+            if webapi test,com_module will start httpserver
+            else com_module send the test case to devices 
+        """
+        #init stub and get the session_id
+        #from com_module import init_test
+        #session_id = init_test(self.deviceid)  #will return session id
+        #self.set_session_id(session id)
+        return True
+
     def write_set_result(self, testxmlfile, result):
         '''
             get the result JSON form com_module,
@@ -1061,5 +1048,6 @@ class TRunner:
         #    return False
         #if the status id end return True ,else return False
         return True
+
     
 

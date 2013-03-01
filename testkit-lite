@@ -460,7 +460,8 @@ Note: \n\
             except Exception, e:
                 print "[ Error: prepare_run test xml: %s from testkit-lite failed, error: %s ]\n" % (testxml, e)
     try:
-        runner.run_and_merge_resultfile(start_time, log_dir)
+        runner.run_case(log_dir)
+        runner.merge_resultfile(start_time, log_dir)
         # kill open windows
         print "[ clean up unfinished process ]"
         try:
