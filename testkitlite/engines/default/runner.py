@@ -168,29 +168,8 @@ class TRunner:
                 if not EXISTS(resultdir):
                     os.mkdir(resultdir)
                 print "[ analysis test xml file: %s ]" % resultfile
-                try:
-                    parse_tree = etree.parse(testxmlfile)
-                    suiteparent = parse_tree.getroot()
-                    no_test_definition = 1
-                    if parse_tree.getiterator('test_definition'):
-                        no_test_definition = 0
-                    if no_test_definition:
-                        suiteparent = etree.Element('test_definition')
-                        suiteparent.tail = "\n"
-                        for suite in parse_tree.getiterator('suite'):
-                            suite.tail = "\n"
-                            suiteparent.append(suite)
-                    self.apply_filter(suiteparent)
-                    try:
-                        with open(resultfile, 'w') as output:
-                            tree = etree.ElementTree(element=suiteparent)
-                            tree.write(output)
-                    except IOError, error:
-                        print "[ Error: create filtered result file: %s failed,\
-                            error: %s ]" % (resultfile, error)
-                except Exception, error:
-                    print error
-                    return False
+                self.__prepare_result_file(testxmlfile, resultfile)
+                
                 casefind = etree.parse(resultfile).getiterator('testcase')
                 if casefind:
                     test_file_name = "%s" % BASENAME(resultfile)
@@ -266,12 +245,37 @@ class TRunner:
                             self.core_manual_files.append(resultfile)
                     if execute_suite_one_way:
                         self.resultfiles.add(resultfile)
-            except Exception, error:
+            except IOError, error:
                 traceback.print_exc()
                 print error
                 ok_prepare &= False
         return ok_prepare
 
+    def __prepare_result_file(self, testxmlfile, resultfile):
+        """ write the test_xml content to resultfile"""
+        try:
+            parse_tree = etree.parse(testxmlfile)
+            suiteparent = parse_tree.getroot()
+            no_test_definition = 1
+            if parse_tree.getiterator('test_definition'):
+                no_test_definition = 0
+            if no_test_definition:
+                suiteparent = etree.Element('test_definition')
+                suiteparent.tail = "\n"
+                for suite in parse_tree.getiterator('suite'):
+                    suite.tail = "\n"
+                    suiteparent.append(suite)
+            self.apply_filter(suiteparent)
+            try:
+                with open(resultfile, 'w') as output:
+                    tree = etree.ElementTree(element=suiteparent)
+                    tree.write(output)
+            except IOError, error:
+                print "[ Error: create filtered result file: %s failed,\
+                    error: %s ]" % (resultfile, error)
+        except IOError, error:
+            print error
+            return False
     def run_case(self, latest_dir):
         """ run case """
         # run core auto cases
@@ -376,7 +380,7 @@ class TRunner:
                                     print "[ Error: fail to close webapi http server, error: %s ]" % error                  
                                 
                                 break
-                except Exception, error:
+                except IOError, error:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % error
                
         # run core manual cases
