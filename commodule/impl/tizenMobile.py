@@ -35,6 +35,13 @@ class sdbCommAsync(threading.Thread):
         self.cmd = cmd
         threading.Thread.__init__(self)
 
+    def communicate(self):
+        stdout = self.stdout
+        stderr = self.stderr
+        self.stdout = []
+        self.stderr = []
+        return stdout, stderr
+
     def run(self):
         proc = subprocess.Popen(self.cmd,
                                 shell=True,
@@ -54,7 +61,7 @@ class sdbCommAsync(threading.Thread):
 
 class sdbCommSync:
     def __init__(self, cmd=None):
-        self.stdout = ['test1','test2']
+        self.stdout = []
         self.stderr = []
         self.cmd = cmd
 
@@ -79,8 +86,9 @@ class tizenMobile:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
 
     def __init__(self):
-        print 'init tizenMobile'
-        pass
+        print 'init tizenMobile instance'
+        self.__hport = "8888"
+        self.__async_shell = None
 
     def __shell_command(self, cmd=None):
         result = []
@@ -95,8 +103,9 @@ class tizenMobile:
         cmd = "sdb forward %s:tcp %s:tcp" % (hport, dport)
         return self.__shell_command(cmd)
 
-    def __http_request(self, url, xtype="POST", data=None):
+    def __http_request(self, api, xtype="POST", data=None):
         result = None
+        url = "http://127.0.0.1:%s%s" % (self.__hport, api)
         if xtype == "POST":
             headers = {'content-type': 'application/json'}
             ret = requests.post(url, data=json.dumps(data), headers=headers)
@@ -128,4 +137,40 @@ class tizenMobile:
     def remove_package(self, deviceid, pkgid):
         cmd = "sdb -s %s shell rpm -e %s" % (deviceid, pkgid)
         ret =  self.__shell_command(cmd)
+        return ret
+
+    def init_test(self, deviceid, params):
+        if not "stub-entry" in params: 
+            stub_entry = "testkit-stub"
+        else:
+            stub_entry = params["stub_entry"]
+        if not "stub_server_port" in params:
+            stub_server_port = "8000"
+        else:
+            stub_server_port = params["stub_server_port"]
+        cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
+        self.__async_shell = sdbCommAsync(cmd, None)
+        ret = self.__set_forward_tcp(self.__hport, stub_server_port)
+        return 0
+
+    def run_test(self, sessionid, test_set):
+        data = test_set
+        ret = self.__http_request("/check_server_status", "POST", data)
+        return ret
+
+    def get_test_status(self, sessionid):
+        if sessionid is None: return []
+        data = {"sessionid": sessionid}
+        ret = self.__http_request("/check_server_status", "GET", data)
+        return ret
+
+    def get_test_result(self, sessionid):
+        if sessionid is None: return []
+        data = {"sessionid": sessionid}
+        ret = self.__http_request("/get_test_result", "GET", data)
+        return ret
+
+    def finalize_test(self, sessionid):
+        data = {"sessionid": sessionid}
+        ret = self.__http_request("/shut_down", "GET", data)
         return ret

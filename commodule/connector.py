@@ -70,7 +70,7 @@ class Connector:
     def run_test(self, sessionid, test_set=None):
         """send the test set data to remote test stub/container"""
         if not self.__impl is None:
-            return self.__impl.send_test_data(sessionid, test_set)
+            return self.__impl.run_test(sessionid, test_set)
         else:
             return None
 
