@@ -218,26 +218,9 @@ Note: \n\
     # create runner
     runner = TRunner()
     runner.set_pid_log(PID_FILE)
+    # apply all options 
+    runner.set_global_parameters(options)
 
-    # apply dryrun
-    if options.bdryrun:
-        runner.set_dryrun(options.bdryrun)
-
-    # apply non-active
-    if options.non_active:
-        runner.set_non_active(options.non_active)
-
-    # apply enable-memory-collection
-    if options.enable_memory_collection:
-        runner.set_enable_memory_collection(options.enable_memory_collection)
-
-    # apply user specify test result file
-    if options.resultfile:
-        runner.set_resultfile(options.resultfile)
-    # set device_id 
-    if options.device_serial:
-        print options.device_serial
-        runner.set_deviceid(options.device_serial)
     #check if there is a device_serial
     if not options.device_serial:
         print "[ Error: not specify a device_serial... ]\n"
@@ -248,14 +231,7 @@ Note: \n\
     for flt in COMMON_FILTERS:
         if eval('options.w%s' % flt):
             wfilters[flt] = eval('options.w%s' % flt)
-
-    if options.fullscreen:
-        runner.set_fullscreen(True)
-
     runner.add_filter_rules(**wfilters)
-
-    if options.exttest:
-        runner.set_external_test(options.exttest)
 
     if not options.testxml:
         print "[ Error: not specify a test xml... ]\n"

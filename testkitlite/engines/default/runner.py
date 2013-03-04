@@ -86,45 +86,40 @@ class TRunner:
         self.pid_log = None
         self.set_parameters = {}
 
+    def set_global_parameters(self, options):
+        "get all options "
+        # apply dryrun
+        if options.bdryrun:
+            self.bdryrun = bdryrun
+
+        #release memory when the free memory is less than 100M
+        if options.enable_memory_collection:
+            self.enable_memory_collection = options.enable_memory_collection
+
+        #Disable set the result of core manual cases from the console
+        if options.non_active:
+            self.non_active = options.non_active
+
+        # apply user specify test result file
+        if options.resultfile:
+            self.resultfile = options.resultfile
+
+        # set device_id 
+        if options.device_serial:
+            self.deviceid = options.device_serial
+
+        if options.fullscreen:
+            self.fullscreen = True
+        
+        # set the external test WRTLauncher
+        if options.exttest:
+            self.external_test = options.exttest
+
+
     def set_pid_log(self, pid_log):
-        """
-            get pid_log file
-        """
+        """ get pid_log file """
         self.pid_log = pid_log
 
-    def set_dryrun(self, bdryrun):
-        """ bdryrun mode"""
-        self.bdryrun = bdryrun
-
-    def set_non_active(self, non_active):
-        """
-            Disable set the result of core manual cases from the console
-        """
-        self.non_active = non_active
-
-    def set_enable_memory_collection(self, enable_memory_collection):
-        """
-            release memory when the free memory is less than 100M
-        """
-        self.enable_memory_collection = enable_memory_collection
-
-    def set_resultfile(self, resultfile):
-        """
-            if Specify output file for result xml,just set it 
-        """
-        self.resultfile = resultfile
-
-    def set_deviceid(self, device_serial):
-        """
-            set device_serial
-        """
-        self.deviceid = device_serial
-
-    def set_external_test(self, exttest):
-        """
-            set the external test WRTLauncher
-        """
-        self.external_test = exttest
 
     def add_filter_rules(self, **kargs):
         """
@@ -132,9 +127,6 @@ class TRunner:
         """
         self.filter_rules = kargs
 
-    def set_fullscreen(self, state):
-        """ fullscreen run"""
-        self.fullscreen = state
 
     def set_session_id(self, session_id):
         """
@@ -552,6 +544,8 @@ class TRunner:
             print "[ some results of core manual cases are N/A, please refer to the above result file ]"
         print "[ merge complete, write to the result file, this might take some time, please wait ]"
         # get useful info for xml
+        #import com_module as com_module
+        #device_info = com_module.get_device_info(self.deviceid)
         device_info = get_device_info()
         # add environment node
         environment = etree.Element('environment')
@@ -757,7 +751,7 @@ class TRunner:
 
             # sdx@kooltux.org: add notes to xml result
             insert_notes(case, stdout)
-            self.insert_measures(case, stdout)
+            self.__insert_measures(case, stdout)
 
             # handle manual core cases
             if case.get('execution_type') == 'manual':
@@ -865,16 +859,16 @@ class TRunner:
     # see xsd/test_definition.xsd: measurementType
     _MEASURE_ATTRIBUTES = ['name', 'value', 'unit', 'target', 'failure', 'power']
 
-    def insert_measures(self, case, buf, pattern = "###[MEASURE]###", field_sep = ":"): 
+    def __insert_measures(self, case, buf, pattern = "###[MEASURE]###", field_sep = ":"): 
         """ get measures """
-        measures = self._extract_measures(buf, pattern, field_sep)
+        measures = self.__extract_measures(buf, pattern, field_sep)
         for measure in measures:
             m_elm = etree.Element('measurement')
             for key in measure:
                 m_elm.attrib[key] = measure[key]
             case.append(m_elm)
          
-    def _extract_measures(self, buf, pattern, field_sep): 
+    def __extract_measures(self, buf, pattern, field_sep): 
         """ 
         This function extracts lines from <buf> containing the defined <pattern>.
         For each line containing the pattern, it extracts the string to the end of line
@@ -977,47 +971,6 @@ def get_version_info():
         print "[ Error: fail to parse version info, error: %s ]\n" % error
         return ""
 
-def get_device_info():
-    """ get devices information """
-    device_info = {}
-    resolution_str = "Empty resolution"
-    screen_size_str = "Empty screen_size"
-    device_model_str = "Empty device_model"
-    device_name_str = "Empty device_name"
-    os_version_str = ""
-    # get resolution and screen size
-    fin, fout, ferr = os.popen3("xrandr")
-    for line in fout.readlines():
-        pattern = re.compile('connected (\d+)x(\d+).* (\d+mm) x (\d+mm)')
-        match = pattern.search(line)
-        if match:
-            resolution_str = "%s x %s" % (match.group(1), match.group(2))
-            screen_size_str = "%s x %s" % (match.group(3), match.group(4))
-    # get architecture
-    fin, fout, ferr = os.popen3("uname -m")
-    device_model_str_tmp = fout.readline()
-    if len(device_model_str_tmp) > 1:
-        device_model_str = device_model_str_tmp[0:-1]
-    # get hostname
-    fin, fout, ferr = os.popen3("uname -n")
-    device_name_str_tmp = fout.readline()
-    if len(device_name_str_tmp) > 1:
-        device_name_str = device_name_str_tmp[0:-1]
-    # get os version
-    fin, fout, ferr = os.popen3("cat /etc/issue")
-    for line in fout.readlines():
-        if len(line) > 1:
-            os_version_str = "%s %s" % (os_version_str, line)
-    os_version_str = os_version_str[0:-1]
-    
-    device_info["resolution"] = resolution_str
-    device_info["screen_size"] = screen_size_str
-    device_info["device_model"] = device_model_str
-    device_info["device_name"] = device_name_str
-    device_info["os_version"] = os_version_str
-    
-    return device_info
-
 def replace_cdata(file_name):
     """ replace some character"""
     try:
@@ -1059,3 +1012,43 @@ def insert_notes(case, buf, pattern="###[NOTE]###"):
         notes_elm.text = extract_notes(buf, pattern)
     else:
         notes_elm.text += "\n"+extract_notes(buf, pattern)
+
+def get_device_info():
+        device_info = {}
+        resolution_str = "Empty resolution"
+        screen_size_str = "Empty screen_size"
+        device_model_str = "Empty device_model"
+        device_name_str = "Empty device_name"
+        os_version_str = ""
+        # get resolution and screen size
+        fi, fo, fe = os.popen3("xrandr")
+        for line in fo.readlines():
+            pattern = re.compile('connected (\d+)x(\d+).* (\d+mm) x (\d+mm)')
+            match = pattern.search(line)
+            if match:
+                resolution_str = "%s x %s" % (match.group(1), match.group(2))
+                screen_size_str = "%s x %s" % (match.group(3), match.group(4))
+        # get architecture
+        fi, fo, fe = os.popen3("uname -m")
+        device_model_str_tmp = fo.readline()
+        if len(device_model_str_tmp) > 1:
+            device_model_str = device_model_str_tmp[0:-1]
+        # get hostname
+        fi, fo, fe = os.popen3("uname -n")
+        device_name_str_tmp = fo.readline()
+        if len(device_name_str_tmp) > 1:
+            device_name_str = device_name_str_tmp[0:-1]
+        # get os version
+        fi, fo, fe = os.popen3("cat /etc/issue")
+        for line in fo.readlines():
+            if len(line) > 1:
+                os_version_str = "%s %s" % (os_version_str, line)
+        os_version_str = os_version_str[0:-1]
+        
+        device_info["resolution"] = resolution_str
+        device_info["screen_size"] = screen_size_str
+        device_info["device_model"] = device_model_str
+        device_info["device_name"] = device_name_str
+        device_info["os_version"] = os_version_str
+        
+        return device_info
