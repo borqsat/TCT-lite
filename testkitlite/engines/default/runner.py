@@ -360,17 +360,17 @@ class TRunner:
                         print "\n[ run set: %s ]" % test_xml_set
 
                         #init test here
-                        self.init_com_module()
+                        self.__init_com_module()
                         # prepare the test JSON
                         self.execute_external_test(test_xml_set)
                         while True:
                             time.sleep(5)
                             #check the test status ,if the set finished,get the set_result,and finalize_test
-                            if self.check_test_status():
+                            if self.__check_test_status():
                                 #from com_module import get_test_result
                                 #set_result = get_test_result(self.deviceid,self.session_id)
                                 #write_result to set_xml
-                                #self.write_set_result(test_xml_set,set_result)
+                                #self.__write_set_result(test_xml_set,set_result)
 
                                 # shut down server
                                 try:
@@ -473,7 +473,7 @@ class TRunner:
                                             if result_case.get('result') == "N/A":
                                                 self.testresult_dict["not_run"] += 1
                                             total_set.append(result_case)
-                                        except Exception, error:
+                                        except IOError, error:
                                             print "[ Error: fail to append %s, error: %s ]" % (result_case.get('id'), error)
             total_xml.write(totalfile)
             totals.add(totalfile)
@@ -526,7 +526,7 @@ class TRunner:
                                             if result_case.get('result') == "N/A":
                                                 self.testresult_dict["not_run"] += 1
                                             total_set.append(result_case)
-                                        except Exception, error:
+                                        except IOError, error:
                                             print "[ Error: fail to append %s, error: %s ]" % (result_case.get('id'), error)
             total_xml.write(totalfile)
             totals.add(totalfile)
@@ -552,7 +552,7 @@ class TRunner:
             print "[ some results of core manual cases are N/A, please refer to the above result file ]"
         print "[ merge complete, write to the result file, this might take some time, please wait ]"
         # get useful info for xml
-        device_info = self.get_device_info()
+        device_info = get_device_info()
         # add environment node
         environment = etree.Element('environment')
         environment.attrib['device_id'] = ""
@@ -563,7 +563,7 @@ class TRunner:
         environment.attrib['os_version'] = device_info["os_version"]
         environment.attrib['resolution'] = device_info["resolution"]
         environment.attrib['screen_size'] = device_info["screen_size"]
-        environment.attrib['cts_version'] = self.get_version_info()
+        environment.attrib['cts_version'] = get_version_info()
         other = etree.Element('other')
         other.text = ""
         environment.append(other)
@@ -591,79 +591,13 @@ class TRunner:
         except IOError, error:
             print "[ Error: merge result file failed, error: %s ]" % error
         # change &lt;![CDATA[]]&gt; to <![CDATA[]]>
-        self.replace_cdata(mergefile)
+        replace_cdata(mergefile)
         # copy result to -o option
         try:
             if self.resultfile:
                 copyfile(mergefile, self.resultfile)
-        except Exception, error:
+        except IOError, error:
             print "[ Error: fail to copy the result file to: %s, please check if you have created its parent directory, error: %s ]" % (self.resultfile, error)
-
-
-    def get_device_info(self):
-        """ get devices information """
-        device_info = {}
-        resolution_str = "Empty resolution"
-        screen_size_str = "Empty screen_size"
-        device_model_str = "Empty device_model"
-        device_name_str = "Empty device_name"
-        os_version_str = ""
-        # get resolution and screen size
-        fin, fout, ferr = os.popen3("xrandr")
-        for line in fout.readlines():
-            pattern = re.compile('connected (\d+)x(\d+).* (\d+mm) x (\d+mm)')
-            match = pattern.search(line)
-            if match:
-                resolution_str = "%s x %s" % (match.group(1), match.group(2))
-                screen_size_str = "%s x %s" % (match.group(3), match.group(4))
-        # get architecture
-        fin, fout, ferr = os.popen3("uname -m")
-        device_model_str_tmp = fout.readline()
-        if len(device_model_str_tmp) > 1:
-            device_model_str = device_model_str_tmp[0:-1]
-        # get hostname
-        fin, fout, ferr = os.popen3("uname -n")
-        device_name_str_tmp = fout.readline()
-        if len(device_name_str_tmp) > 1:
-            device_name_str = device_name_str_tmp[0:-1]
-        # get os version
-        fin, fout, ferr = os.popen3("cat /etc/issue")
-        for line in fout.readlines():
-            if len(line) > 1:
-                os_version_str = "%s %s" % (os_version_str, line)
-        os_version_str = os_version_str[0:-1]
-        
-        device_info["resolution"] = resolution_str
-        device_info["screen_size"] = screen_size_str
-        device_info["device_model"] = device_model_str
-        device_info["device_name"] = device_name_str
-        device_info["os_version"] = os_version_str
-        
-        return device_info
-
-    def get_version_info(self):
-        """
-            get testkit tool version ,just read the version in VERSION file
-            VERSION file must put in /opt/testkit/lite/
-        """
-        try:
-            config = ConfigParser.ConfigParser()
-            if platform.system() == "Linux":
-                config.read('/opt/testkit/lite/VERSION')
-            else:
-                version_file = os.path.join(sys.path[0], 'VERSION')
-                config.read(version_file)
-            version = config.get('public_version', 'version')
-            return version
-        except Exception, error:
-            print "[ Error: fail to parse version info, error: %s ]\n" % error
-            return ""
-
-    def pretty_print(self, parse_tree, resultfile):
-        """xml pretty prepared"""
-        rawstr = etree.tostring(parse_tree.getroot(), 'utf-8')
-        parse_xml = minidom.parseString(rawstr)
-        open(resultfile, 'w+').write(parse_xml.toprettyxml(indent="  "))
 
     def execute_external_test(self, resultfile):
         """Run external test"""
@@ -721,35 +655,13 @@ class TRunner:
             self.set_parameters = json.dumps(parameters)            
             #send set JSON Data to com_module
             #run_test(self.deviceid,self.set_parameters)
-        except Exception, error:
+        except IOError, error:
             print "[ Error: fail to prepare cases parameters, error: %s ]\n" % error
             return False
         return True
 
     def apply_filter(self, root_em):
-        """ apply filter """
-        def case_check(tcase):
-            """filter cases"""
-            rules = self.filter_rules
-            for key in rules.iterkeys():
-                if key in ["suite", "set"]:
-                    continue
-                # Check attribute
-                t_val = tcase.get(key)
-                if t_val:
-                    if not t_val in rules[key]:
-                        return False
-                else:
-                    # Check sub-element
-                    items = tcase.getiterator(key)
-                    if items: 
-                        t_val = []
-                        for i in items:
-                            t_val.append(i.text)
-                        if len(set(rules[key]) & set(t_val)) == 0:
-                            return False
-            return True
-        
+        """ apply filter """     
         rules = self.filter_rules
         for tsuite in root_em.getiterator('suite'):
             if rules.get('suite'):
@@ -762,8 +674,30 @@ class TRunner:
                        
         for tset in root_em.getiterator('set'):
             for tcase in tset.getiterator('testcase'):
-                if not case_check(tcase):
+                if not self.__apply_filter_case_check(tcase):
                     tset.remove(tcase)
+
+    def __apply_filter_case_check(self, tcase):
+        """filter cases"""
+        rules = self.filter_rules
+        for key in rules.iterkeys():
+            if key in ["suite", "set"]:
+                continue
+            # Check attribute
+            t_val = tcase.get(key)
+            if t_val:
+                if not t_val in rules[key]:
+                    return False
+            else:
+                # Check sub-element
+                items = tcase.getiterator(key)
+                if items: 
+                    t_val = []
+                    for i in items:
+                        t_val.append(i.text)
+                    if len(set(rules[key]) & set(t_val)) == 0:
+                        return False
+        return True
 
     def execute(self, testxmlfile, resultfile):
         """core test cases execute"""
@@ -822,7 +756,7 @@ class TRunner:
             stderr_elm.text = stderr
 
             # sdx@kooltux.org: add notes to xml result
-            self.insert_notes(case, stdout)
+            insert_notes(case, stdout)
             self.insert_measures(case, stdout)
 
             # handle manual core cases
@@ -922,52 +856,10 @@ class TRunner:
                         exec_testcase(tcase, total_number, current_number)
             parse_tree.write(resultfile)
             return True
-        except Exception, error:
+        except IOError, error:
             print "[ Error: fail to run core test case, error: %s ]\n" % error
             traceback.print_exc()
             return False
-
-    def replace_cdata(self, file_name):
-        """ replace some character"""
-        try:
-            abs_path = mktemp()
-            new_file = open(abs_path, 'w')
-            old_file = open(file_name)
-            for line in old_file:
-                line_temp = line.replace('&lt;![CDATA', '<![CDATA')
-                new_file.write(line_temp.replace(']]&gt;', ']]>'))
-            new_file.close()
-            old_file.close()
-            remove(file_name)
-            move(abs_path, file_name)
-        except Exception, error:
-            print "[ Error: fail to replace cdata in the result file, error: %s ]\n" % error
-
-    # sdx@kooltux.org: parse notes in buffer and insert them in XML result
-    def insert_notes(self, case, buf, pattern="###[NOTE]###"):
-        """ insert notes"""
-        desc = case.find('description')
-        if desc is None:
-            return
-
-        notes_elm = desc.find('notes')
-        if notes_elm is None:
-            notes_elm = etree.Element('notes')
-            desc.append(notes_elm)
-        if notes_elm.text is None:
-            notes_elm.text = self._extract_notes(buf, pattern)
-        else:
-            notes_elm.text += "\n"+self._extract_notes(buf, pattern)
-
-    def _extract_notes(self, buf, pattern):
-        """util func to split lines in buffer, search for pattern on each line
-        then concatenate remaining content in output buffer"""
-        out = "" 
-        for line in buf.split("\n"):
-            pos = line.find(pattern)
-            if pos >= 0:
-                out += line[pos + len(pattern):] + "\n"
-        return out
 
     # sdx@kooltux.org: parse measures returned by test script and insert in XML result
     # see xsd/test_definition.xsd: measurementType
@@ -1009,7 +901,7 @@ class TRunner:
                 out.append(measure)
         return out
 
-    def init_com_module(self):
+    def __init_com_module(self):
         """
             send init test to com_module
             if webapi test,com_module will start httpserver
@@ -1021,7 +913,7 @@ class TRunner:
         #self.set_session_id(session id)
         return True
 
-    def write_set_result(self, testxmlfile, result):
+    def __write_set_result(self, testxmlfile, result):
         '''
             get the result JSON form com_module,
             write them to orignal testxmlfile
@@ -1043,10 +935,10 @@ class TRunner:
                             tcase.set('result','PASS')           
             parse_tree.write(set_result_xml)
             print "[ cases result saved to resultfile ]\n"
-        except Exception, error:
+        except IOError, error:
             print "[ Error: fail to write cases result, error: %s ]\n" % error
 
-    def check_test_status(self):
+    def __check_test_status(self):
         '''
             get_test_status from com_module
             check the status
@@ -1067,5 +959,103 @@ class TRunner:
         #if the status id end return True ,else return False
         return True
 
-    
+def get_version_info():
+    """
+        get testkit tool version ,just read the version in VERSION file
+        VERSION file must put in /opt/testkit/lite/
+    """
+    try:
+        config = ConfigParser.ConfigParser()
+        if platform.system() == "Linux":
+            config.read('/opt/testkit/lite/VERSION')
+        else:
+            version_file = os.path.join(sys.path[0], 'VERSION')
+            config.read(version_file)
+        version = config.get('public_version', 'version')
+        return version
+    except KeyError, error:
+        print "[ Error: fail to parse version info, error: %s ]\n" % error
+        return ""
 
+def get_device_info():
+    """ get devices information """
+    device_info = {}
+    resolution_str = "Empty resolution"
+    screen_size_str = "Empty screen_size"
+    device_model_str = "Empty device_model"
+    device_name_str = "Empty device_name"
+    os_version_str = ""
+    # get resolution and screen size
+    fin, fout, ferr = os.popen3("xrandr")
+    for line in fout.readlines():
+        pattern = re.compile('connected (\d+)x(\d+).* (\d+mm) x (\d+mm)')
+        match = pattern.search(line)
+        if match:
+            resolution_str = "%s x %s" % (match.group(1), match.group(2))
+            screen_size_str = "%s x %s" % (match.group(3), match.group(4))
+    # get architecture
+    fin, fout, ferr = os.popen3("uname -m")
+    device_model_str_tmp = fout.readline()
+    if len(device_model_str_tmp) > 1:
+        device_model_str = device_model_str_tmp[0:-1]
+    # get hostname
+    fin, fout, ferr = os.popen3("uname -n")
+    device_name_str_tmp = fout.readline()
+    if len(device_name_str_tmp) > 1:
+        device_name_str = device_name_str_tmp[0:-1]
+    # get os version
+    fin, fout, ferr = os.popen3("cat /etc/issue")
+    for line in fout.readlines():
+        if len(line) > 1:
+            os_version_str = "%s %s" % (os_version_str, line)
+    os_version_str = os_version_str[0:-1]
+    
+    device_info["resolution"] = resolution_str
+    device_info["screen_size"] = screen_size_str
+    device_info["device_model"] = device_model_str
+    device_info["device_name"] = device_name_str
+    device_info["os_version"] = os_version_str
+    
+    return device_info
+
+def replace_cdata(file_name):
+    """ replace some character"""
+    try:
+        abs_path = mktemp()
+        new_file = open(abs_path, 'w')
+        old_file = open(file_name)
+        for line in old_file:
+            line_temp = line.replace('&lt;![CDATA', '<![CDATA')
+            new_file.write(line_temp.replace(']]&gt;', ']]>'))
+        new_file.close()
+        old_file.close()
+        remove(file_name)
+        move(abs_path, file_name)
+    except IOError, error:
+        print "[ Error: fail to replace cdata in the result file, error: %s ]\n" % error
+
+def extract_notes(buf, pattern):
+    """util func to split lines in buffer, search for pattern on each line
+    then concatenate remaining content in output buffer"""
+    out = "" 
+    for line in buf.split("\n"):
+        pos = line.find(pattern)
+        if pos >= 0:
+            out += line[pos + len(pattern):] + "\n"
+    return out
+
+# sdx@kooltux.org: parse notes in buffer and insert them in XML result
+def insert_notes(case, buf, pattern="###[NOTE]###"):
+    """ insert notes"""
+    desc = case.find('description')
+    if desc is None:
+        return
+
+    notes_elm = desc.find('notes')
+    if notes_elm is None:
+        notes_elm = etree.Element('notes')
+        desc.append(notes_elm)
+    if notes_elm.text is None:
+        notes_elm.text = extract_notes(buf, pattern)
+    else:
+        notes_elm.text += "\n"+extract_notes(buf, pattern)
