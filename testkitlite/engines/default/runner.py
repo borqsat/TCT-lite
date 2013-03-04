@@ -90,7 +90,7 @@ class TRunner:
         "get all options "
         # apply dryrun
         if options.bdryrun:
-            self.bdryrun = bdryrun
+            self.bdryrun = options.bdryrun
 
         #release memory when the free memory is less than 100M
         if options.enable_memory_collection:
