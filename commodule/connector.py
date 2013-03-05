@@ -24,85 +24,54 @@ import sys
 class Connector:
     """Communication module for automatic test"""
     def __init__(self, config):
-        self.__impl = None
-        if 'tizenMobile' in config:
+        self.__handler = None
+        if "testremote" in config:
             try:
-                from impl.tizenMobile import tizenMobile
-                self.__impl = tizenMobile()
+                exec "from impl.%s import testremote" % config["testremote"]
+                self.__handler = testremote
             except Exception, e:
                 print e
 
-    def get_device_ids(self):
-        """list the ids of device available"""
-        if not self.__impl is None:
-            return self.__impl.get_device_ids()
-        else:
-            return None
-
-    def get_device_info(self, deviceid):
-        """get device information by device id"""
-        if not self.__impl is None:
-            return self.__impl.get_device_info(deviceid)
-        else:
-            return None
-
-    def install_package(self, deviceid, pkgpath=None):
-        """install a package to remote test terminal"""
-        if not self.__impl is None:
-            return self.__impl.install_package(deviceid, pkgpath)
-        else:
-            return None
-
-    def remove_package(self, deviceid, pkgname):
-        """remove a package from remote test terminal"""
-        if not self.__impl is None:
-            return self.__impl.get_device_ids(deviceid, pkgname)
-        else:
-            return None
-
-    def init_test(self, deviceid, params):
-        """Init the test environment"""
-        if not self.__impl is None:
-            return self.__impl.get_device_ids(deviceid, params)
-        else:
-            return None
-
-    def run_test(self, sessionid, test_set=None):
-        """send the test set data to remote test stub/container"""
-        if not self.__impl is None:
-            return self.__impl.run_test(sessionid, test_set)
-        else:
-            return None
-
-    def get_test_status(self, sessionid):
-        """get test status from remote test terminal"""
-        if not self.__impl is None:
-            return self.__impl.get_test_status(sessionid)
-        else:
-            return None
-
-    def get_test_result(self, sessionid):
-        """get test result from remote test terminal"""
-        if not self.__impl is None:
-            return self.__impl.get_test_status(sessionid)
-        else:
-            return None
-
-    def finalize_test(self, sessionid):
-        """send the test set data to remote test stub"""
-        if not self.__impl is None:
-            return self.__impl.finalize_test(sessionid)
-        else:
-            return None
+    def get_connector(self):
+        """list the handler instance"""
+        return self.__handler
 
 def main(argvs):
     """commanline entry for invoke Connector apis"""
     if len(argvs) < 2:
-        print "No parameter provided."
-    conn = Connector({'tizenMobile':'yes'})
-    ret = conn.get_device_ids()
+        print "No command-line parameters provided."
+        return
+
+    ret = None
+    subcmd = argvs[1]
+    conn = Connector({"testremote":"tizenMobile"}).get_connector()
+    if subcmd == "get_device_ids":
+        ret = conn.get_device_ids()
+    elif subcmd == "get_device_info":
+        ret = conn.get_device_info("emulator-26100") 
+    elif subcmd == "install_package":
+        ret = conn.install_package("emulator-26100", \
+                                   "/home/test_packages/test.rpm")
+    elif subcmd == "get_installed_package":
+        ret = conn.get_installed_package("emulator-26100")
+    elif subcmd == "remove_package":
+        ret = conn.remove_package("emulator-26100", \
+              "cts-webapi-tizen-contact-tests-1.1.9-7.1.i586")
+    elif subcmd == "init_test":
+        ret = conn.init_test()
+    elif subcmd == "run_test":
+        ret = conn.run_test()
+    elif subcmd == "get_test_status":
+        ret = conn.get_test_status()
+    elif subcmd == "get_test_result":
+        ret = conn.get_test_result()
+    elif subcmd == "finalize_test":
+        ret = conn.finalize_test()
+    else: 
+        print "unknown sub command name \"%s\"" % subcmd
+
     for l in ret:
-        print 'id = %s' % l
+        print "%s" % l,
 
 if __name__ == '__main__':
     main(sys.argv)

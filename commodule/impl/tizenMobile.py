@@ -20,157 +20,295 @@
 #              Liu ChengTao <liux.chengtao@intel.com>
 
 import os
-import sys
-import time
+import string
 import threading
 import subprocess
 import requests
 import json
+import re
 
-class sdbCommAsync(threading.Thread):
-    def __init__(self, cmd=None, trigger=None):
+
+def http_request(self, url, rtype="POST", data=None):
+    result = None
+    if rtype == "POST":
+        headers = {'content-type': 'application/json'}
+        ret = requests.post(url, data=json.dumps(data), headers=headers)
+        if ret: 
+            result = ret.json()
+    elif rtype == "GET":
+        ret = requests.get(url, params=data)
+        if ret: 
+            result = ret.json()
+    return result
+
+def shell_command(cmdline):
+    """sdb communication for quick return in sync mode"""
+    proc = subprocess.Popen(cmdline,
+                            shell=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    while True:
+        if not proc.poll is None:
+            break
+    stdout = proc.stdout.readlines()
+    return stdout
+
+class SdbCommThread(threading.Thread):
+    """sdb communication for serve_forever app in async mode"""
+    def __init__(self, cmd=None, endflag=None):
         self.stdout = []
         self.stderr = []
-        self.trigger = trigger
-        self.cmd = cmd
+        self.cmdline = cmd
+        self.endflag = endflag
         threading.Thread.__init__(self)
 
-    def communicate(self):
+    def get_ouput(self):
+        """get stdout for sdb shell command"""
         stdout = self.stdout
-        stderr = self.stderr
         self.stdout = []
-        self.stderr = []
-        return stdout, stderr
+        return stdout
 
     def run(self):
-        proc = subprocess.Popen(self.cmd,
+        proc = subprocess.Popen(self.cmdline,
                                 shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         while True:
-            outLine = proc.stdout.readline().rstrip()
-            if outLine:
-                self.stdout.append(outLine)
+            outlines = proc.stdout.readlines()
+            errlines = proc.stderr.readlines()
+            self.stdout.extend(outlines)
+            self.stderr.extend(errlines)
 
-            errLine = proc.stderr.readline().rstrip()
-            if errLine:
-                self.stderr.append(errLine)
+            break_flag = False
+            for line in outlines:
+                if string.find(line, self.endflag) != -1:
+                    break_flag = True
+                    break
 
-            if not proc.poll is None:
+            if (not proc.poll is None) or break_flag:
                 break
 
-class sdbCommSync:
-    def __init__(self, cmd=None):
-        self.stdout = []
-        self.stderr = []
-        self.cmd = cmd
-
-    def communicate(self):
-        result = ""
-        print '%s' % self.cmd
-        proc = subprocess.Popen(self.cmd,
-                                shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        while True:
-            outLine = proc.stdout.readline().rstrip()
-            if outLine:
-                self.stdout.append(outLine)
-
-            errLine = proc.stderr.readline().rstrip()
-            if not proc.poll is None:
-                break
-        return self.stdout
-
-class tizenMobile:
+class TizenMobile:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
 
     def __init__(self):
-        print 'init tizenMobile instance'
-        self.__hport = "8888"
-        self.__async_shell = None
-
-    def __shell_command(self, cmd=None):
-        result = []
-        if not cmd is None:
-            proc = sdbCommSync(cmd)
-            result = proc.communicate()
-        return result
+        self.__test_listen_port = "8080"
+        self.__test_async_shell = None
+        self.__test_set_block = 100
+        self.__test_set_casecount = 0
 
     def __set_forward_tcp(self, hport=None, dport=None):
-        if hport is None: return None
-        if dport is None: return None
+        """forward request a host port to a device-side port"""
+        if hport is None: 
+            return None
+        if dport is None: 
+            return None
         cmd = "sdb forward %s:tcp %s:tcp" % (hport, dport)
-        return self.__shell_command(cmd)
-
-    def __http_request(self, api, xtype="POST", data=None):
-        result = None
-        url = "http://127.0.0.1:%s%s" % (self.__hport, api)
-        if xtype == "POST":
-            headers = {'content-type': 'application/json'}
-            ret = requests.post(url, data=json.dumps(data), headers=headers)
-            result = ret.json()
-        elif xtype == "GET":
-            ret = requests.get(url, params=data)
-            result = ret.json()
+        result = shell_command(cmd)
         return result
 
+    def __get_url(self, api):
+        url = "http://127.0.0.1:%s%s" % (self.__test_listen_port, api)
+        return url
+
     def get_device_ids(self):
-        cmd = "sdb devices"
-        ret = self.__shell_command(cmd)
-        return ret
+        """get tizen deivce list of ids"""
+        result = []
+        ret = shell_command("sdb devices")
+        for line in ret:
+            if str.find(line, "\tdevice\t") != -1: 
+                result.append(line.split("\t")[0])
+        return result
 
     def get_device_info(self, deviceid=None):
-        cmd = "sdb -s %s shell rpm -qa | grep cts" % deviceid
-        ret =  self.__shell_command(cmd)
-        return ret
+        """get tizen deivce inforamtion"""
+        device_info = {}
+        resolution_str = "Empty resolution"
+        screen_size_str = "Empty screen_size"
+        device_model_str = "Empty device_model"
+        device_name_str = "Empty device_name"
+        os_version_str = ""
+
+        # get resolution and screen size
+        ret = shell_command("sdb -s %s shell xrandr" % deviceid)
+        pattern = re.compile("connected (\d+)x(\d+).* (\d+mm) x (\d+mm)")
+        for line in ret:
+            match = pattern.search(line)
+            if match:
+                resolution_str = "%s x %s" % (match.group(1), match.group(2))
+                screen_size_str = "%s x %s" % (match.group(3), match.group(4))
+        # get architecture
+        ret = shell_command("sdb -s %s shell uname -m" % deviceid)
+        if len(ret) > 1:
+            device_model_str = ret[0]
+        # get hostname
+        ret = shell_command("sdb -s %s shell uname -m" % deviceid)
+        if len(ret) > 1:
+            device_name_str = ret[0]
+        # get os version
+        ret = shell_command("sdb -s %s shell cat /etc/issue" % deviceid)
+        for line in ret:
+            if len(line) > 1:os_version_str = "%s %s" % (os_version_str, line)
+        os_version_str = os_version_str[0:-1]
+        
+        device_info["resolution"] = resolution_str
+        device_info["screen_size"] = screen_size_str
+        device_info["device_model"] = device_model_str
+        device_info["device_name"] = device_name_str
+        device_info["os_version"] = os_version_str
+
+        return device_info
 
     def install_package(self, deviceid, pkgpath):
+        """install a package on tizen device: push package and install with shell command"""
         filename = os.path.split(pkgpath)[1]
         devpath = "/tmp/%s" % filename
         cmd = "sdb -s %s push %s %s" % (deviceid, pkgpath, devpath)
-        ret =  self.__shell_command(cmd)
+        ret =  shell_command(cmd)
         cmd = "sdb shell rpm -ivh %s" % devpath
-        ret =  self.__shell_command(cmd)
+        ret =  shell_command(cmd)
+        return ret
+
+    def get_installed_package(self, deviceid):
+        """get list of installed package from device"""
+        cmd = "sdb -s %s shell rpm -qa | grep cts" % (deviceid)
+        ret =  shell_command(cmd)
         return ret
 
     def remove_package(self, deviceid, pkgid):
+        """remove a installed package from device"""
         cmd = "sdb -s %s shell rpm -e %s" % (deviceid, pkgid)
-        ret =  self.__shell_command(cmd)
+        ret =  shell_command(cmd)
         return ret
 
     def init_test(self, deviceid, params):
-        if not "stub-entry" in params: 
+        """init the test runtime, mainly process the star up of test stub"""
+        if not "stub-entry" in params:
             stub_entry = "testkit-stub"
         else:
-            stub_entry = params["stub_entry"]
-        if not "stub_server_port" in params:
-            stub_server_port = "8000"
-        else:
-            stub_server_port = params["stub_server_port"]
+            stub_entry = params["stub-entry"]
+
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
-        self.__async_shell = sdbCommAsync(cmd, None)
-        ret = self.__set_forward_tcp(self.__hport, stub_server_port)
-        return 0
+        self.__test_async_shell = SdbCommThread(cmd, None)
+        ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
+        result = False
+        interval = 30
+        timecnt = 0
+        while True:
+            if timecnt > 3000: break
+            ret = http_request(self.__get_url("/check_server"), "GET", {})
+            #check server is ready
+            if ret is None:
+                timecnt += interval
+            else:
+                result = True
+                break
+        return result
 
     def run_test(self, sessionid, test_set):
+        """process the execution of a test set"""
+        if sessionid is None: 
+            return False
+        if not "casecount" in test_set : 
+            return False
         data = test_set
-        ret = self.__http_request("/check_server_status", "POST", data)
-        return ret
+        casecount = int(data["casecount"])
+        cases = data["cases"]
+
+        self.__test_set_casecount = casecount
+        if casecount % self.__test_set_block == 0:
+            blknum = casecount / self.__test_set_block
+        else:
+            blknum = casecount / self.__test_set_block + 1
+
+        idx = 1
+        self.test_set_blocks = []
+        self.__test_set_counter = 1
+        while idx <= blknum:
+            block_data = {}
+            block_data["totalBlk"] = str(blknum)
+            block_data["currentBlk"] = str(idx)
+            block_data["casecount"] = data["casecount"]
+            block_data["exetype"] = data["exetype"] 
+            block_data["type"] = data["type"]
+            start = (idx - 1) * self.__test_set_block
+            if idx == blknum: 
+                end = casecount
+            else: 
+                end = idx * self.__test_set_block
+            block_data["cases"] = cases[start:end]
+            self.test_set_blocks.append(block_data)
+            idx += 1
+
+        #for data in self.test_set_blocks:
+        #    ret = http_request(self.__get_url("/init_test"), "POST", data)
+        #if ret: result = True
+        #return result
+        return True
 
     def get_test_status(self, sessionid):
-        if sessionid is None: return []
+        """"""
+        result = {}
+        if sessionid is None: 
+            return result
         data = {"sessionid": sessionid}
-        ret = self.__http_request("/check_server_status", "GET", data)
-        return ret
+        ret = http_request(self.__get_url("/check_server_status"), "GET", data)
+        if ret is None: return result
+        finished = ret["finished"]
+        result["finished"] = ret["finished"]
+        if finished == "0":#running status
+            ret = self.__test_async_shell.get_ouput()
+            if ret:
+                result["msg"] = ret
+            else:
+                result["msg"] = ""
+
+        #total = str(self.__test_set_casecount)
+        #current = str(self.__test_set_counter)
+        #if self.__test_set_counter  != self.__test_set_casecount:
+        #    if self.__test_set_counter % 4 == 0: caseresult = "FAIL"
+        #    else: caseresult = "PASS"
+        #    result = {"finished":"0", "progress":{"total":total, "current":current,"last_test_result":caseresult}}  
+        #else:
+        #    result = {"finished":"1"}
+
+        #self.__test_set_counter += 1
+        return result      
 
     def get_test_result(self, sessionid):
-        if sessionid is None: return []
+        result = {}
+        if sessionid is None: 
+            return result
         data = {"sessionid": sessionid}
-        ret = self.__http_request("/get_test_result", "GET", data)
-        return ret
+        result = http_request(self.__get_url("/get_test_result"), "GET", data)
+        
+        # result["cases"] = []
+        # count = 0
+        # for data in self.test_set_blocks:
+        #     result["casecount"] = data["casecount"]
+        #     cases = data["cases"]
+        #     for item in cases:
+        #         count += 1
+        #         if count % 4 == 0:
+        #             item["result"] = "FAIL"
+        #             item["stdout"] = "the function catch exception in source code xxx line"
+        #             item["start_time"] = "2013-03-05 11:11:11"
+        #             item["end_time"] = "2013-03-05 11:11:11"
+        #         else:
+        #             item["result"] = "PASS"
+        #             item["stdout"] = "N/A"
+        #             item["start_time"] = "2013-03-05 11:11:11"
+        #             item["end_time"] = "2013-03-05 11:11:11"
+        #         result["cases"].append(item)
+        return result
 
     def finalize_test(self, sessionid):
+        if sessionid is None: return False
         data = {"sessionid": sessionid}
-        ret = self.__http_request("/shut_down", "GET", data)
-        return ret
+        ret = http_request(self.__get_url("/shut_down_server"), "GET", data)
+        if not ret is None:
+            return True
+        else:
+            return False
+
+testremote = TizenMobile()
