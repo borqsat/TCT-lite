@@ -41,6 +41,9 @@ from os import remove
 import re
 import json
 
+sys.path.append("../../")
+from commodule.connector import Connector
+
 
 JOIN = os.path.join
 DIRNAME = os.path.dirname
@@ -83,6 +86,7 @@ class TRunner:
         self.session_id = None
         self.pid_log = None
         self.set_parameters = {}
+        self.connector = Connector({"testRemote":"tizenMobile"}).get_connector()
 
     def set_global_parameters(self, options):
         "get all options "
@@ -246,7 +250,6 @@ class TRunner:
         """ run case """
         # run core auto cases
         self.__run_core_auto()
-        
         # run webAPI cases
         list_auto = []
         list_manual = []
@@ -320,20 +323,18 @@ class TRunner:
                         self.__prepare_external_test_json(test_xml_set)
 
                         #send set JSON Data to com_module
-                        #run_test(self.deviceid,self.set_parameters)
+                        self.connector.run_test(self.session_id, self.set_parameters)
                         while True:
-                            time.sleep(5)
+                            time.sleep(1)
                             #check the test status ,if the set finished,get the set_result,and finalize_test
                             if self.__check_test_status():
-                                #from com_module import get_test_result
-                                #set_result = get_test_result(self.deviceid,self.session_id)
+                                set_result = self.connector.get_test_result(self.session_id)
                                 #write_result to set_xml
-                                #self.__write_set_result(test_xml_set,set_result)
-
+                                self.__write_set_result(test_xml_set,set_result)
                                 # shut down server
                                 try:
-                                    print 'show down server'
-                                    #finalize_test(self.deviceid)
+                                    print '[ show down server ]'
+                                    self.connector.finalize_test(self.session_id)
                                 except Exception, error:
                                     print "[ Error: fail to close webapi http server, error: %s ]" % error                  
                                 
@@ -530,9 +531,8 @@ class TRunner:
             print "[ some results of core manual cases are N/A, please refer to the above result file ]"
         print "[ merge complete, write to the result file, this might take some time, please wait ]"
         # get useful info for xml
-        #import com_module as com_module
-        #device_info = com_module.get_device_info(self.deviceid)
-        device_info = get_device_info()
+
+        device_info = self.connector.get_device_info(self.deviceid)
         # add environment node
         environment = etree.Element('environment')
         environment.attrib['device_id'] = ""
@@ -596,14 +596,14 @@ class TRunner:
             for tset in root_em.getiterator('set'):
                 case_total = len(tset.getiterator('testcase'))
                 case_order = 1
-                parameters.setdefault("casecount", case_total)
+                parameters.setdefault("casecount", str(case_total))
                 for tcase in tset.getiterator('testcase'):
                     case_detail_tmp = {}
                     parameters.setdefault("exetype", tcase.get('execution_type'))
                     parameters.setdefault("type", tcase.get('type'))
                     case_detail_tmp.setdefault("case_id", tcase.get('id'))
                     case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
-                    case_detail_tmp.setdefault("order", case_order)
+                    case_detail_tmp.setdefault("order", str(case_order))
                     testentry_elm = tcase.find('description/test_script_entry')
                     if testentry_elm is not None:
                         test_script_entry = testentry_elm.text
@@ -632,7 +632,7 @@ class TRunner:
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
-            self.set_parameters = json.dumps(parameters)
+            self.set_parameters = parameters
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, error: %s ]\n" % error
             return False
@@ -888,9 +888,8 @@ class TRunner:
         starup_parameters = self.__prepare_starup_parameters(testxml)
         try:            
             #init stub and get the session_id
-            #from com_module import init_test
-            #session_id = init_test(self.deviceid, starup_parameters)  #will return session id
-            #self.set_session_id(session id)
+            session_id = self.connector.init_test(self.deviceid, starup_parameters)  #will return session id
+            self.set_session_id(session_id)
             return True
         except Exception, error:
             print "[ Error: Initialization Error, error: %s ]" % error
@@ -920,7 +919,7 @@ class TRunner:
         set_result_json = result
         set_result_xml = testxmlfile
         #covert JOSN to python dict string
-        set_result = json.loads(set_result_json)
+        set_result = set_result_json
         case_results = set_result["cases"]
         try:
             parse_tree = etree.parse(set_result_xml)
@@ -929,7 +928,7 @@ class TRunner:
                 for tcase in tset.getiterator('testcase'):
                     for case_result in case_results:
                         if tcase.get("id") == case_result['case_id']:
-                            tcase.set('result','PASS')           
+                            tcase.set('result',case_result['result'])           
             parse_tree.write(set_result_xml)
             print "[ cases result saved to resultfile ]\n"
         except IOError, error:
@@ -944,27 +943,25 @@ class TRunner:
         #check test running or end
         #if the status id end return True ,else return False
 
-        #import get_test_status from com_module
-        #session_status_json = get_test_status(self.session_id)
-        #session_status = json.loads(session_status_json)
+        session_status = self.connector.get_test_status(self.session_id)
         #session_status["finished"] == "0" is running
         #session_status["finished"] == "1" is end
-        #if session_status["finished"] == "0":
-        #    progress_json = session_status["progress"]
-        #    try:
-        #       print "Total: %s, Current: %s\nLast Case Result: %s" % \
-        #            progress_json["total"], \
-        #            progress_json["current"], \
-        #            progress_json["last_test_result"])
-        #    except KeyError, error:
-        #        print "[ Error: fail to get test progress infomation, error: %s ]\n" % error
-        #    return False
-        #elif session_status["finished"] == "1":
-        #    return True
-        #else :
-        #    print "[ session status error ,pls finilize test ]\n"
-        #    return False
-        return True
+        if session_status["finished"] == "0":
+           progress_json = session_status["progress"]
+           try:
+              print "Total: %s, Current: %s\nLast Case Result: %s" % \
+                   (progress_json["total"], \
+                   progress_json["current"], \
+                   progress_json["last_test_result"])
+           except KeyError, error:
+               print "[ Error: fail to get test progress infomation, error: %s ]\n" % error
+           return False
+        elif session_status["finished"] == "1":
+           return True
+        else :
+           print "[ session status error ,pls finilize test ]\n"
+           return False
+
 
 def get_version_info():
     """
@@ -1025,19 +1022,3 @@ def insert_notes(case, buf, pattern="###[NOTE]###"):
         notes_elm.text = extract_notes(buf, pattern)
     else:
         notes_elm.text += "\n"+extract_notes(buf, pattern)
-
-def get_device_info():
-    """get_device_info"""
-    device_info = {}
-    resolution_str = "Empty resolution"
-    screen_size_str = "Empty screen_size"
-    device_model_str = "Empty device_model"
-    device_name_str = "Empty device_name"
-    os_version_str = ""
-    device_info["resolution"] = resolution_str
-    device_info["screen_size"] = screen_size_str
-    device_info["device_model"] = device_model_str
-    device_info["device_name"] = device_name_str
-    device_info["os_version"] = os_version_str
-    
-    return device_info
