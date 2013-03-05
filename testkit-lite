@@ -24,36 +24,26 @@
 import os
 import re
 import sys, traceback
-import time
 import platform
-import ctypes
 import ConfigParser
 import xml.etree.ElementTree as etree
 from optparse import *
-from shutil import copyfile
-from tempfile import mktemp 
 from datetime import datetime
-try:
-    exec "from testkitlite.common.killall import killall"
-except ImportError, e:
-    print "[ Error: loading module killall failed, error: %s ]\n" % e
-    print "try to run command 'export PYTHONPATH=/usr/lib/python2.7/site-packages' to resolve this issue"
-    sys.exit(1)
 
-_j = os.path.join
-_e = os.path.exists
-_d = os.path.dirname
-_b = os.path.basename
-_abspath = os.path.abspath
+JOIN = os.path.join
+EXISTS = os.path.exists
+DIRNAME = os.path.dirname
+BASENAME = os.path.basename
+ABSPATH = os.path.abspath
 
 testkit_dir = "/opt/testkit/lite"
 if not platform.system() == "Linux":
-    testkit_dir = _d(_abspath(__file__))
-    sys.path += [_j(testkit_dir)]
-    testkit_dir = _j(testkit_dir , "results")
+    testkit_dir = DIRNAME(ABSPATH(__file__))
+    sys.path += [JOIN(testkit_dir)]
+    testkit_dir = JOIN(testkit_dir , "results")
 
 LOG_DIR = testkit_dir
-PID_FILE = _j(LOG_DIR , "pid.log")
+PID_FILE = JOIN(LOG_DIR , "pid.log")
 COMMON_FILTERS = {
         "suite":          [],
         "set":            [],
@@ -65,16 +55,6 @@ COMMON_FILTERS = {
         "component":      []}
 
 # start testkit-lite in Singleton mode
-try:
-    with open(PID_FILE, "r") as fd:
-        pid = fd.readline().rstrip("\n")
-        if pid:
-            killall(pid)
-except Exception, e:
-    pattern = re.compile('No such file or directory|No such process')
-    match = pattern.search(str(e))
-    if not match:
-        print "[ Error: fail to kill existing testkit-lite, error: %s ]\n" % e
 
 if not platform.system() == "Linux":
     try:
@@ -238,26 +218,9 @@ Note: \n\
     # create runner
     runner = TRunner()
     runner.set_pid_log(PID_FILE)
+    # apply all options 
+    runner.set_global_parameters(options)
 
-    # apply dryrun
-    if options.bdryrun:
-        runner.set_dryrun(options.bdryrun)
-
-    # apply non-active
-    if options.non_active:
-        runner.set_non_active(options.non_active)
-
-    # apply enable-memory-collection
-    if options.enable_memory_collection:
-        runner.set_enable_memory_collection(options.enable_memory_collection)
-
-    # apply user specify test result file
-    if options.resultfile:
-        runner.set_resultfile(options.resultfile)
-    # set device_id 
-    if options.device_serial:
-        print options.device_serial
-        runner.set_deviceid(options.device_serial)
     #check if there is a device_serial
     if not options.device_serial:
         print "[ Error: not specify a device_serial... ]\n"
@@ -268,14 +231,7 @@ Note: \n\
     for flt in COMMON_FILTERS:
         if eval('options.w%s' % flt):
             wfilters[flt] = eval('options.w%s' % flt)
-
-    if options.fullscreen:
-        runner.set_fullscreen(True)
-
     runner.add_filter_rules(**wfilters)
-
-    if options.exttest:
-        runner.set_external_test(options.exttest)
 
     if not options.testxml:
         print "[ Error: not specify a test xml... ]\n"
@@ -286,10 +242,10 @@ Note: \n\
         session = datetime.today().isoformat('-')
     else:
         session = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
-    log_dir = _j(LOG_DIR, session)
-    latest_dir = _j(LOG_DIR, "latest")
+    log_dir = JOIN(LOG_DIR, session)
+    latest_dir = JOIN(LOG_DIR, "latest")
     try:
-        if _e(latest_dir):
+        if EXISTS(latest_dir):
             os.remove(latest_dir)
         os.makedirs(log_dir)
         if os.name == "posix":
@@ -317,9 +273,9 @@ Note: \n\
                         sys.exit(1)
             else:
                 filename = filename.split('\\')[-2]
-            filename = "%s.total" % _b(filename)
+            filename = "%s.total" % BASENAME(filename)
             resultfile = "%s.xml" % filename
-            resultfile = _j(log_dir, resultfile)
+            resultfile = JOIN(log_dir, resultfile)
             ep = etree.parse(t)
             suiteparent = ep.getroot()
             no_test_definition = 1
@@ -400,9 +356,9 @@ Note: \n\
                     sys.exit(1)
         else:
             filename = filename.split('\\')[-2]
-        filename = "%s.total" % _b(filename)
+        filename = "%s.total" % BASENAME(filename)
         resultfile = "%s.xml" % filename
-        resultfile = _j(log_dir, resultfile)
+        resultfile = JOIN(log_dir, resultfile)
         ep = etree.parse(testxml)
         suiteparent = ep.getroot()
         no_test_definition = 1
@@ -460,32 +416,8 @@ Note: \n\
             except Exception, e:
                 print "[ Error: prepare_run test xml: %s from testkit-lite failed, error: %s ]\n" % (testxml, e)
     try:
-        runner.run_and_merge_resultfile(start_time, log_dir)
-        # kill open windows
-        print "[ clean up unfinished process ]"
-        try:
-            with open(PID_FILE, "r") as fd:
-                main_pid = 1
-                for line in fd.readlines():
-                    if main_pid:
-                        main_pid = 0
-                    else:
-                        pid = line.rstrip("\n")
-                        if pid:
-                            killall(pid)
-        except Exception, e:
-            pattern = re.compile('No such file or directory|No such process')
-            match = pattern.search(str(e))
-            if not match:
-                print "[ Error: fail to kill client process, error: %s ]\n" % e
-        fi, fo, fe = os.popen3("netstat -tpa | grep 8000")
-        for line in fo.readlines():
-            pattern = re.compile('([0-9]*)\/python')
-            match = pattern.search(line)
-            if match:
-                http_server_pid = match.group(1)
-                print "[ kill http server, pid: %s ]" % http_server_pid
-                killall(http_server_pid)
+        runner.run_case(log_dir)
+        runner.merge_resultfile(start_time, log_dir)
         print "[ all tasks for testkit lite are accomplished, goodbye ]"
     except Exception, e:
         print "[ Error: run_and_merge_resultfile from testkit-lite failed, error: %s ]\n" % e
