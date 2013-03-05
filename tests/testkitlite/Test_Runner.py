@@ -39,7 +39,7 @@ class RunnerTestCase(unittest.TestCase):
         self.runner = None
 
     def test_set_pid_log(self):
-    	self.runner.set_pid_log('/home/test/autotest')
+        self.runner.set_pid_log('/home/test/autotest')
         self.assertEqual(self.runner.pid_log,'/home/test/autotest')
 
     def test_set_global_parameters(self):
@@ -66,7 +66,15 @@ class RunnerTestCase(unittest.TestCase):
         self.runner.set_global_parameters(options)
         self.assertEqual(self.runner.bdryrun,True)
 
+    def test_set_session_id(self):
+        self.runner.set_session_id('12345')
+        self.assertEqual(self.runner.session_id,'12345')
 
+    def test_add_filter_rules(self):
+        wfilters = {}
+        wfilters['execution_type'] = ["manual"]
+        self.runner.add_filter_rules(**wfilters)  
+          
     def test_prepare_run(self):
         wfilters = {}
         wfilters['execution_type'] = ["auto"]
@@ -84,18 +92,10 @@ class RunnerTestCase(unittest.TestCase):
         start_time = '2013-03-04-17:02:30.801521'#depend you start test time 
         self.runner.merge_resultfile(start_time, self.log_dir)
 
-    def test_add_filter_rules(self):
-        wfilters = {}
-        wfilters['execution_type'] = ["manual"]
-        self.runner.add_filter_rules(**wfilters)
-
-
-
 
 def suite():
     suite = unittest.TestSuite()
     #suite.addTest(RunnerTestCase("test_add_filter_rules"))
-    suite.addTest(RunnerTestCase("test_set_global_parameters"))
     return suite
 
 #run test

@@ -349,12 +349,15 @@ class TRunner:
                         self.resultfiles.discard(empty_set)
                     # create temporary parameter
                     for test_xml_set in test_xml_set_list:
-                        print "\n[ run set: %s ]" % test_xml_set
-
+                        print "\n[ run set: %s ]" % test_xml_set                  
+                        
                         #init test here
-                        self.__init_com_module()
+                        self.__init_com_module(test_xml_set)
                         # prepare the test JSON
-                        self.execute_external_test(test_xml_set)
+                        self.__prepare_external_test_json(test_xml_set)
+
+                        #send set JSON Data to com_module
+                        #run_test(self.deviceid,self.set_parameters)
                         while True:
                             time.sleep(5)
                             #check the test status ,if the set finished,get the set_result,and finalize_test
@@ -593,7 +596,7 @@ class TRunner:
         except IOError, error:
             print "[ Error: fail to copy the result file to: %s, please check if you have created its parent directory, error: %s ]" % (self.resultfile, error)
 
-    def execute_external_test(self, resultfile):
+    def __prepare_external_test_json(self, resultfile):
         """Run external test"""
         if self.bdryrun:
             print "[ WRTLauncher mode does not support dryrun ]"
@@ -646,9 +649,7 @@ class TRunner:
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
-            self.set_parameters = json.dumps(parameters)            
-            #send set JSON Data to com_module
-            #run_test(self.deviceid,self.set_parameters)
+            self.set_parameters = json.dumps(parameters)
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, error: %s ]\n" % error
             return False
@@ -895,17 +896,36 @@ class TRunner:
                 out.append(measure)
         return out
 
-    def __init_com_module(self):
+    def __init_com_module(self, testxml):
         """
             send init test to com_module
             if webapi test,com_module will start httpserver
             else com_module send the test case to devices 
         """
-        #init stub and get the session_id
-        #from com_module import init_test
-        #session_id = init_test(self.deviceid)  #will return session id
-        #self.set_session_id(session id)
-        return True
+        starup_parameters = self.__prepare_starup_parameters(testxml)
+        try:            
+            #init stub and get the session_id
+            #from com_module import init_test
+            #session_id = init_test(self.deviceid, starup_parameters)  #will return session id
+            #self.set_session_id(session id)
+            return True
+        except Exception, error:
+            print "[ Error: Initialization Error, error: %s ]" % error
+            return False
+
+    def __prepare_starup_parameters(self, testxml):
+        """ prepare_starup_parameters """
+
+        starup_parameters = {}
+        print "prepare_starup_parameters"
+        try:
+            parse_tree = etree.parse(testxml)
+            tsuite = parse_tree.getroot().getiterator('suite')[0]
+            starup_parameters['stub-entry'] = tsuite.get("launcher")
+            starup_parameters['pkg-name'] = tsuite.get("name")            
+        except IOError, error:
+            print "[ Error: prepare starup parameters, error: %s ]" % error
+        return starup_parameters     
 
     def __write_set_result(self, testxmlfile, result):
         '''
