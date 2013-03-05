@@ -161,87 +161,72 @@ class TRunner:
                     os.mkdir(resultdir)
                 print "[ analysis test xml file: %s ]" % resultfile
                 self.__prepare_result_file(testxmlfile, resultfile)
-                
-                casefind = etree.parse(resultfile).getiterator('testcase')
-                if casefind:
-                    test_file_name = "%s" % BASENAME(resultfile)
-                    test_file_name = os.path.splitext(test_file_name)[0]
-                    testsuite_dict_value_list = []
-                    testsuite_dict_add_flag = 0
-                    execute_suite_one_way = 1
-                    if self.external_test:
-                        parser = etree.parse(resultfile)
-                        no_wrtlauncher = 1
-                        suite_total_count = 0 
-                        suite_wrt_launcher_count = 0
-                        for tsuite in parser.getiterator('suite'):
-                            suite_total_count += 1
-                            if tsuite.get('launcher'):
-                                if not tsuite.get('launcher').find('WRTLauncher'):
-                                    no_wrtlauncher = 0
-                                    suite_wrt_launcher_count += 1
-                        if no_wrtlauncher:
-                            if self.filter_rules["execution_type"] == ["auto"]:
-                                self.core_auto_files.append(resultfile)
-                            else:
-                                self.core_manual_files.append(resultfile)
-                        elif suite_total_count == suite_wrt_launcher_count:
-                            testsuite_dict_value_list.append(resultfile) 
-                            testsuite_dict_add_flag = 1
-                            self.exe_sequence.append(test_file_name)
-                        else:
-                            filename_diff = 1
-                            execute_suite_one_way = 0
-                            for tsuite in parser.getiterator('suite'):
-                                root = etree.Element('test_definition')
-                                suitefilename = os.path.splitext(resultfile)[0]
-                                suitefilename += ".suite_%s.xml" % filename_diff
-                                suitefilename = JOIN(resultdir, suitefilename)
-                                tsuite.tail = "\n"
-                                root.append(tsuite)
-                                try:
-                                    with open(suitefilename, 'w') as output:
-                                        tree = etree.ElementTree(element=root)
-                                        tree.write(output)
-                                except IOError, error:
-                                    print "[ Error: create filtered result file: %s failed,\
-                                     error: %s ]" % (suitefilename, error)
-                                case_suite_find = etree.parse(suitefilename).getiterator('testcase')
-                                if case_suite_find:
-                                    if tsuite.get('launcher'):
-                                        if tsuite.get('launcher').find('WRTLauncher'):
-                                            if self.filter_rules["execution_type"] == ["auto"]:
-                                                self.core_auto_files.append(suitefilename)
-                                            else:
-                                                self.core_manual_files.append(suitefilename)
-                                            self.resultfiles.add(suitefilename)
-                                        else:
-                                            testsuite_dict_value_list.append(suitefilename) 
-                                            if testsuite_dict_add_flag == 0:
-                                                self.exe_sequence.append(file)
-                                            testsuite_dict_add_flag = 1
-                                            self.resultfiles.add(suitefilename)
-                                    else:
-                                        if self.filter_rules["execution_type"] == ["auto"]:
-                                            self.core_auto_files.append(suitefilename)
-                                        else:
-                                            self.core_manual_files.append(suitefilename)
-                                        self.resultfiles.add(suitefilename)
-                                filename_diff += 1
-                        if testsuite_dict_add_flag:
-                            self.testsuite_dict[test_file_name] = testsuite_dict_value_list 
-                    else:
-                        if self.filter_rules["execution_type"] == ["auto"]:
-                            self.core_auto_files.append(resultfile)
-                        else:
-                            self.core_manual_files.append(resultfile)
-                    if execute_suite_one_way:
-                        self.resultfiles.add(resultfile)
+                self.__split_test_xml(resultfile, resultdir)
             except IOError, error:
                 traceback.print_exc()
                 print error
                 ok_prepare &= False
         return ok_prepare
+    def __split_test_xml(self, resultfile, resultdir):
+        """ split_test_xml into auto and manual"""  
+        casefind = etree.parse(resultfile).getiterator('testcase')
+        if casefind:
+            test_file_name = "%s" % BASENAME(resultfile)
+            test_file_name = os.path.splitext(test_file_name)[0]            
+            if self.external_test:
+                self.__splite_external_test(resultfile, test_file_name, resultdir)
+            else:
+                self.__splite_core_test(resultfile)
+
+    def __splite_core_test(self, resultfile):
+        """select core test"""
+        if self.filter_rules["execution_type"] == ["auto"]:
+            self.core_auto_files.append(resultfile)
+        else:
+            self.core_manual_files.append(resultfile)
+        self.resultfiles.add(resultfile)
+
+    def __splite_external_test(self, resultfile, test_file_name, resultdir):
+        """select external_test"""
+        testsuite_dict_value_list = []
+        testsuite_dict_add_flag = 0
+        filename_diff = 1
+
+        parser = etree.parse(resultfile)
+        for tsuite in parser.getiterator('suite'):
+            root = etree.Element('test_definition')
+            suitefilename = os.path.splitext(resultfile)[0]
+            suitefilename += ".suite_%s.xml" % filename_diff
+            suitefilename = JOIN(resultdir, suitefilename)
+            tsuite.tail = "\n"
+            root.append(tsuite)
+            try:
+                with open(suitefilename, 'w') as output:
+                    tree = etree.ElementTree(element=root)
+                    tree.write(output)
+            except IOError, error:
+                print "[ Error: create filtered result file: %s failed,\
+                 error: %s ]" % (suitefilename, error)
+            case_suite_find = etree.parse(suitefilename).getiterator('testcase')
+            if case_suite_find:
+                if tsuite.get('launcher'):
+                    if tsuite.get('launcher').find('WRTLauncher'):
+                        self.__splite_core_test(suitefilename)
+                    else:
+                        testsuite_dict_value_list.append(suitefilename) 
+                        if testsuite_dict_add_flag == 0:
+                            self.exe_sequence.append(test_file_name)
+                        testsuite_dict_add_flag = 1
+                        self.resultfiles.add(suitefilename)
+                else:
+                    if self.filter_rules["execution_type"] == ["auto"]:
+                        self.core_auto_files.append(suitefilename)
+                    else:
+                        self.core_manual_files.append(suitefilename)
+                    self.resultfiles.add(suitefilename)
+            filename_diff += 1
+        if testsuite_dict_add_flag:
+            self.testsuite_dict[test_file_name] = testsuite_dict_value_list
 
     def __prepare_result_file(self, testxmlfile, resultfile):
         """ write the test_xml content to resultfile"""
@@ -917,7 +902,7 @@ class TRunner:
         """ prepare_starup_parameters """
 
         starup_parameters = {}
-        print "prepare_starup_parameters"
+        print "[ prepare_starup_parameters ]"
         try:
             parse_tree = etree.parse(testxml)
             tsuite = parse_tree.getroot().getiterator('suite')[0]
@@ -962,10 +947,12 @@ class TRunner:
         #import get_test_status from com_module
         #session_status_json = get_test_status(self.session_id)
         #session_status = json.loads(session_status_json)
-        #if session_status["status"] == "running":
+        #session_status["finished"] == "0" is running
+        #session_status["finished"] == "1" is end
+        #if session_status["finished"] == "0":
         #    print "[ case execute information : %s ]\n" %session_status["msg"]
         #    return False
-        #elif session_status["status"] == "end":
+        #elif session_status["finished"] == "1":
         #    return True
         #else :
         #    print "[ session status error ,pls finilize test ]\n"
@@ -1034,41 +1021,17 @@ def insert_notes(case, buf, pattern="###[NOTE]###"):
         notes_elm.text += "\n"+extract_notes(buf, pattern)
 
 def get_device_info():
-        device_info = {}
-        resolution_str = "Empty resolution"
-        screen_size_str = "Empty screen_size"
-        device_model_str = "Empty device_model"
-        device_name_str = "Empty device_name"
-        os_version_str = ""
-        # get resolution and screen size
-        fi, fo, fe = os.popen3("xrandr")
-        for line in fo.readlines():
-            pattern = re.compile('connected (\d+)x(\d+).* (\d+mm) x (\d+mm)')
-            match = pattern.search(line)
-            if match:
-                resolution_str = "%s x %s" % (match.group(1), match.group(2))
-                screen_size_str = "%s x %s" % (match.group(3), match.group(4))
-        # get architecture
-        fi, fo, fe = os.popen3("uname -m")
-        device_model_str_tmp = fo.readline()
-        if len(device_model_str_tmp) > 1:
-            device_model_str = device_model_str_tmp[0:-1]
-        # get hostname
-        fi, fo, fe = os.popen3("uname -n")
-        device_name_str_tmp = fo.readline()
-        if len(device_name_str_tmp) > 1:
-            device_name_str = device_name_str_tmp[0:-1]
-        # get os version
-        fi, fo, fe = os.popen3("cat /etc/issue")
-        for line in fo.readlines():
-            if len(line) > 1:
-                os_version_str = "%s %s" % (os_version_str, line)
-        os_version_str = os_version_str[0:-1]
-        
-        device_info["resolution"] = resolution_str
-        device_info["screen_size"] = screen_size_str
-        device_info["device_model"] = device_model_str
-        device_info["device_name"] = device_name_str
-        device_info["os_version"] = os_version_str
-        
-        return device_info
+    """get_device_info"""
+    device_info = {}
+    resolution_str = "Empty resolution"
+    screen_size_str = "Empty screen_size"
+    device_model_str = "Empty device_model"
+    device_name_str = "Empty device_name"
+    os_version_str = ""
+    device_info["resolution"] = resolution_str
+    device_info["screen_size"] = screen_size_str
+    device_info["device_model"] = device_model_str
+    device_info["device_name"] = device_name_str
+    device_info["os_version"] = os_version_str
+    
+    return device_info
