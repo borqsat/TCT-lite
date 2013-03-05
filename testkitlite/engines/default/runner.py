@@ -55,9 +55,7 @@ class TRunner:
     Conduct tests execution.
     """
     def __init__(self):
-        """
-            init all self parameters here
-        """
+        """ init all self parameters here """
         # dryrun
         self.bdryrun = False
         # non_active
@@ -91,35 +89,27 @@ class TRunner:
         # apply dryrun
         if options.bdryrun:
             self.bdryrun = options.bdryrun
-
         #release memory when the free memory is less than 100M
         if options.enable_memory_collection:
             self.enable_memory_collection = options.enable_memory_collection
-
         #Disable set the result of core manual cases from the console
         if options.non_active:
             self.non_active = options.non_active
-
         # apply user specify test result file
         if options.resultfile:
             self.resultfile = options.resultfile
-
         # set device_id 
         if options.device_serial:
             self.deviceid = options.device_serial
-
         if options.fullscreen:
-            self.fullscreen = True
-        
+            self.fullscreen = True       
         # set the external test WRTLauncher
         if options.exttest:
             self.external_test = options.exttest
 
-
     def set_pid_log(self, pid_log):
         """ get pid_log file """
         self.pid_log = pid_log
-
 
     def add_filter_rules(self, **kargs):
         """
@@ -127,11 +117,8 @@ class TRunner:
         """
         self.filter_rules = kargs
 
-
     def set_session_id(self, session_id):
-        """
-            set the set test session id which is get form com_module
-        """
+        """ set the set test session id which is get form com_module """
         self.session_id = session_id
 
     def prepare_run(self, testxmlfile, resultdir=None):
@@ -167,6 +154,7 @@ class TRunner:
                 print error
                 ok_prepare &= False
         return ok_prepare
+
     def __split_test_xml(self, resultfile, resultdir):
         """ split_test_xml into auto and manual"""  
         casefind = etree.parse(resultfile).getiterator('testcase')
@@ -253,22 +241,12 @@ class TRunner:
         except IOError, error:
             print error
             return False
+
     def run_case(self, latest_dir):
         """ run case """
         # run core auto cases
-        self.core_auto_files.sort()
-        for core_auto_file in self.core_auto_files:
-            temp_test_xml = os.path.splitext(core_auto_file)[0]
-            temp_test_xml = os.path.splitext(temp_test_xml)[0]
-            temp_test_xml = os.path.splitext(temp_test_xml)[0]
-            temp_test_xml += ".auto"
-            # print identical xml file name
-            if self.current_test_xml != temp_test_xml:
-                time.sleep(3)
-                print "\n[ testing xml: %s.xml ]" % temp_test_xml
-                self.current_test_xml = temp_test_xml
-            self.execute(core_auto_file, core_auto_file)
-            
+        self.__run_core_auto()
+        
         # run webAPI cases
         list_auto = []
         list_manual = []
@@ -364,6 +342,26 @@ class TRunner:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % error
                
         # run core manual cases
+        self.__run_core_manual()
+
+            
+    def __run_core_auto(self):
+        """ core auto cases run"""
+        self.core_auto_files.sort()
+        for core_auto_file in self.core_auto_files:
+            temp_test_xml = os.path.splitext(core_auto_file)[0]
+            temp_test_xml = os.path.splitext(temp_test_xml)[0]
+            temp_test_xml = os.path.splitext(temp_test_xml)[0]
+            temp_test_xml += ".auto"
+            # print identical xml file name
+            if self.current_test_xml != temp_test_xml:
+                time.sleep(3)
+                print "\n[ testing xml: %s.xml ]" % temp_test_xml
+                self.current_test_xml = temp_test_xml
+            self.execute(core_auto_file, core_auto_file)
+
+    def __run_core_manual(self):
+        """ core manual cases run """
         self.core_manual_files.sort()
         for core_manual_file in self.core_manual_files:
             temp_test_xml = os.path.splitext(core_manual_file)[0]
@@ -378,7 +376,7 @@ class TRunner:
             if self.non_active:
                 self.skip_all_manual = True
             self.execute(core_manual_file, core_manual_file)
-            
+
     def merge_resultfile(self, start_time, latest_dir):
         """ merge_result_file """
         mergefile = mktemp(suffix='.xml', prefix='tests.', dir=latest_dir)
@@ -944,20 +942,28 @@ class TRunner:
             if end ,return ture; else return False
         '''
         #check test running or end
+        #if the status id end return True ,else return False
+
         #import get_test_status from com_module
         #session_status_json = get_test_status(self.session_id)
         #session_status = json.loads(session_status_json)
         #session_status["finished"] == "0" is running
         #session_status["finished"] == "1" is end
         #if session_status["finished"] == "0":
-        #    print "[ case execute information : %s ]\n" %session_status["msg"]
+        #    progress_json = session_status["progress"]
+        #    try:
+        #       print "Total: %s, Current: %s\nLast Case Result: %s" % \
+        #            progress_json["total"], \
+        #            progress_json["current"], \
+        #            progress_json["last_test_result"])
+        #    except KeyError, error:
+        #        print "[ Error: fail to get test progress infomation, error: %s ]\n" % error
         #    return False
         #elif session_status["finished"] == "1":
         #    return True
         #else :
         #    print "[ session status error ,pls finilize test ]\n"
         #    return False
-        #if the status id end return True ,else return False
         return True
 
 def get_version_info():
