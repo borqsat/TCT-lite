@@ -13,24 +13,29 @@ public:
     virtual ~TestCase();
 
 public:
-    char* purpose;
-    char* entry;
-    char* e_result; // expect result
     char result[8]; // "pass" or "fail", "block", "N/A"
-    char* msg;
     char* e_type;
     //string xml_node; // not need now?
     //string xml_name; // not need not?
-    int start_at;
-    int end_at;
+    char start_at[32];
+    char end_at[32];
+    char* stdout;
     int timeout;
     bool is_executed;
     int time_task; // what for?
-    int order; // case order
+
+    // below 8 value are sent from Com-module for each case.
+    char* order; // case order
     char* case_id;
+    char* purpose;
+    char* entry;
     char* pre_con;
     char* post_con;
     char* steps;
+    char* e_result; // expect result
+
+    int json_len; // the memory needed for this case if store it as json string
+    int result_json_len;
 
     void get_string_value(JsonReader *reader, const char* key, char** value);
     struct sigaction sa;
@@ -40,10 +45,9 @@ public:
     void print_info_string();
     bool is_manual();
     void to_json(char* str);
-    //string get_xml_name();
-    //void to_xml_node();
-    void set_result(char* test_result, char* test_msg);
-    void set_start_at(int start_at, void(*fn)(int));
+    void result_to_json(char* str);
+    void set_result(char* test_result, char* test_msg, char* end_time);
+    void set_start_at(char* start_time, void(*fn)(int));
     void cancel_time_check();
 
 protected:

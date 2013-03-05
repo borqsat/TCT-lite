@@ -1,6 +1,6 @@
 #include <iostream>
-#include<sys/socket.h>
-#include<errno.h>
+#include <sys/socket.h>
+#include <errno.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #include "httpserver.h"
 
 #define SERVER_PORT 8000
@@ -38,412 +39,72 @@ int gServerStatus = 0;
 int gIsRun = 0;
 
 FILE *pfilelog = NULL;
-/*
-/* the logic of this program is based on handle http request chain.
-1. parse a request
-2. generate reponse head
-3. locate requested file
-4. send reponse head and requested file. update log
-*/
-/*typedef struct HttpRequest
+
+//parse the cmd line parameters
+void parse(int count,char *argv[],HttpServer *httpserver)
 {
-        char method[20];    // request type
-        char *path;         // request path
-        char *content;      // request content
-        int  contentlength; // length of request length
-        int  contenttype;   // response content type
-        int  rangeflag;     // below three are for send if disconnect. they are start, end and total length of a disconnected file.
-        long rangestart;
-        long rangeend;
-        long rangetotal;
-        char prefix[20];
-        int  responsecode; //response code
-} HR;
-
-/*
-  parse request line by line
-*/
-//FILE* isexistfile(char *filename)
-//{
-//        FILE *fp = NULL;
-//        fp = fopen(filename,"r");
-//        return fp;
-//}
-
-//int getrequest(char *requestbuf,struct HttpRequest *prequest)
-//{
-//        char protocol[20];
-//        char path[200];
-//        int i = 0;
-//        if(sscanf(requestbuf, "%s %s %s", prequest->method, path, protocol)!=3)
-//                return BAD_REQUEST;
-//        if(strcmp(prequest->method,"GET") == 0)
-//        {
-//                if(strchr(path, '?') == NULL)
-//                {
-//                        // check whether last character is /. add index.htm if it is /
-//                        if(path[strlen(path)-1] == '/')
-//                                strcat(path,"index.htm");
-//                        // add default folder name ./web
-//                        sprintf(prequest->path,"./web%s",path);
-//                        // get suffix. set to * if no suffix
-//                        if(sscanf(path, "%s.%s", path, prequest->prefix)!=2)
-//                                strcpy(prequest->prefix,"*");
-//
-//                        printf("GET path:%s\nprefix:%s\n",prequest->path,prequest->prefix);
-//                        return GET_COMMON;
-//                }
-//                else
-//                {
-//                        prequest->content = (char *)malloc(strlen(prequest->path));
-//                        printf("run ?  \n");
-//                        sscanf(prequest->path,"%s?%s",prequest->path, prequest->content);
-//                        printf("run ?  %s|%s \n",prequest->path, prequest->content);
-//                        return GET_CGI;
-//                }
-//        }
-//        else if(strcmp(prequest->method,"POST") == 0)
-//        {
-//                return POST;
-//        }
-//        else if(strcmp(prequest->method,"HEAD") == 0)
-//        {
-//                return HEAD;
-//        }
-//        else if(strcmp(prequest->method,"TRACR") == 0)
-//        {
-//                return TRACR;
-//        }
-//        return -1;
-//}
-//
-//char* getcontenttype(char *type)
-//{
-//        // response content type
-//        char ContentType[][27] ={
-//                        "jpeg", "image/jpeg",
-//                        "png", "image/png",
-//                        "mpg", "video/mpeg",
-//                        "asf", "video/x-ms-asf",
-//                        "avi", "video/x-msvideo",
-//                        "bmp", "image/bmp",
-//                        "doc", "application/msword",
-//                        "exe", "application/octet-stream",//14, 15
-//                        "rar", "application/octet-stream",
-//                        "zip", "application/zip",
-//                        "jpg", "image/jpeg",
-//                        "gif", "image/gif",
-//                        "txt", "text/plain",
-//                        "c", "text/plain",
-//                        "cpp", "text/plain",
-//                        "cxx", "text/plain",
-//                        "h", "text/plain",
-//                        "ico", "image/x-icon",
-//                        "css", "text/css",
-//                        "htm", "text/html",
-//                        "html", "text/html"
-//                        "*", "application/octet-stream"
-//        };
-//        int nType = sizeof(ContentType)/27;
-//        int i;
-//        for(i=0; i<nType; i+=2)
-//        {
-//                if(strcmp(ContentType[i], type) == 0)
-//                        return ContentType[i+1];
-//        }
-//    return "application/octet-stream";
-//}
-//
-//char* getcurrenttime()
-//{
-//        time_t timep;
-//        char localvalue[30];
-//        time (&timep);
-//
-//        sprintf(localvalue,"%s",asctime(gmtime(&timep)));
-//        printf("localtime :%s",localvalue);
-//        return localvalue;
-//}
-//
-//// generate response code. send response
-//void responsecode(int s,int code,struct HttpRequest *prequest)
-//{
-//
-//        char buffer[2048];
-//        char contenttype[200];
-//        char content[1023];
-//
-//        prequest->responsecode = code;
-//        // generate response head
-//        switch(code)
-//        {
-//        case 200:
-//                sprintf(buffer,
-//                        "HTTP/1.1 200 OK\r\n"
-//                        "Server: Server/1.0\r\n"
-//                        "Date: %s\r\n"
-//                        "Content-Type: %s\r\n"
-//                        "Accept-Ranges: bytes\r\n"
-//                        "Content-Length: %d\r\n"
-//                        "Connection: close\r\n"
-//                        "\r\n",getcurrenttime(),getcontenttype(prequest->prefix),prequest->rangetotal);
-//                break;
-//        case 404:
-//                strcpy(content,"<html><head><title>Object Not Found</title></head><body><h1>Object Not Found</h1>File Not Found.</body></html>");
-//                sprintf(buffer,
-//                        "HTTP/1.1 404 Object Not Found\r\n"
-//                        "Server: Server/1.0\r\n"
-//                        "Date: %s\r\n"
-//                        "Content-Type: %s\r\n"
-//                        "Content-Length: %d\r\n"
-//                        "Connection: close\r\n"
-//                        "\r\n"
-//                        "%s", getcurrenttime(),getcontenttype(prequest->prefix),strlen(content), content);
-//                break;
-//        case 505:
-//                break;
-//        default:
-//                break;
-//        }
-//        sendsegment(s,buffer,strlen(buffer));
-//}
-//
-//void processgetcommon(int s,struct HttpRequest *prequest)
-//{
-//        // at first, test whether file exist
-//        FILE *fp = isexistfile(prequest->path);
-//        printf("%s\n",prequest->path);
-//        struct stat finfo;
-//        if(fp == NULL)
-//        {
-//                responsecode(s,404,prequest);
-//        }
-//        else
-//        {
-//                if(prequest->rangeflag == 0)
-//                {
-//                        stat(prequest->path,&finfo);
-//                        prequest->rangetotal = finfo.st_size;
-//                }
-//                responsecode(s,200,prequest);
-//                transferfile(s,fp,prequest->rangeflag,prequest->rangestart,prequest->rangetotal);
-//                fclose(fp);
-//        }
-//}
-//void processgetcgi(int s,struct HttpRequest *prequest)
-//{
-//        system("hello");
-//
-//}
-//
-//void processpost(int s,struct HttpRequest *prequest)
-//{
-//}
-//
-//void processhead(int s,struct HttpRequest *prequest)
-//{
-//}
-//
-//int transferfile(int s,FILE *fp,int type,int rangstart,int totallength)
-//{
-//        if(type == 1)
-//        {
-//                // 1 means send file from required position
-//                fseek(fp,rangstart,0);
-//        }
-//        int sendnum = 0;
-//        int segment = 1024;
-//        while(!feof(fp)&&sendnum < totallength)
-//        {
-//                char buf[segment];
-//                memset(buf,0,1024);
-//                int i = 0;
-//                while(!feof(fp) && i < segment && sendnum+i < totallength)
-//                {
-//                        buf[i++] = fgetc(fp);
-//                }
-//                if(sendsegment(s,buf,i) == 0)
-//                        return 0;
-//                sendnum += i;
-//        }
-//        return 1;
-//}
-//
-//int sendsegment(int s, char *buffer,int length)
-//{
-//        if(length <= 0)
-//                return 0;
-//        printf("%s\n",buffer);
-//        int result = send(s,buffer,length,0);
-//        if(result < 0)
-//                return 0;
-//        return 1;
-//}
-//
-//// save log in xml format
-//FILE* openlogfile(FILE *fp)
-//{
-//        char filename[200];
-//        sprintf(filename,"./log/%s.xml",getcurrenttime());
-//        fp = fopen(filename,"ab+");
-//        if(fp == NULL)
-//        {
-//                printf("can't open this file[%s]\n",filename);
-//                return NULL;
-//        }
-//        fputs("<?xml version=\"1.0\" encoding=\"GB2312\"?>",fp);
-//        fputs("<Log>",fp);
-//        fflush(fp);
-//        return fp;
-//}
-//
-//void closelogfile(FILE *fp)
-//{
-//        if(fp == NULL)
-//                return;
-//        fputs("</Log>",fp);
-//        fclose(fp);
-//}
-//
-//void insertlognode(FILE *fp,struct HttpRequest *prequest)
-//{
-//        if(fp == NULL)
-//                return;
-//        fputs("<record>",fp);
-//        fputs("<method>",fp);
-//        fputs(prequest->method,fp);
-//        fputs("</method>",fp);
-//        fputs("<path>",fp);
-//        fputs(prequest->path,fp);
-//        fputs("</path>",fp);
-//        char reponsecode[100];
-//        sprintf(reponsecode,"<reponsecode>%d</reponsecode>",prequest->responsecode);
-//        fputs(reponsecode,fp);
-//        fputs("</record>",fp);
-//        fflush(fp);
-//}
-//
-//void* processthread(void *para)
-//{
-//        int clientsocket;
-//        char buffer[1024];
-//        int iDataNum =0;
-//        int recvnum=0;
-//        clientsocket = *((int *)para);
-//        printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<BEGIN [%d]>>>>>>>>>>>>>>>>>>>>>>>\n",clientsocket);
-//        struct HttpRequest httprequest;
-//        httprequest.content = NULL;
-//        httprequest.path = NULL;
-//        httprequest.path = (char *)malloc(1024);
-//        httprequest.rangeflag = 0;
-//        httprequest.rangestart = 0;
-//
-//        while(1)
-//        {
-//                iDataNum = recv(clientsocket,buffer+recvnum,sizeof(buffer)-recvnum-1,0);
-//                if(iDataNum <= 0)
-//                {
-//                        close(clientsocket);
-//                        pthread_exit(NULL);
-//                        return 0;
-//                }
-//                recvnum += iDataNum;
-//                buffer[recvnum]='\0';
-//                if(strstr(buffer,"\r\n\r\n")!=NULL || strstr(buffer,"\n\n")!=NULL)
-//                        break;
-//        }
-//        printf("request: %s\n",buffer);
-//
-//        // parse request and process it
-//        switch(getrequest(buffer,&httprequest))
-//        {
-//        case GET_COMMON:
-//                processgetcommon(clientsocket,&httprequest);
-//                break;
-//        case GET_CGI:
-//                processgetcgi(clientsocket,&httprequest);
-//                break;
-//        case POST:
-//                processpost(clientsocket,&httprequest);
-//                break;
-//        case HEAD:
-//                processhead(clientsocket,&httprequest);
-//                break;
-//        default:
-//                break;
-//        }
-//        insertlognode(pfilelog,&httprequest);
-//        if(httprequest.path != NULL)
-//                free(httprequest.path);
-//        if(httprequest.content != NULL)
-//                free(httprequest.content);
-//        close(clientsocket);
-//        printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<END [%d]>>>>>>>>>>>>>>>>>>>>>>>\n",clientsocket);
-//        pthread_exit(NULL);
-//}
-//
-//void* server_process(void *p)
-//{
-//        int serverSocket;
-//        struct sockaddr_in server_addr;
-//        struct sockaddr_in clientAddr;
-//        int addr_len = sizeof(clientAddr);
-//
-//        if((serverSocket = socket(AF_INET,SOCK_STREAM,0)) < 0)
-//        {
-//                perror( "error: create server socket!!!");
-//                exit(1);
-//        }
-//
-//        bzero(&server_addr,sizeof(server_addr));
-//        server_addr.sin_family =AF_INET;
-//        server_addr.sin_port = htons(SERVER_PORT);
-//        server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-//        if(bind(serverSocket,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0)
-//        {
-//                perror("error: bind address !!!!");
-//                exit(1);
-//        }
-//
-//        if(listen(serverSocket,5)<0)
-//        {
-//                perror("error: listen !!!!");
-//                exit(1);
-//        }
-//        gIsRun = 1;
-//        printf("Server is running.....\n");
-//
-//        while(gIsRun)
-//        {
-//                int clientsocket;
-//                clientsocket = accept(serverSocket,(struct sockaddr *)&clientAddr,(socklen_t*)&addr_len);
-//                if(clientsocket < 0)
-//                {
-//                        perror("error: accept client socket !!!");
-//                        continue;
-//                }
-//                if(gServerStatus == 0)
-//                {
-//                        close(clientsocket);
-//                }
-//                else if(gServerStatus == 1)
-//                {
-//                        pthread_t threadid;
-//                        int temp;
-//                        temp = pthread_create(&threadid, NULL, processthread, (void *)&clientsocket);
-//                        /*if(threadid !=0)
-//                        {
-//                                 pthread_join(threadid,NULL);
-//                        }*/
-//                }
-//        }
-//        close(serverSocket);
-//}*/
-
+	for (int i = 1; i < count; ++i)
+	{
+		char *value = argv[i];		
+		char *key = strsep(&value,":");
+		/*printf("value is %s\n",value);
+		printf("key is %s\n",key);*/
+		
+		if(strcmp(key, "--port")==0)
+		{
+			httpserver->g_port = new char[strlen(value)+1];
+			strcpy(httpserver->g_port,value);
+		}
+		else if(strcmp(key, "--hidestatus")==0)
+		{
+			httpserver->g_hide_status = new char[strlen(value)+1];
+			strcpy(httpserver->g_hide_status,value);			
+		}
+		else if(strcmp(key, "--pid_log")==0)
+		{
+			httpserver->g_pid_log = new char[strlen(value)+1];
+			strcpy(httpserver->g_pid_log,value);
+		}
+		else if(strcmp(key, "--testsuite")==0)
+		{
+			httpserver->g_test_suite = new char[strlen(value)+1];
+			strcpy(httpserver->g_test_suite,value);
+		}
+		else if(strcmp(key, "--exe_sequence")==0)
+		{
+			httpserver->g_exe_sequence = new char[strlen(value)+1];
+			strcpy(httpserver->g_exe_sequence,value);
+		}
+		else if(strcmp(key, "--client_command")==0)
+		{
+			httpserver->g_client_command = new char[strlen(value)+1];
+			strcpy(httpserver->g_client_command,value);
+		}
+		else if(strcmp(key, "--enable_memory_collection")==0)
+		{
+			httpserver->g_enable_memory_collection = new char[strlen(value)+1];
+			strcpy(httpserver->g_enable_memory_collection,value);
+		}
+	}
+}
 int main( int   argc,
           char *argv[] )
 {
-    HttpServer httpserver;
+	//get the parameters from cmd line
+	//printf("argc is %d\n", argc);	
+    HttpServer httpserver; 
+    if (argc > 1)
+	{
+		parse(argc,argv,&httpserver);	
+	}   
+	
+	/*printf("%s\n",httpserver.g_port);
+	printf("%s\n",httpserver.g_hide_status);
+	printf("%s\n",httpserver.g_pid_log);
+	printf("%s\n",httpserver.g_test_suite);
+	printf("%s\n",httpserver.g_exe_sequence);
+	printf("%s\n",httpserver.g_client_command);
+	printf("%s\n",httpserver.g_enable_memory_collection);*/
     httpserver.StartUp();
 
     return 0;
