@@ -28,8 +28,8 @@ import requests
 import json
 import re
 
-
-def http_request(self, url, rtype="POST", data=None):
+def http_request(url, rtype="POST", data=None):
+    """http request to the device http server"""
     result = None
     if rtype == "POST":
         headers = {'content-type': 'application/json'}
@@ -95,14 +95,19 @@ class HttpCommThread(threading.Thread):
     def __init__(self, test_block_queue):
         threading.Thread.__init__(self)
         self.data_queue = test_block_queue
-        self.http_result = {}
+        self.http_result = {"cases":[]}
+
+    def set_result(self, result_data):
+        """set http result response to the result buffer"""
+        if "cases" in result_data:
+            self.http_result["cases"].extend(result_data["cases"])
 
     def get_result(self):
-        """get http result"""
+        """get http result buffer"""
         return self.http_result
 
     def run(self):
-        if self.http_queue is None:
+        if self.data_queue is None:
             return
 
         for test_block in self.data_queue:
@@ -118,7 +123,8 @@ class HttpCommThread(threading.Thread):
                 if ret["finished"] == "2":
                     ret =  http_request("http://127.0.0.1:8080/get_test_result", "GET", {})
                     ## to process for result 
-                    ## self.http_result
+                    if not ret is None:
+                        self.set_result(ret)
                     break
                 else:
                     time.sleep(0.3)
@@ -284,7 +290,7 @@ class TizenMobile:
         return True
 
     def get_test_status(self, sessionid):
-        """"""
+        """poll the test task status"""
         result = {}
         if sessionid is None: 
             return result
@@ -313,6 +319,7 @@ class TizenMobile:
         return result      
 
     def get_test_result(self, sessionid):
+        """get the test result for a test set """
         result = {}
         if sessionid is None: 
             return result
@@ -343,6 +350,7 @@ class TizenMobile:
         return result
 
     def finalize_test(self, sessionid):
+        """clear the test stub and related resources"""
         if sessionid is None: return False
         data = {"sessionid": sessionid}
         ret = http_request(self.__get_url("/shut_down_server"), "GET", data)
