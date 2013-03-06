@@ -45,6 +45,9 @@ def main(argvs):
     ret = None
     subcmd = argvs[1]
     conn = Connector({"testremote":"tizenMobile"}).get_connector()
+    if conn is None:
+        print "Testremote instance is not initialized successfully!"        
+        return
     if subcmd == "get_device_ids":
         ret = conn.get_device_ids()
     elif subcmd == "get_device_info":
