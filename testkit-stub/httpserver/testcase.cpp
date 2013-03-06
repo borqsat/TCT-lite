@@ -5,6 +5,7 @@
 
 TestCase::TestCase()
 {
+        order = NULL;
         case_id = NULL;
         purpose = NULL;
         entry = NULL;
@@ -13,11 +14,17 @@ TestCase::TestCase()
         post_con = NULL;
         steps = NULL;
 
+        stdout = NULL;
+
         timeout = 90;
 }
 
 TestCase::~TestCase()
 {
+        if (order) {
+                delete[] order;
+                order = NULL;
+        }
         if (case_id) {
                 delete[] case_id;
                 case_id = NULL;
@@ -47,9 +54,9 @@ TestCase::~TestCase()
                 steps = NULL;
         }
 
-        if (msg) {
-                delete msg;
-                msg = NULL;
+        if (stdout) {
+                delete stdout;
+                stdout = NULL;
         }
 }
 
@@ -59,6 +66,8 @@ void TestCase::get_string_value(JsonReader *reader, const char* key, char** valu
         const char* tmp = json_reader_get_string_value (reader);
         json_reader_end_member (reader);
         if (!tmp) return;
+
+        json_len += strlen("\"") + strlen(key) + strlen("\":\"") + strlen(tmp) + strlen("\",");
 
         printf("=========%s:%s\n", key, tmp);
         *value = new char[strlen(tmp)+1];
@@ -77,10 +86,8 @@ void TestCase::init(char* case_node)
 
         JsonReader *reader = json_reader_new (json_parser_get_root (parser));
 
-        json_reader_read_member (reader, "order");
-        order = json_reader_get_int_value (reader);
-        json_reader_end_member (reader);
-
+        json_len = strlen("{");
+        get_string_value(reader, "order", &order);
         get_string_value(reader, "case_id", &case_id);
         get_string_value(reader, "purpose", &purpose);
         get_string_value(reader, "test_script_entry", &entry);
@@ -111,40 +118,52 @@ bool TestCase::is_manual()
 
 void TestCase::to_json(char* str)
 {
-        sprintf(str, "{\"purpose\":%s, \"entry\":%s, \"expected\":%s, \"case_id\":%s, \"pre_condition\":%s, \"post_condition\":%s, \"steps\":%s, \"order\":%d}", purpose, entry, e_result, case_id, pre_con, post_con, steps, order);
+        sprintf(str, "{\"purpose\":\"%s\",\"entry\":\"%s\",\"expected\":\"%s\",\"case_id\":\"%s\",\"pre_condition\":\"%s\",\"post_condition\":\"%s\",\"steps\":\"%s\",\"order\":\"%s\"}", purpose, entry, e_result, case_id, pre_con, post_con, steps, order);
 }
 
-void TestCase::set_result(char* test_result, char* test_msg)
+void TestCase::result_to_json(char* str)
+{
+    if (stdout)
+        sprintf(str, "{\"order\":\"%s\",\"case_id\":\"%s\",\"result\":\"%s\",\"stdout\":\"%s\",\"start_time\":\"%s\",\"end_time\":\"%s\"}", order, case_id, result, stdout, start_at, end_at);
+    else
+        sprintf(str, "{\"order\":\"%s\",\"case_id\":\"%s\",\"result\":\"%s\"}", order, case_id, result);
+
+    result_json_len = strlen(str);
+}
+
+void TestCase::set_result(char* test_result, char* test_msg, char* end_time)
 {
         is_executed = true;
         cancel_time_check();
 
-        strcpy(result, test_result);
+        if (test_result) 
+        {
+            memset(result, 0, 8);
+            strcpy(result, test_result);
+        }
 
-        if (msg) delete[] msg;
-        msg = new char[strlen(test_msg)+1];
-        if (msg) strcpy(msg, test_msg);
+        if (stdout) delete[] stdout;
+        stdout = NULL;
+        if (!test_msg) return;// no need to set end_time if no error message
 
-        /*self.xml_node.set("result", test_result)
-        if self.xml_node.find("./result_info") is not None:
-            self.xml_node.remove(self.xml_node.find("./result_info"))
+        stdout = new char[strlen(test_msg)+1];
+        if (stdout) 
+        {
+                memset(stdout, 0, strlen(test_msg)+1);
+                strcpy(stdout, test_msg);
+        }
 
-        result_info = ElementTree.SubElement(self.xml_node, "result_info")
-        actual_result = ElementTree.SubElement(result_info, "actual_result")
-        actual_result.text = str(test_result)
-        
-        start  = ElementTree.SubElement(result_info, "start")
-        end    = ElementTree.SubElement(result_info, "end")
-        stdout = ElementTree.SubElement(result_info, "stdout") 
-
-        start.text  = str(self.start_at)
-        end.text    = str(datetime.now())
-        stdout.text = self.msg*/ 
+        if (end_time) 
+        {
+            memset(end_at, 0, 32);
+            strcpy(end_at, end_time);
+        }
 }
 
-void TestCase::set_start_at(int start_at, void(*fn)(int))
+void TestCase::set_start_at(char *start_time, void(*fn)(int))
 {
-        this->start_at = start_at;
+        memset(start_at, 0, 32);
+        strcpy(start_at, start_time);
         if (timeout > 0) {
             memset ( &sa, 0, sizeof ( sa ) ) ;
 
@@ -152,9 +171,9 @@ void TestCase::set_start_at(int start_at, void(*fn)(int))
             sigaction ( SIGALRM, &sa, NULL );
 
             timer.it_value.tv_sec = 0 ;
-            timer.it_value.tv_usec = 100000;
+            timer.it_value.tv_usec = 900000;
             timer.it_interval.tv_sec = 0;
-            timer.it_interval.tv_usec = 100000 ;
+            timer.it_interval.tv_usec = 900000 ;
 
             setitimer ( ITIMER_REAL, &timer, NULL ) ;
         }

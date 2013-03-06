@@ -1,14 +1,23 @@
 #include <stdio.h>
-//#include <sys/socket.h>
-////#include <netinet/in.h>
-////#include <errno.h>
-////#include <netdb.h>
-//#include <sys/types.h>
-//#include <stdio.h>
-//#include <sys/ioctl.h>
-//#include <net/if.h>
 #include <string.h>
 #include "testcase.h"
+
+void timer_handler(int signum);
+
+typedef struct HttpRequest
+{
+    char method[20];    // request type
+    char *path;         // request path
+    char *content;      // request content
+    int  contentlength; // length of request length
+    int  contenttype;   // response content type
+    int  rangeflag;     // below three are for send if disconnect. they are start, end and total length of a disconnected file.
+    long rangestart;
+    long rangeend;
+    long rangetotal;
+    char prefix[20];
+    int  responsecode;  //response code
+} HR;
 
 class HttpServer
 {
@@ -26,6 +35,14 @@ public:
     void get_string_value(JsonReader *reader, const char *key, char **value);
     void init_test(char *content);
     int getrequest(char *requestbuf,struct HttpRequest *prequest);
+    bool get_auto_case(char *content,char **type);
+    void checkResult(TestCase* testcase);
+    void killAllWidget();
+    void start_client(char* cmd);
+
+    void find_purpose(struct HttpRequest *prequest, bool auto_test);
+    void getCurrentTime();
+    char m_str_time[32];
 //    int Send(char* data, int len);
 //    int Recv(char* data, int len);
 //    int RecvByLine(char* data, int len);
@@ -36,16 +53,12 @@ public:
     int clientsocket;
     //int serversocket;
     bool is_finished;
-    char session_id[256];
-
+    //char session_id[256];
     int start_auto_test;
-    pid_t client_process_id;
-    char* client_command;
-    void checkResult(TestCase* testcase);
-    void killAllWidget();
-    void start_client(char* cmd);
+    pid_t client_process_id;    
 
-protected:
+
+//protected:
     //
 //    zfqstring m_hostaddr;
 //    unsigned short m_hostport;
@@ -67,20 +80,39 @@ protected:
     int gServerStatus;
 
     //block   
-    int m_totalBlocks;
-    int m_currentIndex;
-    int m_caseCount;
+    char *m_totalBlocks;
+    char *m_current_block_index;
+    char *m_totalcaseCount_str;
+    int m_totalcaseCount;
     char *m_exeType;//auto;muanul
     char *m_type;
-    TestCase *m_testcase;
+    TestCase *m_test_cases;
+
+    int m_case_index;   //current case index 
+    int m_block_case_count; //case count in every block
 
     //TestStatus
     int m_finished;
 
-    char *m_suiteName;
-    char *m_setName;
+    //char *m_suiteName;
+    //char *m_setName;
 
     //TestResult
     //int m_caseCount;
 
+    int m_start_auto_test;
+    char *m_running_session;
+    
+    char *m_last_auto_result;
+    bool m_need_restart_client;
+
+
+    //some variables get from cmd line
+    char *g_port;
+    char *g_hide_status;
+    char *g_pid_log;
+    char *g_test_suite;
+    char *g_exe_sequence;
+    char *g_client_command;
+    char *g_enable_memory_collection;
 };
