@@ -20,6 +20,7 @@
 #              Liu ChengTao <liux.chengtao@intel.com>
 
 import os
+import time
 import string
 import threading
 import subprocess
@@ -56,11 +57,11 @@ def shell_command(cmdline):
 class SdbCommThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
     def __init__(self, cmd=None, endflag=None):
+        threading.Thread.__init__(self)
         self.stdout = []
         self.stderr = []
         self.cmdline = cmd
         self.endflag = endflag
-        threading.Thread.__init__(self)
 
     def get_ouput(self):
         """get stdout for sdb shell command"""
@@ -87,6 +88,40 @@ class SdbCommThread(threading.Thread):
 
             if (not proc.poll is None) or break_flag:
                 break
+
+class HttpCommThread(threading.Thread):
+
+    """sdb communication for serve_forever app in async mode"""
+    def __init__(self, test_block_queue):
+        threading.Thread.__init__(self)
+        self.data_queue = test_block_queue
+        self.http_result = {}
+
+    def get_result(self):
+        """get http result"""
+        return self.http_result
+
+    def run(self):
+        if self.http_queue is None:
+            return
+
+        for test_block in self.data_queue:
+            ret = http_request("http://127.0.0.1:8080/test_init", "POST", test_block)
+            if ret is None:
+                break
+
+            while True:
+                ret =  http_request("http://127.0.0.1:8080/check_server_status", "GET", {})
+                if ret is None:
+                    break
+                ### check if test set block is finished
+                if ret["finished"] == "2":
+                    ret =  http_request("http://127.0.0.1:8080/get_test_result", "GET", {})
+                    ## to process for result 
+                    ## self.http_result
+                    break
+                else:
+                    time.sleep(0.3)
 
 class TizenMobile:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
@@ -190,15 +225,18 @@ class TizenMobile:
 
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
         self.__test_async_shell = SdbCommThread(cmd, None)
+        self.__test_async_shell.start()
         ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
         result = False
-        interval = 30
         timecnt = 0
+        interval = 0.2
         while True:
-            if timecnt > 3000: break
+            if timecnt > 5:
+                result = False
+                break
             ret = http_request(self.__get_url("/check_server"), "GET", {})
-            #check server is ready
             if ret is None:
+                time.sleep(interval)
                 timecnt += interval
             else:
                 result = True
@@ -222,7 +260,7 @@ class TizenMobile:
             blknum = casecount / self.__test_set_block + 1
 
         idx = 1
-        self.test_set_blocks = []
+        self.__test_set_blocks = []
         self.__test_set_counter = 1
         while idx <= blknum:
             block_data = {}
@@ -237,13 +275,12 @@ class TizenMobile:
             else: 
                 end = idx * self.__test_set_block
             block_data["cases"] = cases[start:end]
-            self.test_set_blocks.append(block_data)
+            self.__test_set_blocks.append(block_data)
             idx += 1
 
-        #for data in self.test_set_blocks:
-        #    ret = http_request(self.__get_url("/init_test"), "POST", data)
-        #if ret: result = True
-        #return result
+        self.__test_async_http = HttpCommThread(self.__test_set_blocks)
+        self.__test_async_http.start()
+
         return True
 
     def get_test_status(self, sessionid):
@@ -261,7 +298,7 @@ class TizenMobile:
             if ret:
                 result["msg"] = ret
             else:
-                result["msg"] = ""
+                result["msg"] = []
 
         #total = str(self.__test_set_casecount)
         #current = str(self.__test_set_counter)
@@ -279,12 +316,15 @@ class TizenMobile:
         result = {}
         if sessionid is None: 
             return result
-        data = {"sessionid": sessionid}
-        result = http_request(self.__get_url("/get_test_result"), "GET", data)
-        
+
+        try:    
+            result = self.__test_async_http.get_result()
+        except Exception, e:
+            print e
+
         # result["cases"] = []
         # count = 0
-        # for data in self.test_set_blocks:
+        # for data in self.__test_set_blocks:
         #     result["casecount"] = data["casecount"]
         #     cases = data["cases"]
         #     for item in cases:
