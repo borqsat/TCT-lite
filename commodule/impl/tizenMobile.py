@@ -22,7 +22,7 @@
 import os
 import time
 import string
-import threading
+import threading, thread
 import subprocess
 import requests
 import json
@@ -33,13 +33,20 @@ def http_request(url, rtype="POST", data=None):
     result = None
     if rtype == "POST":
         headers = {'content-type': 'application/json'}
-        ret = requests.post(url, data=json.dumps(data), headers=headers)
-        if ret: 
-            result = ret.json()
+        try:
+            ret = requests.post(url, data=json.dumps(data), headers=headers)
+            if ret: 
+                result = ret.json()
+        except requests.exceptions.ConnectionError:
+            result = None
     elif rtype == "GET":
-        ret = requests.get(url, params=data)
-        if ret: 
-            result = ret.json()
+        try:        
+            ret = requests.get(url, params=data)
+            if ret: 
+                result = ret.json()
+        except requests.exceptions.ConnectionError:
+            result = None
+
     return result
 
 def shell_command(cmdline):
@@ -54,6 +61,8 @@ def shell_command(cmdline):
     stdout = proc.stdout.readlines()
     return stdout
 
+stdout_buffer = []
+stderr_buffer = []
 class SdbCommThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
     def __init__(self, cmd=None, endflag=None):
@@ -63,29 +72,25 @@ class SdbCommThread(threading.Thread):
         self.cmdline = cmd
         self.endflag = endflag
 
-    def get_ouput(self):
-        """get stdout for sdb shell command"""
-        stdout = self.stdout
-        self.stdout = []
-        return stdout
-
     def run(self):
         proc = subprocess.Popen(self.cmdline,
                                 shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         while True:
-            outlines = proc.stdout.readlines()
-            errlines = proc.stderr.readlines()
-            self.stdout.extend(outlines)
-            self.stderr.extend(errlines)
+            outlines = proc.stdout.readline()
+            errlines = proc.stderr.readline()
 
-            break_flag = False
-            for line in outlines:
-                if string.find(line, self.endflag) != -1:
-                    break_flag = True
-                    break
+            stdout_buffer.append(outlines)
+            stderr_buffer.append(errlines)
 
+            print outlines
+
+            # break_flag = False
+            # for line in outlines:
+            #     if string.find(line, self.endflag) != -1:
+            #         break_flag = True
+            #         break
             if (not proc.poll is None) or break_flag:
                 break
 
@@ -225,15 +230,16 @@ class TizenMobile:
     def init_test(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
         if not "stub-entry" in params:
-            stub_entry = "testkit-stub"
+            stub_entry = "/tmp/httpserver"
         else:
             stub_entry = params["stub-entry"]
 
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
-        self.__test_async_shell = SdbCommThread(cmd, None)
+        self.__test_async_shell = SdbCommThread(cmd, "bye")
         self.__test_async_shell.start()
         ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
         result = False
+        time.sleep(3)
         timecnt = 0
         interval = 0.2
         while True:
@@ -291,18 +297,21 @@ class TizenMobile:
 
     def get_test_status(self, sessionid):
         """poll the test task status"""
-        result = {}
         if sessionid is None: 
-            return result
+            return None
         data = {"sessionid": sessionid}
-        ret = http_request(self.__get_url("/check_server_status"), "GET", data)
-        if ret is None: return result
-        finished = ret["finished"]
+        ret = http_request(self.__get_url("/check_server_status"), "GET", {})
+        if ret is None:
+            return None
+        result = {}
         result["finished"] = ret["finished"]
-        if finished == "0":#running status
-            ret = self.__test_async_shell.get_ouput()
-            if ret:
-                result["msg"] = ret
+        global stdout_buffer
+        if result["finished"] == 0: #running status
+            output = stdout_buffer
+            stdout_buffer = []
+
+            if not output is None:
+                result["msg"] = output
             else:
                 result["msg"] = []
 
@@ -353,7 +362,7 @@ class TizenMobile:
         """clear the test stub and related resources"""
         if sessionid is None: return False
         data = {"sessionid": sessionid}
-        ret = http_request(self.__get_url("/shut_down_server"), "GET", data)
+        ret = http_request(self.__get_url("/shut_down_server"), "GET", {})
         if not ret is None:
             return True
         else:
