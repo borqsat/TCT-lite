@@ -242,7 +242,7 @@ Note: \n\
     else:
         COMMODULE_TYPE = "tizenMobile"
 
-    CONNECTOR = Connector({"testRemote": "tizenMobile"}).get_connector()
+    CONNECTOR = Connector({"testremote": "tizenMobile"}).get_connector()
     if CONNECTOR == None:
         print "[ Error: init commodule error... ]\n"
         sys.exit(1)
