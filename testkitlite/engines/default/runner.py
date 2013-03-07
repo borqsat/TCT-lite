@@ -83,6 +83,7 @@ class TRunner:
         self.pid_log = None
         self.set_parameters = {}
         self.connector = connector
+        self.stub_name = "httpserver"
 
     def set_global_parameters(self, options):
         "get all options "
@@ -106,6 +107,9 @@ class TRunner:
         # set the external test WRTLauncher
         if options.exttest:
             self.external_test = options.exttest
+        #set stub name
+        if options.stubname:
+            self.stub_name = options.stubname         
 
     def set_pid_log(self, pid_log):
         """ get pid_log file """
@@ -913,14 +917,15 @@ class TRunner:
             else com_module send the test case to devices
         """
         starup_prms = self.__prepare_starup_parameters(testxml)
-        try:
-            # init stub and get the session_id
-            session_id = self.connector.init_test(self.deviceid, starup_prms)
-            self.set_session_id(session_id)
-            return True
-        except Exception, error:
+        # init stub and get the session_id
+        session_id = self.connector.init_test(self.deviceid, starup_prms)
+        if session_id == None:
             print "[ Error: Initialization Error, error: %s ]" % error
             return False
+        else:
+            self.set_session_id(session_id)
+            return True
+
 
     def __prepare_starup_parameters(self, testxml):
         """ prepare_starup_parameters """
@@ -930,8 +935,9 @@ class TRunner:
         try:
             parse_tree = etree.parse(testxml)
             tsuite = parse_tree.getroot().getiterator('suite')[0]
-            starup_parameters['stub-entry'] = tsuite.get("launcher")
+            starup_parameters['client-command'] = tsuite.get("launcher")
             starup_parameters['pkg-name'] = tsuite.get("name")
+            starup_parameters['stub-name'] = self.stub_name
         except IOError, error:
             print "[ Error: prepare starup parameters, error: %s ]" % error
         return starup_parameters
@@ -981,7 +987,7 @@ class TRunner:
         elif session_status["finished"] == "1":
             return True
         else:
-            print "[ session status error ,pls finilize test ]\n"
+            print "[ session status error ,pls finalize test ]\n"
             return False
 
 
