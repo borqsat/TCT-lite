@@ -936,7 +936,7 @@ class TRunner:
             parse_tree = etree.parse(testxml)
             tsuite = parse_tree.getroot().getiterator('suite')[0]
             starup_parameters['client-command'] = tsuite.get("launcher")
-            starup_parameters['pkg-name'] = tsuite.get("name")
+            starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['stub-name'] = self.stub_name
         except IOError, error:
             print "[ Error: prepare starup parameters, error: %s ]" % error
