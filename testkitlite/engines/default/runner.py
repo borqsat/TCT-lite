@@ -82,7 +82,7 @@ class TRunner:
         self.session_id = None
         self.pid_log = None
         self.set_parameters = {}
-        self.connector = connector        
+        self.connector = connector
 
     def set_global_parameters(self, options):
         "get all options "
@@ -974,15 +974,9 @@ class TRunner:
         # session_status["finished"] == "0" is running
         # session_status["finished"] == "1" is end
         if session_status["finished"] == "0":
-            progress_json = session_status["progress"]
-            try:
-                print "Total: %s, Current: %s\nLast Case Result: %s" % \
-                    (progress_json["total"],
-                     progress_json["current"],
-                     progress_json["last_test_result"])
-            except KeyError, error:
-                print "[ Error: fail to get test progress infomation, \
-                error: %s ]\n" % error
+            progress_msg_list = session_status["msg"]
+            for line in progress_msg_list:
+                print line,
             return False
         elif session_status["finished"] == "1":
             return True
