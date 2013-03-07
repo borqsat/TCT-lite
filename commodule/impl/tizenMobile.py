@@ -20,6 +20,7 @@
 #              Liu ChengTao <liux.chengtao@intel.com>
 
 import os
+import sys
 import time
 import string
 import threading, thread
@@ -63,10 +64,11 @@ def shell_command(cmdline):
 
 stdout_buffer = []
 stderr_buffer = []
+
 class SdbCommThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
     def __init__(self, cmd=None, endflag=None):
-        threading.Thread.__init__(self)
+        super(SdbCommThread, self).__init__()
         self.stdout = []
         self.stderr = []
         self.cmdline = cmd
@@ -77,28 +79,31 @@ class SdbCommThread(threading.Thread):
                                 shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
+        global stdout_buffer
+        global stderr_buffer
+        
         while True:
-            outlines = proc.stdout.readline()
-            errlines = proc.stderr.readline()
+            outlines = proc.stdout.readlines()
+            errlines = proc.stderr.readlines()
 
-            stdout_buffer.append(outlines)
-            stderr_buffer.append(errlines)
+            stdout_buffer.extend(outlines)
+            stderr_buffer.extend(errlines)
 
-            print outlines
-
+            for l in stdout_buffer:
+                print l, 
             # break_flag = False
             # for line in outlines:
             #     if string.find(line, self.endflag) != -1:
             #         break_flag = True
             #         break
-            if (not proc.poll is None) or break_flag:
+            if not proc.poll is None:
                 break
 
 class HttpCommThread(threading.Thread):
 
     """sdb communication for serve_forever app in async mode"""
     def __init__(self, test_block_queue):
-        threading.Thread.__init__(self)
+        super(HttpCommThread, self).__init__()
         self.data_queue = test_block_queue
         self.http_result = {"cases":[]}
 
@@ -116,23 +121,23 @@ class HttpCommThread(threading.Thread):
             return
 
         for test_block in self.data_queue:
-            ret = http_request("http://127.0.0.1:8080/test_init", "POST", test_block)
+            ret = http_request("http://127.0.0.1:8080/init_test", "POST", test_block)
             if ret is None:
                 break
 
             while True:
                 ret =  http_request("http://127.0.0.1:8080/check_server_status", "GET", {})
+                print "check_server_status",ret
                 if ret is None:
                     break
                 ### check if test set block is finished
-                if ret["finished"] == "2":
+                if ret["finished"] == 1:
                     ret =  http_request("http://127.0.0.1:8080/get_test_result", "GET", {})
                     ## to process for result 
                     if not ret is None:
                         self.set_result(ret)
                     break
-                else:
-                    time.sleep(0.3)
+                time.sleep(3)
 
 class TizenMobile:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
@@ -229,12 +234,27 @@ class TizenMobile:
 
     def init_test(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
-        if not "stub-entry" in params:
-            stub_entry = "/tmp/httpserver"
-        else:
-            stub_entry = params["stub-entry"]
 
+        print "init_test entry"
+        if params is None:
+            return None
+
+        if not "stub-name" in params:
+            print "\"stub-name\" is required for launch!"
+            return None
+
+        if not "testsuite-name" in params:
+            print "\"testsuite-name\" is required for launch!"
+            return None
+
+        if not "client-command" in params:
+            print "\"client-command\" is required for launch!"
+            return None
+
+        stub_entry = "%s --testsuite:%s --client-command:%s" % \
+                    (params["stub-name"], params["testsuite-name"], params["client-command"] )
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
+        print cmd
         self.__test_async_shell = SdbCommThread(cmd, "bye")
         self.__test_async_shell.start()
         ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
@@ -243,6 +263,7 @@ class TizenMobile:
         timecnt = 0
         interval = 0.2
         while True:
+            print "check server ", result
             if timecnt > 5:
                 result = False
                 break
@@ -253,10 +274,14 @@ class TizenMobile:
             else:
                 result = True
                 break
+        print "startup server ", result
         return result
 
     def run_test(self, sessionid, test_set):
         """process the execution of a test set"""
+
+        print "run_test entry"
+
         if sessionid is None: 
             return False
         if not "casecount" in test_set : 
@@ -288,6 +313,8 @@ class TizenMobile:
                 end = idx * self.__test_set_block
             block_data["cases"] = cases[start:end]
             self.__test_set_blocks.append(block_data)
+            print "[=====================block[%d]========================]" % idx
+            print block_data
             idx += 1
 
         self.__test_async_http = HttpCommThread(self.__test_set_blocks)
@@ -304,28 +331,17 @@ class TizenMobile:
         if ret is None:
             return None
         result = {}
-        result["finished"] = ret["finished"]
+        result["finished"] = str(ret["finished"])
         global stdout_buffer
-        if result["finished"] == 0: #running status
+        if result["finished"] == "0": #running status
             output = stdout_buffer
             stdout_buffer = []
-
+            print "output", stdout_buffer
             if not output is None:
                 result["msg"] = output
             else:
                 result["msg"] = []
-
-        #total = str(self.__test_set_casecount)
-        #current = str(self.__test_set_counter)
-        #if self.__test_set_counter  != self.__test_set_casecount:
-        #    if self.__test_set_counter % 4 == 0: caseresult = "FAIL"
-        #    else: caseresult = "PASS"
-        #    result = {"finished":"0", "progress":{"total":total, "current":current,"last_test_result":caseresult}}  
-        #else:
-        #    result = {"finished":"1"}
-
-        #self.__test_set_counter += 1
-        return result      
+        return result
 
     def get_test_result(self, sessionid):
         """get the test result for a test set """
