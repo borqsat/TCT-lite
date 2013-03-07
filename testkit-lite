@@ -190,7 +190,10 @@ try:
                     help="set sdb device serial information"),
         make_option("--comm", dest="commodule",
                     action="store",
-                    help="set commodule type")
+                    help="set commodule type"),
+        make_option("--stubname", dest="stubname",
+                    action="store",
+                    help="set stub name")
     ]
 
     option_list.extend(map(lambda flt:
