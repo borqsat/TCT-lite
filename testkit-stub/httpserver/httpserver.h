@@ -25,15 +25,12 @@ public:
     HttpServer();
     virtual ~HttpServer();
 public:
-
-    void StartUp();
-   // static void* processthread(void *para);
+    void StartUp();   
     void processpost(int s,struct HttpRequest *prequest);
     void sendresponse(int s,int code,struct HttpRequest *prequest, char* content);
     int sendsegment(int s, char *buffer,int length);
     void parse_json_str(char *jsonstr);
     void get_string_value(JsonReader *reader, const char *key, char **value);
-    void init_test(char *content);
     int getrequest(char *requestbuf,struct HttpRequest *prequest);
     bool get_auto_case(char *content,char **type);
     void checkResult(TestCase* testcase);
@@ -52,30 +49,10 @@ public:
     int gIsRun;
     int clientsocket;
     //int serversocket;
-    bool is_finished;
+    //bool is_finished;
     //char session_id[256];
     int start_auto_test;
-    pid_t client_process_id;    
-
-
-//protected:
-    //
-//    zfqstring m_hostaddr;
-//    unsigned short m_hostport;
-//    //
-//    zfqstring m_id;
-//    zfqstring m_pwd;
-//    //
-//    zfqstring m_loginid;
-//    zfqstring m_loginpwd;
-//    //
-//    zfqstring m_postdata;
-//    zfqstring m_page;
-//    DWORD m_method;
-//    DWORD m_contentlength;
-    //
-    //socket m_socket;
-
+    pid_t client_process_id; 
      
     int gServerStatus;
 
@@ -84,12 +61,16 @@ public:
     char *m_current_block_index;
     char *m_totalcaseCount_str;
     int m_totalcaseCount;
-    char *m_exeType;//auto;muanul
+    int m_total_case_index; //current case index in set
+    char *m_exeType;//auto;manual
     char *m_type;
     TestCase *m_test_cases;
 
-    int m_case_index;   //current case index 
+    int m_case_index;   //current case index in block
     int m_block_case_count; //case count in every block
+
+    bool m_block_finished;
+    bool m_set_finished;
 
     //TestStatus
     int m_finished;

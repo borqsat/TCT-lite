@@ -4,7 +4,6 @@
 #include <errno.h>
 #include <netdb.h>
 #include <sys/types.h>
-#include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -40,8 +39,10 @@ HttpServer::HttpServer()
 {
     m_test_cases = NULL;
 
-    is_finished = false;
-    m_exeType = NULL;//auto;muanul
+    //is_finished = false;
+    m_exeType = new char[8];
+    memset(m_exeType, 0, 8);
+    strcpy(m_exeType, "auto");// set default to auto
     m_type = NULL;
     /*m_suiteName = NULL;
     m_setName = NULL;*/
@@ -61,7 +62,9 @@ HttpServer::HttpServer()
     g_test_suite = NULL;
     g_exe_sequence = NULL;
     g_client_command = NULL;
-    g_enable_memory_collection= NULL;
+    g_enable_memory_collection = NULL;
+    m_block_finished = false;
+    m_set_finished = false;
 }
 
 HttpServer::~HttpServer()
@@ -215,12 +218,13 @@ int HttpServer::getrequest(char *requestbuf,struct HttpRequest *prequest)
     int i = 0;
     if(sscanf(requestbuf, "%s %s %s", prequest->method, path, protocol)!=3)
             return BAD_REQUEST;
+    printf("%s\n", requestbuf);
 
     if(strchr(path, '?') == NULL)
     {
-        // check whether last character is /. add index.html if it is /
+        /*// check whether last character is /. add index.html if it is /
         if(path[strlen(path)-1] == '/')
-                strcat(path,"index.html");
+                strcat(path,"index.html");*/
         sprintf(prequest->path,"%s",path);
         // get suffix. set to * if no suffix
         if(sscanf(path, "%s.%s", path, prequest->prefix)!=2)
@@ -233,6 +237,7 @@ int HttpServer::getrequest(char *requestbuf,struct HttpRequest *prequest)
         if (s1)
         {
             printf("s1.length %d\n",strlen(s1));
+            printf("s1 %s\n",s1);
             prequest->content = new char[strlen(s1)+1];
             memset(prequest->content,0,strlen(s1)+1);
             strcpy(prequest->content,s1+4);
@@ -262,9 +267,13 @@ int HttpServer::getrequest(char *requestbuf,struct HttpRequest *prequest)
 
 void HttpServer::get_string_value(JsonReader *reader, const char *key, char **value)
 {
-    json_reader_read_member (reader, key);
+    printf("key is %s\n",key);
+    bool key_exist = json_reader_read_member (reader, key);
+    if (key_exist == false)
+        return;
+
     const char* tmp;
-    if (key == "cases")
+    if (strcmp(key ,"cases") == 0)
     {
         bool is_array = json_reader_is_array(reader);
         printf("%d\n",is_array);
@@ -284,29 +293,45 @@ void HttpServer::get_string_value(JsonReader *reader, const char *key, char **va
                 m_test_cases[i].json_len = strlen("{");
 
                 get_string_value(reader, "order", &m_test_cases[i].order);
-                m_test_cases[i].json_len += strlen("\"order\":\"") + strlen(m_test_cases[i].order) + strlen("\",");
-                printf("m_test_cases[i].order is %s\n", m_test_cases[i].order);
+                if (m_test_cases[i].order ){
+                    m_test_cases[i].json_len += strlen("\"order\":\"") + strlen(m_test_cases[i].order) + strlen("\",");
+                    printf("m_test_cases[i].order is %s\n", m_test_cases[i].order);
+                }
 
                 get_string_value(reader, "case_id", &m_test_cases[i].case_id);
-                m_test_cases[i].json_len += strlen("\"case_id\":\"") + strlen(m_test_cases[i].case_id) + strlen("\",");
-                printf("m_test_cases[i].case_id is %s\n",m_test_cases[i].case_id);
+                if (m_test_cases[i].case_id )
+                {
+                    m_test_cases[i].json_len += strlen("\"case_id\":\"") + strlen(m_test_cases[i].case_id) + strlen("\",");
+                    printf("m_test_cases[i].case_id is %s\n",m_test_cases[i].case_id); 
+                }
                 
                 get_string_value(reader, "purpose", &m_test_cases[i].purpose);
-                m_test_cases[i].json_len += strlen("\"purpose\":\"") + strlen(m_test_cases[i].purpose) + strlen("\",");
-                printf("m_test_cases[i].purpose is %s\n",m_test_cases[i].purpose);
+                if (m_test_cases[i].purpose )
+                {
+                    m_test_cases[i].json_len += strlen("\"purpose\":\"") + strlen(m_test_cases[i].purpose) + strlen("\",");
+                    printf("m_test_cases[i].purpose is %s\n",m_test_cases[i].purpose);
+                }
 
-                /*
-                get_string_value(reader, "test_script_entry", &m_testcase[i].entry);
-                m_test_cases[i].json_len += strlen("\"test_script_entry\":\"") + strlen(m_test_cases[i].entry) + strlen("\",");
-                get_string_value(reader, "pre_condition", &m_testcase[i].pre_con);
-                m_test_cases[i].json_len += strlen("\"pre_condition\":\"") + strlen(m_test_cases[i].pre_con) + strlen("\",");
-                get_string_value(reader, "post_condition", &m_testcase[i].post_con);
-                m_test_cases[i].json_len += strlen("\"post_condition\":\"") + strlen(m_test_cases[i].post_con) + strlen("\",");
-                get_string_value(reader, "step_desc", &m_testcase[i].steps);
-                m_test_cases[i].json_len += strlen("\"step_desc\":\"") + strlen(m_test_cases[i].steps) + strlen("\",");
-                get_string_value(reader, "expected", &m_testcase[i].e_result);
-                m_test_cases[i].json_len += strlen("\"expected\":\"") + strlen(m_test_cases[i].e_result) + strlen("\"}");
-                */
+                
+                get_string_value(reader, "test_script_entry", &m_test_cases[i].entry);                
+                if (m_test_cases[i].entry )
+                    m_test_cases[i].json_len += strlen("\"test_script_entry\":\"") + strlen(m_test_cases[i].entry) + strlen("\",");
+                
+                get_string_value(reader, "pre_condition", &m_test_cases[i].pre_con);
+                if (m_test_cases[i].pre_con)
+                    m_test_cases[i].json_len += strlen("\"pre_condition\":\"") + strlen(m_test_cases[i].pre_con) + strlen("\",");
+                
+                get_string_value(reader, "post_condition", &m_test_cases[i].post_con);
+                if (m_test_cases[i].post_con)
+                    m_test_cases[i].json_len += strlen("\"post_condition\":\"") + strlen(m_test_cases[i].post_con) + strlen("\",");
+                
+                get_string_value(reader, "step_desc", &m_test_cases[i].steps);
+                if (m_test_cases[i].steps)
+                    m_test_cases[i].json_len += strlen("\"step_desc\":\"") + strlen(m_test_cases[i].steps) + strlen("\",");
+                
+                get_string_value(reader, "expected", &m_test_cases[i].e_result);
+                if (m_test_cases[i].e_result)
+                    m_test_cases[i].json_len += strlen("\"expected\":\"") + strlen(m_test_cases[i].e_result) + strlen("\"}");
                 json_reader_end_element (reader);
             }
         }
@@ -377,6 +402,12 @@ char* build_json_str(char **key, char **value,int len)
 
     return str;
 }
+void copy_const_str(char **to_str,const char *from_str)
+{
+    *to_str = new char[strlen(from_str)+1];
+    memset(*to_str,0,strlen(from_str)+1);
+    strcpy(*to_str,from_str);
+}
 
 void HttpServer::processpost(int s,struct HttpRequest *prequest)
 {
@@ -390,25 +421,45 @@ void HttpServer::processpost(int s,struct HttpRequest *prequest)
         printf("[ init the test suit ]\n");
         parse_json_str(prequest->content);
         if (strcmp(m_current_block_index, "1") == 0)//the first block,start client
-            start_client(g_client_command);
-        m_case_index = 0;
-        json_str = "{\"OK\":1}";
+        {
+            if (g_client_command)
+                start_client(g_client_command);
+            else
+                printf("no g_client_command\n");
+            m_total_case_index = 0;
+        }  
+        else
+            m_case_index = 0;
+
+        const char *tmp = "{\"OK\":1}";
+        copy_const_str(&json_str,tmp);
+        printf("json_str is %s\n", json_str);        
     }
     else if(strcmp(prequest->path,"/check_server") == 0)
     {
         printf("[ checking server, and found the server is running ]\n");
-        json_str = "{\"OK\":1}";
+        const char *tmp = "{\"OK\":1}";
+        copy_const_str(&json_str,tmp);
     }
     else if(strcmp(prequest->path,"/check_server_status") == 0)
     {
-        if (is_finished) 
-            json_str = "{\"finished\":1}";
-        else
-            json_str = "{\"finished\":0}";
+        const char *tmp = NULL;
+        if (m_set_finished == true) 
+            tmp = "{\"finished\":1}";
+        else{
+            if (m_block_finished == true)
+                tmp = "{\"finished\":0,\"block_finished\":1}";
+            else
+                tmp = "{\"finished\":0,\"block_finished\":0}";
+        }            
+
+        copy_const_str(&json_str,tmp);
     }
     else if(strstr(prequest->path, "/init_session_id"))
     { 
-        json_str = "{\"OK\":1}";
+        const char *tmp = "{\"OK\":1}";
+        copy_const_str(&json_str,tmp);
+
         char * para = strchr(prequest->path, '=');
         if (para) {
                 //sscanf(prequest->path, "%*[^=]%s", session_id);
@@ -422,15 +473,33 @@ void HttpServer::processpost(int s,struct HttpRequest *prequest)
     }
     else if(strcmp(prequest->path,"/shut_down_server") == 0)
     {
-        json_str = "{\"OK\":1}";
+        const char *tmp = "{\"OK\":1}";
+        copy_const_str(&json_str,tmp);
         gIsRun = 0;
     }
     else if(strcmp(prequest->path,"/ask_next_step") == 0)
     {
-        json_str = "{\"step\":\"continue\"}";
+        const char *tmp = "{\"step\":\"continue\"}";
+        copy_const_str(&json_str,tmp);
     }
     else if(strstr(prequest->path,"/auto_test_task"))
     {
+        if (!m_test_cases)
+        {
+            const char *tmp = "{\"OK\":\"no case\"}";
+            copy_const_str(&json_str,tmp);
+            sendresponse(s, 200, prequest, json_str);
+            delete[] json_str;
+            return;
+        }
+        else if (strcmp(m_exeType, "auto") != 0)
+        {
+            copy_const_str(&json_str, "{\"OK\":\"no auto case\"}");
+            sendresponse(s, 200, prequest, json_str);
+            delete[] json_str;
+            return;
+        }
+
         char *type = new char[16];
         memset(type,0,sizeof(char)*16);
 
@@ -450,14 +519,18 @@ void HttpServer::processpost(int s,struct HttpRequest *prequest)
             delete []type;
             char* tmpstr = new char[m_test_cases[m_case_index].json_len+128];
             memset(tmpstr,0,m_test_cases[m_case_index].json_len+128);
-			if (!tmpstr) 
-                json_str = "fail to allocate memory";
+			if (!tmpstr)
+            {
+                const char *tmp = "fail to allocate memory";
+                copy_const_str(&json_str,tmp);
+            }
             else
             {
                 printf("send case: m_case_index is %d\n",m_case_index);
                 m_test_cases[m_case_index].to_json(tmpstr);
                 sendresponse(s, 200, prequest, tmpstr);   
-                m_case_index++;             
+                //m_case_index++;
+				//m_total_case_index++;
                 if (tmpstr)
                 {
                    delete[] tmpstr;
@@ -469,30 +542,40 @@ void HttpServer::processpost(int s,struct HttpRequest *prequest)
     }
     else if(strstr(prequest->path,"/manual_cases"))
     {
-        if (m_block_case_count == 0) json_str = "{\"OK\":\"no case\"}";
+        if (!m_test_cases)
+        {
+            const char *tmp = "{\"OK\":\"no case\"}";
+            copy_const_str(&json_str,tmp);
+        }
+        else if (strcmp(m_exeType, "auto") == 0)
+        {
+            copy_const_str(&json_str, "{\"OK\":\"no manual case\"}");
+        }
         else
         {
-            int length = strlen("[");
+            int length = 0;
             for (int i = 0; i < m_block_case_count; i++) length += m_test_cases[i].json_len + strlen(",");
 
-            char* str = new char[length+1];
-            if (!str) json_str = "fail to allocate memory";
+            char* str = new char[length+128];
+            if (!str)
+            {
+                const char *tmp = "fail to allocate memory";
+                copy_const_str(&json_str,tmp);
+            }
             else 
             {
                 memset(str, 0, length+1);
-                char* point = str;
+                char* point = str + 1;
 
                 str[0] = '[';
-                point += 1;
                 for (int i = 0; i < m_block_case_count; i++)
                 {
                     m_test_cases[i].to_json(point);
-                    point += m_test_cases[i].json_len;
+                    point = str + strlen(str);
                     point[0] = ',';
                     point += 1;
                 }
-                str[length-1] = ']';
-                str[length] = 0;
+                str[strlen(str)-1] = ']';
 
                 sendresponse(s, 200, prequest, str);
                 delete[] str;
@@ -501,34 +584,41 @@ void HttpServer::processpost(int s,struct HttpRequest *prequest)
     }
     else if(strstr(prequest->path,"/case_time_out"))
     {
-        printf("case_time_out\n");
-        m_test_cases[m_case_index].cancel_time_check();
-        checkResult(&m_test_cases[m_case_index]);
-        json_str = "{\"OK\":\"timeout\"}";
+        if (!m_test_cases)
+        {
+            const char *tmp = "{\"OK\":\"no case\"}";
+            copy_const_str(&json_str,tmp);
+        }
+        else
+        {
+            m_test_cases[m_case_index].cancel_time_check();
+            checkResult(&m_test_cases[m_case_index]);
+
+            const char *tmp = "{\"OK\":\"timeout\"}";
+            copy_const_str(&json_str,tmp);
+        }
     }
     else if(strstr(prequest->path,"/commit_manual_result"))
     {
-        if (strlen(prequest->content) == 0) json_str = "{\"OK\":\"no case\"}";
+        if ((strlen(prequest->content) == 0) || (!m_test_cases))
+        {
+            const char *tmp = "{\"OK\":\"no case\"}";
+            copy_const_str(&json_str,tmp);
+        } 
         else
         {
             find_purpose(prequest, false);
-            json_str = "{\"OK\":1}";
+            const char *tmp = "{\"OK\":1}";
+            copy_const_str(&json_str,tmp);
         }
+        m_set_finished = true;
     }
 	else if(strstr(prequest->path,"/check_execution_progress"))
     {
-       /* m_case_count = 50;
-        m_case_index = 3;
-        if (m_last_auto_result == NULL)
-            m_last_auto_result = new char[32];
-        memset(m_last_auto_result,0,32);
-        strcpy(m_last_auto_result ,"Pass");
-        printf("Total: %d, Current: %d\nLast Case Result: %s" ,m_case_count, m_case_index, m_last_auto_result);
-        */
         char *tmpstr = new char[128];
         memset(tmpstr,0,128);
-        sprintf(tmpstr,"{\"Total\":%d,\"Current\":%d,\"Last Case Result\":\"%s\"}",m_totalcaseCount,m_case_index,m_last_auto_result);
-        printf("Total: %d, Current: %d\nLast Case Result: %s" ,m_totalcaseCount, m_case_index, m_last_auto_result);
+        sprintf(tmpstr,"{\"Total\":%d,\"Current\":%d,\"Last Case Result\":\"%s\"}",m_totalcaseCount,m_total_case_index,m_last_auto_result);
+        printf("Total: %d, Current: %d\nLast Case Result: %s" ,m_totalcaseCount, m_total_case_index, m_last_auto_result);
         sendresponse(s, 200, prequest, tmpstr);
 		delete []tmpstr;
 
@@ -541,14 +631,22 @@ void HttpServer::processpost(int s,struct HttpRequest *prequest)
     }
     else if(strcmp(prequest->path,"/generate_xml") == 0)
     {
-        if (m_block_case_count == 0) json_str = "{\"OK\":\"no case\"}";
+        if (!m_test_cases)
+        {
+            const char *tmp = "{\"OK\":\"no case\"}";
+            copy_const_str(&json_str,tmp);
+        } 
         else
         {
-            char* str = new char[128*m_block_case_count];
-            if (!str) json_str = "fail to allocate memory";
+            char* str = new char[256*m_block_case_count];
+            if (!str)
+            {
+                const char *tmp = "fail to allocate memory";
+                copy_const_str(&json_str,tmp);
+            }
             else
             {
-                memset(str, 0, 128*m_block_case_count);
+                memset(str, 0, 256*m_block_case_count);
                 char* point = str;
 
                 sprintf(str, "{\"count\":\"%d\",\"cases\":[", m_block_case_count);
@@ -571,16 +669,30 @@ void HttpServer::processpost(int s,struct HttpRequest *prequest)
 
     else if (strcmp(prequest->path,"/commit_result") == 0)//for auto case
     {
-        if (m_block_case_count == 0) 
+        if (!m_test_cases) 
         {
-            json_str = "{\"OK\":\"no case\"}";
+            const char *tmp = "{\"OK\":\"no case\"}";
+            copy_const_str(&json_str,tmp);
             sendresponse(s, 200, prequest, json_str);
             return;
         }
+        m_case_index++;
+        m_total_case_index++;
 
         find_purpose(prequest, true);
 
-        json_str = "{\"OK\":1}";
+        const char *tmp = "{\"OK\":1}";
+        copy_const_str(&json_str,tmp);
+
+        if (m_case_index < m_block_case_count)
+            m_block_finished = false;
+        else
+            m_block_finished = true;
+        if (m_total_case_index < m_totalcaseCount)
+            m_set_finished = false;
+        else
+            m_set_finished = true;
+
 
         if(m_need_restart_client == true)
         {
@@ -604,6 +716,8 @@ void HttpServer::processpost(int s,struct HttpRequest *prequest)
     if (json_str != NULL)
     {
         sendresponse(s, 200, prequest, json_str);
+        delete []json_str;
+        json_str = NULL;
     }
 }
 
@@ -615,9 +729,12 @@ void HttpServer::find_purpose(struct HttpRequest *prequest, bool auto_test)
             char* result = NULL;
             char* msg = NULL;
 
-            char *content = prequest->content;
+            char *content = new char[strlen(prequest->content)+1];
+            memset(content, 0, strlen(prequest->content)+1);
+            char* tmp = content;
+            strcpy(content, prequest->content);// must copy the content to a local variable, otherwise segment fault?
             while (content != NULL) {
-                char *pair = strsep(&content,"&");
+                char* pair = strsep(&content, "&");
                 char* key = strsep(&pair, "=");
                 if (strcmp(key, "purpose") == 0) 
                 {
@@ -636,6 +753,7 @@ void HttpServer::find_purpose(struct HttpRequest *prequest, bool auto_test)
                     getCurrentTime();
                 }
             }
+            delete[] tmp;
 
             for (int i = 0; i < m_block_case_count; i++)
             {
@@ -661,7 +779,7 @@ void HttpServer::find_purpose(struct HttpRequest *prequest, bool auto_test)
 void* processthread(void *para)
 {
     char buffer[102400]; // suppose 1 case need 1k, 100 cases will be sent each time, we need 100k memory?
-    int iDataNum =0;
+    long iDataNum =0;
     int recvnum=0;
     HttpServer *server = (HttpServer *)para;
     //int clientsocket = *((int *)para);
@@ -680,6 +798,7 @@ void* processthread(void *para)
     {
         printf("clinetsocket id is %d\n", server->clientsocket);
         iDataNum = recv(server->clientsocket,buffer+recvnum,sizeof(buffer)-recvnum-1,0);
+        printf("iDataNum is %ld\n", iDataNum);
         if(iDataNum <= 0)
         {
                 close(server->clientsocket);
@@ -688,7 +807,7 @@ void* processthread(void *para)
         }
         recvnum += iDataNum;
         buffer[recvnum]='\0';
-        // printf("buffer ================%s\n",buffer);               
+        printf("buffer is ================%s\n",buffer);               
         
         if(strstr(buffer,"\r\n\r\n")!=NULL || strstr(buffer,"\n\n")!=NULL)
                 break;
@@ -718,7 +837,7 @@ void timer_handler(int signum)
 {    
     printf("time out \n");
     // when timeout, we send a http request to server, so server can check result. no other convinent way to do it?
-    char *strings="GET /case_time_out HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: Close\r\n\r\n";
+    const char *strings="GET /case_time_out HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: Close\r\n\r\n";
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in address;
     address.sin_family = AF_INET;
@@ -736,7 +855,7 @@ void timer_handler(int signum)
         //char ch;
         //while(read(sockfd, &ch, 1)) printf("%c", ch);
         close(sockfd);    
-        printf("finish send timeout cmd\n");
+        printf("finish send timeout cmd\n");//report error: accept client socket !!!: Interrupted system call?
     }
 }
 
@@ -747,7 +866,7 @@ void HttpServer::getCurrentTime()
         struct tm* t_tm; 
         time(&timer); 
         t_tm = localtime(&timer); 
-        sprintf(m_str_time,"%4d%02d%02d%02d%02d%02d\n", t_tm->tm_year+1900, 
+        sprintf(m_str_time,"%4d-%02d-%02d %02d:%02d:%02d", t_tm->tm_year+1900, 
         t_tm->tm_mon+1, t_tm->tm_mday, t_tm->tm_hour, t_tm->tm_min, t_tm->tm_sec); 
 }
 
@@ -792,13 +911,6 @@ bool HttpServer::get_auto_case(char *content,char **type)
         strcpy(*type,"stop");
     }
     return false;
-}
-
-void HttpServer::init_test(char *content){
-    //printf("init content ================%s\n",content);
-    parse_json_str(content);
-    m_case_index = 0;
-
 }
 
 void HttpServer::StartUp()
@@ -851,17 +963,19 @@ void HttpServer::StartUp()
                 int temp;
                
                 temp = pthread_create(&threadid, NULL, processthread, (void *)this);
-                /*if(threadid !=0)
+                //must have,otherwise the thread can not exit
+                if(threadid !=0)
                 {
-                         pthread_join(threadid,NULL);
-                }*/
-        }
+                    pthread_join(threadid,NULL);
+                }
+        }        
     }
     close(serversocket);
 }
 
 void HttpServer::checkResult(TestCase* testcase)
 {
+    printf("%d\n", testcase->is_executed);
     if (!testcase->is_executed) {
         printf("[ Warning: time is out, test case \"%s\" is timeout, set the result to \"BLOCK\", and restart the client ]\n", testcase->purpose);
         //try:
@@ -879,7 +993,7 @@ void HttpServer::checkResult(TestCase* testcase)
         killAllWidget();
 
         printf("[ start new client in 5sec ]\n");
-        sleep(5000);
+        sleep(5);
 
         m_start_auto_test = 1;
 
@@ -887,6 +1001,7 @@ void HttpServer::checkResult(TestCase* testcase)
     }
     else {
         m_case_index++;
+        m_total_case_index++;
         printf("[ test case \"%s\" is executed in time, and the result is %s ]\n", testcase->purpose, testcase->result);
         //try:
         //    print "[ test case \"%s\" is executed in time, and the result is %s ]" % (case.purpose, case.result)
@@ -898,8 +1013,31 @@ void HttpServer::checkResult(TestCase* testcase)
 
 void HttpServer::killAllWidget()
 {
-    system("echo 3 > /proc/sys/vm/drop_caches");
-    system("kill -9 ` ps -ef | grep wrt-launcher | grep -v grep |  awk '{printf $2};{printf \" \"}'`");
+    system("echo 3 > /proc/sys/vm/drop_caches");// what for?
+    //system("kill -9 ` ps -ef | grep wrt-launcher | grep -v grep |  awk '{printf $2};{printf \" \"}'`");
+
+    char buf[128];
+    memset(buf, 0, 128);
+    char cmd[256];
+    FILE *pp;
+    if( (pp = popen("wrt-launcher -l | awk '{print $NF}' | sed -n '3,$p'", "r")) == NULL )
+    {
+        printf("popen() error!\n");
+        return;
+    }
+
+    while(fgets(buf, sizeof buf, pp))
+    {
+        printf("%s", buf);
+        buf[strlen(buf)-1] = 0; // remove the character return at the end.
+
+        memset(cmd, 0, 256);
+        sprintf(cmd, "kill -9 `ps -ef | grep %s | grep -v grep | awk '{printf $2};{printf \" \"}'`\n", buf);
+        printf("%s", cmd);
+        system(cmd);
+        memset(buf, 0, 128);
+    }
+    pclose(pp);
 
     /*OS = platform.system()
     if OS == "Linux":
@@ -927,10 +1065,17 @@ void HttpServer::killAllWidget()
 
 void HttpServer::start_client(char* cmd)
 {
+    printf("%s\n", cmd);
+
     pid_t pid = fork();
-    if(pid > 0) client_process_id = pid;
+    if(pid > 0) 
+    {
+            printf("parent %d\n", pid);
+            client_process_id = pid;
+    }
     else if(pid == 0)
     {
+            printf("now start\n");
             execl("/bin/sh", "sh", "-c", cmd, (char *)0);
     }
     else {
