@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright (C) 2012 Intel Corporation
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc.,
-# 51 Franklin Street, 
+# 51 Franklin Street,
 # Fifth Floor,
 # Boston, MA  02110-1301, USA.
 #
@@ -28,7 +28,8 @@
 import os
 import platform
 import time
-import sys, traceback
+import sys
+import traceback
 import collections
 from datetime import datetime
 from shutil import copyfile
@@ -39,15 +40,12 @@ from shutil import move
 from os import remove
 
 
-sys.path.append("../../")
-from commodule.connector import Connector
-
-
 JOIN = os.path.join
 DIRNAME = os.path.dirname
 BASENAME = os.path.basename
 EXISTS = os.path.exists
 ABSPATH = os.path.abspath
+
 
 class TRunner:
     """
@@ -55,7 +53,7 @@ class TRunner:
     Apply filter for each run.
     Conduct tests execution.
     """
-    def __init__(self):
+    def __init__(self, connector):
         """ init all self parameters here """
         # dryrun
         self.bdryrun = False
@@ -65,7 +63,7 @@ class TRunner:
         self.enable_memory_collection = False
         # result file
         self.resultfile = None
-        # external test    
+        # external test
         self.external_test = None
         # filter rules
         self.filter_rules = None
@@ -76,35 +74,35 @@ class TRunner:
         self.skip_all_manual = False
         self.testsuite_dict = {}
         self.exe_sequence = []
-        self.testresult_dict = {"pass" : 0, "fail" : 0, 
-                                "block" : 0, "not_run" : 0}
+        self.testresult_dict = {"pass": 0, "fail": 0,
+                                "block": 0, "not_run": 0}
         self.current_test_xml = "none"
         self.first_run = True
         self.deviceid = None
         self.session_id = None
         self.pid_log = None
         self.set_parameters = {}
-        self.connector = Connector({"testRemote":"tizenMobile"}).get_connector()
+        self.connector = connector        
 
     def set_global_parameters(self, options):
         "get all options "
         # apply dryrun
         if options.bdryrun:
             self.bdryrun = options.bdryrun
-        #release memory when the free memory is less than 100M
+        # release memory when the free memory is less than 100M
         if options.enable_memory_collection:
             self.enable_memory_collection = options.enable_memory_collection
-        #Disable set the result of core manual cases from the console
+        # Disable set the result of core manual cases from the console
         if options.non_active:
             self.non_active = options.non_active
         # apply user specify test result file
         if options.resultfile:
             self.resultfile = options.resultfile
-        # set device_id 
+        # set device_id
         if options.device_serial:
             self.deviceid = options.device_serial
         if options.fullscreen:
-            self.fullscreen = True       
+            self.fullscreen = True
         # set the external test WRTLauncher
         if options.exttest:
             self.external_test = options.exttest
@@ -158,13 +156,14 @@ class TRunner:
         return ok_prepare
 
     def __split_test_xml(self, resultfile, resultdir):
-        """ split_test_xml into auto and manual""" 
+        """ split_test_xml into auto and manual"""
         casefind = etree.parse(resultfile).getiterator('testcase')
         if casefind:
             test_file_name = "%s" % BASENAME(resultfile)
             test_file_name = os.path.splitext(test_file_name)[0]
             if self.external_test:
-                self.__splite_external_test(resultfile, test_file_name, resultdir)
+                self.__splite_external_test(
+                    resultfile, test_file_name, resultdir)
             else:
                 self.__splite_core_test(resultfile)
 
@@ -197,13 +196,14 @@ class TRunner:
             except IOError, error:
                 print "[ Error: create filtered result file: %s failed,\
                  error: %s ]" % (suitefilename, error)
-            case_suite_find = etree.parse(suitefilename).getiterator('testcase')
+            case_suite_find = etree.parse(
+                suitefilename).getiterator('testcase')
             if case_suite_find:
                 if tsuite.get('launcher'):
                     if tsuite.get('launcher').find('WRTLauncher'):
                         self.__splite_core_test(suitefilename)
                     else:
-                        testsuite_dict_value_list.append(suitefilename) 
+                        testsuite_dict_value_list.append(suitefilename)
                         if testsuite_dict_add_flag == 0:
                             self.exe_sequence.append(test_file_name)
                         testsuite_dict_add_flag = 1
@@ -251,10 +251,10 @@ class TRunner:
 
         # run webAPI cases
         self.__run_webapi_test(latest_dir)
-               
+
         # run core manual cases
         self.__run_core_manual()
-            
+
     def __run_core_auto(self):
         """ core auto cases run"""
         self.core_auto_files.sort()
@@ -317,26 +317,31 @@ class TRunner:
                     # create temporary parameter
                     for test_xml_set in test_xml_set_list:
                         print "\n[ run set: %s ]" % test_xml_set
-                        #init test here
+                        # init test here
                         self.__init_com_module(test_xml_set)
                         # prepare the test JSON
                         self.__prepare_external_test_json(test_xml_set)
-                        #send set JSON Data to com_module
-                        self.connector.run_test(self.session_id, self.set_parameters)
+                        # send set JSON Data to com_module
+                        self.connector.run_test(
+                            self.session_id, self.set_parameters)
                         while True:
                             time.sleep(1)
-                            #check the test status ,if the set finished,get the set_result,and finalize_test
+                            # check the test status ,if the set finished,get
+                            # the set_result,and finalize_test
                             if self.__check_test_status():
-                                set_result = self.connector.get_test_result(self.session_id)
-                                #write_result to set_xml
-                                self.__write_set_result(test_xml_set, set_result)
+                                set_result = self.connector.get_test_result(
+                                    self.session_id)
+                                # write_result to set_xml
+                                self.__write_set_result(
+                                    test_xml_set, set_result)
                                 # shut down server
                                 try:
                                     print '[ show down server ]'
-                                    self.connector.finalize_test(self.session_id)
+                                    self.connector.finalize_test(
+                                        self.session_id)
                                 except Exception, error:
-                                    print "[ Error: fail to close webapi http server, error: %s ]" % error                  
-                                
+                                    print "[ Error: fail to close webapi http server, error: %s ]" % error
+
                                 break
                 except IOError, error:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % error
@@ -419,9 +424,7 @@ class TRunner:
         totals = self.__merge_result(resultfiles_webapi, totals)
 
         for total in totals:
-            print "total %s" % total
             result_xml = etree.parse(total)
-            print "result_xml %s" % total
             for suite in result_xml.getiterator('suite'):
                 suite.tail = "\n"
                 root.append(suite)
@@ -470,18 +473,20 @@ class TRunner:
             totalfile = "%s.total" % totalfile
             totalfile = "%s.xml" % totalfile
             total_xml = etree.parse(totalfile)
-            
+
             print "|--[ merge webapi result file: %s ]" % resultfile
             result_xml = etree.parse(resultfile)
             for total_suite in total_xml.getiterator('suite'):
                 for total_set in total_suite.getiterator('set'):
                     for result_suite in result_xml.getiterator('suite'):
                         for result_set in result_suite.getiterator('set'):
-                            # when total xml and result xml have same suite name and set name
+                            # when total xml and result xml have same suite
+                            # name and set name
                             if result_set.get('name') == total_set.get('name') and result_suite.get('name') == total_suite.get('name'):
                                 # set cases that doesn't have result in result set to N/A
                                 # append cases from result set to total set
-                                result_case_iterator = result_set.getiterator('testcase')
+                                result_case_iterator = result_set.getiterator(
+                                    'testcase')
                                 if result_case_iterator:
                                     print "`----[ suite: %s, set: %s, time: %s ]" % (result_suite.get('name'), result_set.get('name'), datetime.today().strftime("%Y-%m-%d_%H_%M_%S"))
                                     for result_case in result_case_iterator:
@@ -569,7 +574,7 @@ class TRunner:
             if it's not right, please check the test xml files, or the filter values ]"
         else:
             print "  [ pass rate: %.2f%% ]" \
-            % (int(self.testresult_dict["pass"]) * 100 / int(total_case_number))
+                % (int(self.testresult_dict["pass"]) * 100 / int(total_case_number))
             print "  [ PASS case number: %s ]" % self.testresult_dict["pass"]
             print "  [ FAIL case number: %s ]" % self.testresult_dict["fail"]
             print "  [ BLOCK case number: %s ]" % self.testresult_dict["block"]
@@ -593,12 +598,12 @@ class TRunner:
                 case_order = 1
                 parameters.setdefault(
                     "casecount", str(len(tset.getiterator('testcase')))
-                    )
+                )
                 for tcase in tset.getiterator('testcase'):
                     case_detail_tmp = {}
                     parameters.setdefault(
                         "exetype", tcase.get('execution_type')
-                        )
+                    )
 
                     parameters.setdefault("type", tcase.get('type'))
                     case_detail_tmp.setdefault("case_id", tcase.get('id'))
@@ -612,32 +617,33 @@ class TRunner:
 
                     if tcase.find('description/test_script_entry') is not None:
                         case_detail_tmp.setdefault(
-                            "test_script_entry", tcase.find('description/test_script_entry').text
-                            )
+                            "test_script_entry", tcase.find(
+                                'description/test_script_entry').text
+                        )
                     for this_step in tcase.getiterator("step"):
                         if this_step.find("step_desc") is not None:
                             case_detail_tmp.setdefault(
-                                "step_desc", 
+                                "step_desc",
                                 this_step.find("step_desc").text
-                                )
+                            )
 
                         if this_step.find("expected") is not None:
                             case_detail_tmp.setdefault(
-                                "expected", 
+                                "expected",
                                 this_step.find("expected").text
-                                )
+                            )
 
                     if tcase.find('description/pre_condition') is not None:
                         case_detail_tmp.setdefault(
-                            "pre_condition", 
+                            "pre_condition",
                             tcase.find('description/pre_condition').text
-                            )
+                        )
 
                     if tcase.find('description/post_condition') is not None:
                         case_detail_tmp.setdefault(
-                            "post_condition", 
+                            "post_condition",
                             tcase.find('description/post_condition').text
-                            )
+                        )
 
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
@@ -650,7 +656,7 @@ class TRunner:
         return True
 
     def apply_filter(self, root_em):
-        """ apply filter """     
+        """ apply filter """
         rules = self.filter_rules
         for tsuite in root_em.getiterator('suite'):
             if rules.get('suite'):
@@ -660,7 +666,7 @@ class TRunner:
                 if rules.get('set'):
                     if tset.get('name') not in rules['set']:
                         tsuite.remove(tset)
-                       
+
         for tset in root_em.getiterator('set'):
             for tcase in tset.getiterator('testcase'):
                 if not self.__apply_filter_case_check(tcase):
@@ -680,7 +686,7 @@ class TRunner:
             else:
                 # Check sub-element
                 items = tcase.getiterator(key)
-                if items: 
+                if items:
                     t_val = []
                     for i in items:
                         t_val.append(i.text)
@@ -704,7 +710,8 @@ class TRunner:
             testentry_elm = case.find('description/test_script_entry')
             if testentry_elm is not None:
                 test_script_entry = testentry_elm.text
-                expected_result = testentry_elm.get('test_script_expected_result', "0")
+                expected_result = testentry_elm.get(
+                    'test_script_expected_result', "0")
             print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s\nExpected Result: %s\nTotal: %s, Current: %s" % (case.get("id"), test_script_entry, expected_result, total_number, current_number)
             # execute test script
             if testentry_elm is not None:
@@ -716,7 +723,7 @@ class TRunner:
                         print "[ Warnning: test script is empty, please check your test xml file ]"
                     else:
                         try:
-                            #run auto core test here
+                            # run auto core test here
                             # if testentry_elm.get("timeout")
                             #    case = testentry_elm.text
                             #    time_out = str2number(testentry_elm.get("timeout"))
@@ -775,7 +782,8 @@ class TRunner:
                         case_result = "N/A"
                     else:
                         while True:
-                            test_result = raw_input('[ please input case result ] (p^PASS, f^FAIL, b^BLOCK, n^Next, d^Done):')
+                            test_result = raw_input(
+                                '[ please input case result ] (p^PASS, f^FAIL, b^BLOCK, n^Next, d^Done):')
                             if test_result == 'p':
                                 case_result = "PASS"
                                 break
@@ -804,10 +812,10 @@ class TRunner:
                 end_elm.text = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
                 # set test result
                 if return_code is not None:
-                    # sdx@kooltux.org: 
-                    # if retcode is 69 ("service unavailable" in sysexits.h), 
+                    # sdx@kooltux.org:
+                    # if retcode is 69 ("service unavailable" in sysexits.h),
                     # test environment is not correct
-                    if actual_result == "69": 
+                    if actual_result == "69":
                         case_result = "N/A"
                     elif actual_result == "time_out":
                         case_result = "BLOCK"
@@ -856,13 +864,13 @@ class TRunner:
             traceback.print_exc()
             return False
 
-    # sdx@kooltux.org: parse measures returned by test script 
+    # sdx@kooltux.org: parse measures returned by test script
     # and insert in XML result
     # see xsd/test_definition.xsd: measurementType
-    _MEASURE_ATTRIBUTES = ['name', 'value', 'unit', 
-        'target', 'failure', 'power']
+    _MEASURE_ATTRIBUTES = ['name', 'value', 'unit',
+                           'target', 'failure', 'power']
 
-    def __insert_measures(self, case, buf, pattern = "###[MEASURE]###"): 
+    def __insert_measures(self, case, buf, pattern="###[MEASURE]###"):
         """ get measures """
         measures = self.__extract_measures(buf, pattern)
         for measure in measures:
@@ -870,9 +878,9 @@ class TRunner:
             for key in measure:
                 m_elm.attrib[key] = measure[key]
             case.append(m_elm)
-         
-    def __extract_measures(self, buf, pattern): 
-        """ 
+
+    def __extract_measures(self, buf, pattern):
+        """
         This function extracts lines from <buf> containing the defined <pattern>.
         For each line containing the pattern, it extracts the string to the end of line
         Then it splits the content in multiple fields using the defined separator <field_sep>
@@ -892,7 +900,7 @@ class TRunner:
                     measure[k] = ''
                 else:
                     measure[k] = elts.popleft()
-                    
+
             # don't accept unnamed measure
             if measure['name'] != '':
                 out.append(measure)
@@ -902,11 +910,11 @@ class TRunner:
         """
             send init test to com_module
             if webapi test,com_module will start httpserver
-            else com_module send the test case to devices 
+            else com_module send the test case to devices
         """
         starup_prms = self.__prepare_starup_parameters(testxml)
-        try:            
-            #init stub and get the session_id
+        try:
+            # init stub and get the session_id
             session_id = self.connector.init_test(self.deviceid, starup_prms)
             self.set_session_id(session_id)
             return True
@@ -926,7 +934,7 @@ class TRunner:
             starup_parameters['pkg-name'] = tsuite.get("name")
         except IOError, error:
             print "[ Error: prepare starup parameters, error: %s ]" % error
-        return starup_parameters     
+        return starup_parameters
 
     def __write_set_result(self, testxmlfile, result):
         '''
@@ -937,7 +945,7 @@ class TRunner:
         # write the set_result to set_xml
         set_result_json = result
         set_result_xml = testxmlfile
-        #covert JOSN to python dict string
+        # covert JOSN to python dict string
         set_result = set_result_json
         case_results = set_result["cases"]
         try:
@@ -959,26 +967,26 @@ class TRunner:
             check the status
             if end ,return ture; else return False
         '''
-        #check test running or end
-        #if the status id end return True ,else return False
+        # check test running or end
+        # if the status id end return True ,else return False
 
         session_status = self.connector.get_test_status(self.session_id)
-        #session_status["finished"] == "0" is running
-        #session_status["finished"] == "1" is end
+        # session_status["finished"] == "0" is running
+        # session_status["finished"] == "1" is end
         if session_status["finished"] == "0":
             progress_json = session_status["progress"]
             try:
                 print "Total: %s, Current: %s\nLast Case Result: %s" % \
-                   (progress_json["total"], \
-                   progress_json["current"], \
-                   progress_json["last_test_result"])
+                    (progress_json["total"],
+                     progress_json["current"],
+                     progress_json["last_test_result"])
             except KeyError, error:
                 print "[ Error: fail to get test progress infomation, \
                 error: %s ]\n" % error
             return False
         elif session_status["finished"] == "1":
             return True
-        else :
+        else:
             print "[ session status error ,pls finilize test ]\n"
             return False
 
@@ -1001,6 +1009,7 @@ def get_version_info():
         print "[ Error: fail to parse version info, error: %s ]\n" % error
         return ""
 
+
 def replace_cdata(file_name):
     """ replace some character"""
     try:
@@ -1018,10 +1027,11 @@ def replace_cdata(file_name):
         print "[ Error: fail to replace cdata in the result file, \
             error: %s ]\n" % error
 
+
 def extract_notes(buf, pattern):
     """util func to split lines in buffer, search for pattern on each line
     then concatenate remaining content in output buffer"""
-    out = "" 
+    out = ""
     for line in buf.split("\n"):
         pos = line.find(pattern)
         if pos >= 0:
@@ -1029,6 +1039,8 @@ def extract_notes(buf, pattern):
     return out
 
 # sdx@kooltux.org: parse notes in buffer and insert them in XML result
+
+
 def insert_notes(case, buf, pattern="###[NOTE]###"):
     """ insert notes"""
     desc = case.find('description')
@@ -1042,4 +1054,4 @@ def insert_notes(case, buf, pattern="###[NOTE]###"):
     if notes_elm.text is None:
         notes_elm.text = extract_notes(buf, pattern)
     else:
-        notes_elm.text += "\n"+extract_notes(buf, pattern)
+        notes_elm.text += "\n" + extract_notes(buf, pattern)

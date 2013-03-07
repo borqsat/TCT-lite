@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright (C) 2012 Intel Corporation
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -14,7 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
+# USA.
 #
 # Authors:
 #              Zhang, Huihui <huihuix.zhang@intel.com>
@@ -23,12 +24,14 @@
 """ testkit lite tools"""
 
 import os
-import sys, traceback
+import sys
+import traceback
 import platform
 import ConfigParser
 import xml.etree.ElementTree as etree
 from optparse import OptionParser, make_option
 from datetime import datetime
+from commodule.connector import Connector
 
 JOIN = os.path.join
 EXISTS = os.path.exists
@@ -36,23 +39,23 @@ DIRNAME = os.path.dirname
 BASENAME = os.path.basename
 ABSPATH = os.path.abspath
 
-testkit_dir = "/opt/testkit/lite"
+TESTKIT_DIR = "/opt/testkit/lite"
 if not platform.system() == "Linux":
-    testkit_dir = DIRNAME(ABSPATH(__file__))
-    sys.path += [JOIN(testkit_dir)]
-    testkit_dir = JOIN(testkit_dir , "results")
+    TESTKIT_DIR = DIRNAME(ABSPATH(__file__))
+    sys.path += [JOIN(TESTKIT_DIR)]
+    TESTKIT_DIR = JOIN(TESTKIT_DIR, "results")
 
-LOG_DIR = testkit_dir
-PID_FILE = JOIN(LOG_DIR , "pid.log")
+LOG_DIR = TESTKIT_DIR
+PID_FILE = JOIN(LOG_DIR, "pid.log")
 COMMON_FILTERS = {
-        "suite":          [],
-        "set":            [],
-        "id":             [],
-        "type":           [],
-        "priority":       [],
-        "category":       [],
-        "status":         [],
-        "component":      []}
+    "suite": [],
+    "set": [],
+    "id": [],
+    "type": [],
+    "priority": [],
+    "category": [],
+    "status": [],
+    "component": []}
 
 # start testkit-lite in Singleton mode
 
@@ -66,8 +69,8 @@ if not platform.system() == "Linux":
 
 try:
     with open(PID_FILE, "w") as fd:
-        pid = str(os.getpid())
-        fd.writelines(pid + '\n')
+        PID = str(os.getpid())
+        fd.writelines(PID + '\n')
 except IOError, e:
     print "[ Error: can't create pid log file: %s, \
     error: %s ]\n" % (PID_FILE, e)
@@ -81,13 +84,13 @@ except IOError, e:
 # detect version option
 if "--version" in sys.argv:
     try:
-        config = ConfigParser.ConfigParser()
+        CONFIG = ConfigParser.ConfigParser()
         if platform.system() == "Linux":
-            config.read('/opt/testkit/lite/VERSION')
+            CONFIG.read('/opt/testkit/lite/VERSION')
         else:
-            version_file = os.path.join(sys.path[0], 'VERSION')
-            config.read(version_file)
-        VERSION = config.get('public_version', 'version')
+            VERSION_FILE = os.path.join(sys.path[0], 'VERSION')
+            CONFIG.read(VERSION_FILE)
+        VERSION = CONFIG.get('public_version', 'version')
         print "V%s" % VERSION
     except Exception, e:
         print "[ Error: fail to parse version info, error: %s ]\n" % e
@@ -96,13 +99,13 @@ if "--version" in sys.argv:
 # detect internal version option
 if "--internal-version" in sys.argv:
     try:
-        config = ConfigParser.ConfigParser()
+        CONFIG = ConfigParser.ConfigParser()
         if platform.system() == "Linux":
-            config.read('/opt/testkit/lite/VERSION')
+            CONFIG.read('/opt/testkit/lite/VERSION')
         else:
-            version_file = os.path.join(sys.path[0], 'VERSION')
-            config.read(version_file)
-        VERSION = config.get('internal_version', 'version')
+            VERSION_FILE = os.path.join(sys.path[0], 'VERSION')
+            CONFIG.read(VERSION_FILE)
+        VERSION = CONFIG.get('internal_version', 'version')
         print VERSION
     except Exception, e:
         print "[ Error: fail to parse version info, error: %s ]\n" % e
@@ -110,24 +113,25 @@ if "--internal-version" in sys.argv:
 
 # get test engine, now we only got default engine
 if "-E" in sys.argv:
-    index = sys.argv.index("-E")
+    INDEX = sys.argv.index("-E")
     try:
-        engine = sys.argv[index + 1]
-        engine = str(engine.strip()).lower()
+        ENGINE = sys.argv[INDEX + 1]
+        ENGINE = str(ENGINE.strip()).lower()
     except IndexError:
-        engine = "default"
+        ENGINE = "default"
 else:
-    engine = "default"
+    ENGINE = "default"
 
 # init test engine here
 try:
-    exec "from testkitlite.engines.%s.runner import TRunner" % engine
-    print "[ loading %s test engine ]" % engine
+    exec "from testkitlite.engines.%s.runner import TRunner" % ENGINE
+    print "[ loading %s test engine ]" % ENGINE
 except ImportError, e:
-    print "[ Error: loading test engine: %s failed, error: %s ]\n" % (engine, e)
+    print "[ Error: loading test engine: %s failed, error: %s ]\n" % (ENGINE, e)
     print "try to run command \
     'export PYTHONPATH=/usr/lib/python2.7/site-packages' to resolve this issue"
     sys.exit(1)
+
 
 def varnarg(option, opt_str, value, parser):
     """ parser srg"""
@@ -135,10 +139,10 @@ def varnarg(option, opt_str, value, parser):
     import re
     for arg in parser.rargs:
         if re.search('^--.+', arg) or \
-           re.search('^-[\D]', arg):
+                re.search('^-[\D]', arg):
             break
         value.append(arg)
-        
+
     del parser.rargs[:len(value)]
     setattr(parser.values, option.dest, value)
 
@@ -165,36 +169,39 @@ try:
         make_option("-E", dest="engine", help="Specific test engine"),
         make_option("-e", dest="exttest", action="store",
                     help="Launch external test with an executable file"),
-        make_option("--fullscreen", dest="fullscreen", 
+        make_option("--fullscreen", dest="fullscreen",
                     action="store_true",
                     help="Run web API test in full screen mode"),
-        make_option("--non-active", dest="non_active", 
+        make_option("--non-active", dest="non_active",
                     action="store_true",
                     help="Disable the ability to set the result of \
                     core manual cases from the console"),
-        make_option("--enable-memory-collection", 
+        make_option("--enable-memory-collection",
                     dest="enable_memory_collection", action="store_true",
                     help="Enable the ability to release memory \
                     when the free memory is less than 100M"),
         make_option("--version", dest="version_info", action="store_true",
                     help="Show version information"),
-        make_option("--internal-version", dest="internal_version_info", 
+        make_option("--internal-version", dest="internal_version_info",
                     action="store_true",
                     help="Show internal version information"),
-        make_option("--deviceid",dest="device_serial",
+        make_option("--deviceid", dest="device_serial",
                     action="store",
-                    help="set sdb device serial information")
-        ]
-    
-    option_list.extend(map(lambda flt: \
-                make_option("--%s" % flt, dest="w%s" % flt, \
-                    action="callback", callback=varnarg, \
-                    help="Select the specified filter-rules : %s" % flt), \
-                    COMMON_FILTERS))
+                    help="set sdb device serial information"),
+        make_option("--comm", dest="commodule",
+                    action="store",
+                    help="set commodule type")
+    ]
+
+    option_list.extend(map(lambda flt:
+                           make_option("--%s" % flt, dest="w%s" % flt,
+                                       action="callback", callback=varnarg,
+                                       help="Select the specified filter-rules : %s" % flt),
+                           COMMON_FILTERS))
 
     try:
         # untrusted behaviour of %%prog
-        usage = "%%prog [options] -f <somewhere/test.xml>\n\
+        USAGE = "%%prog [options] -f <somewhere/test.xml>\n\
 examples: %%prog  -f  <somewhere>/test.xml\n\
           %%prog  -f test.xml -D\n\
           %%prog  -f test.xml -A\n\
@@ -217,27 +224,36 @@ Note: \n\
           6) The test cases' order in the result files might be arbitrary, when running same tests.xml with same options. This is caused by python's API 'getiterator' from module 'xml.etree.ElementTree'\n\
           7) run command 'testkit-lite', it might not be able to locate module 'testkitlite.engines.default.runner', run command 'export PYTHONPATH=/usr/lib/python2.7/site-packages' to resolve this issue" % (LOG_DIR)
     except Exception:
-        usage = None
+        USAGE = None
 
     # detect non-params
     if len(sys.argv) == 1:
         sys.argv.append("-h")
 
-    parsers = OptionParser(option_list=option_list, usage=usage)
+    PARSERS = OptionParser(option_list=option_list, usage=USAGE)
 
-    (options, args) = parsers.parse_args()
+    (options, args) = PARSERS.parse_args()
 
     # detect conflict
     if options.bautoonly and options.bmanualonly:
         raise ValueError("-A and -M are conflict")
+    if options.commodule:
+        COMMODULE_TYPE = options.commodule
+    else:
+        COMMODULE_TYPE = "tizenMobile"
+
+    CONNECTOR = Connector({"testRemote": "tizenMobile"}).get_connector()
+    if CONNECTOR == None:
+        print "[ Error: init commodule error... ]\n"
+        sys.exit(1)
 
     # create runner
-    runner = TRunner()
+    runner = TRunner(CONNECTOR)
     runner.set_pid_log(PID_FILE)
-    # apply all options 
+    # apply all options
     runner.set_global_parameters(options)
 
-    #check if there is a device_serial
+    # check if there is a device_serial
     if not options.device_serial and options.testxml:
         print "[ Error: not specify a device_serial... ]\n"
         sys.exit(1)
@@ -255,20 +271,20 @@ Note: \n\
 
     # 1) prepare log dir
     if platform.system() == "Linux":
-        session = datetime.today().isoformat('-')
+        SESSION = datetime.today().isoformat('-')
     else:
-        session = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
-    log_dir = JOIN(LOG_DIR, session)
-    latest_dir = JOIN(LOG_DIR, "latest")
+        SESSION = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
+    CURRENT_LOG_DIR = JOIN(LOG_DIR, SESSION)
+    LATEST_DIR = JOIN(LOG_DIR, "latest")
     try:
-        if EXISTS(latest_dir):
-            os.remove(latest_dir)
-        os.makedirs(log_dir)
+        if EXISTS(LATEST_DIR):
+            os.remove(LATEST_DIR)
+        os.makedirs(CURRENT_LOG_DIR)
         if os.name == "posix":
-            os.symlink(log_dir, latest_dir)
+            os.symlink(CURRENT_LOG_DIR, LATEST_DIR)
     except IOError, e:
         print "[ Error: create session log directory: \
-        %s failed, error: %s ]\n" % (log_dir, e)
+        %s failed, error: %s ]\n" % (CURRENT_LOG_DIR, e)
 
     # 2) run test
     # run more than one tests.xml
@@ -294,7 +310,7 @@ Note: \n\
                 filename = filename.split('\\')[-2]
             filename = "%s.total" % BASENAME(filename)
             resultfile = "%s.xml" % filename
-            resultfile = JOIN(log_dir, resultfile)
+            resultfile = JOIN(CURRENT_LOG_DIR, resultfile)
             ep = etree.parse(t)
             suiteparent = ep.getroot()
             no_test_definition = 1
@@ -332,7 +348,7 @@ Note: \n\
                     try:
                         wfilters['execution_type'] = ["manual"]
                         runner.add_filter_rules(**wfilters)
-                        runner.prepare_run(t, resultdir=log_dir)
+                        runner.prepare_run(t, resultdir=CURRENT_LOG_DIR)
                     except IOError, e:
                         print "[ Error: prepare_run test xml: \
                         %s from testkit-lite failed, error: %s ]\n" % (t, e)
@@ -341,7 +357,7 @@ Note: \n\
                     try:
                         wfilters['execution_type'] = ["auto"]
                         runner.add_filter_rules(**wfilters)
-                        runner.prepare_run(t, resultdir=log_dir)
+                        runner.prepare_run(t, resultdir=CURRENT_LOG_DIR)
                     except IOError, e:
                         print "[ Error: prepare_run test xml: \
                         %s from testkit-lite failed, error: %s ]\n" % (t, e)
@@ -349,7 +365,7 @@ Note: \n\
                     try:
                         wfilters['execution_type'] = ["manual"]
                         runner.add_filter_rules(**wfilters)
-                        runner.prepare_run(t, resultdir=log_dir)
+                        runner.prepare_run(t, resultdir=CURRENT_LOG_DIR)
                     except IOError, e:
                         print "[ Error: prepare_run test xml: \
                         %s from testkit-lite failed, error: %s ]\n" % (t, e)
@@ -358,7 +374,7 @@ Note: \n\
                 try:
                     wfilters['execution_type'] = ["auto"]
                     runner.add_filter_rules(**wfilters)
-                    runner.prepare_run(t, resultdir=log_dir)
+                    runner.prepare_run(t, resultdir=CURRENT_LOG_DIR)
                 except IOError, e:
                     print "[ Error: prepare_run test xml: \
                     %s from testkit-lite failed, error: %s ]\n" % (t, e)
@@ -367,8 +383,8 @@ Note: \n\
     # 2. run all manual cases from the xml
     else:
         testxml = (options.testxml)[0]
-        filename = testxml
-        filename = os.path.splitext(filename)[0]
+        FILENAME = testxml
+        filename = os.path.splitext(FILENAME)[0]
         if platform.system() == "Linux":
             if not filename.startswith('/'):
                 print "[ Error: xml file %s should start with '/' ]" % filename
@@ -383,7 +399,7 @@ Note: \n\
             filename = filename.split('\\')[-2]
         filename = "%s.total" % BASENAME(filename)
         resultfile = "%s.xml" % filename
-        resultfile = JOIN(log_dir, resultfile)
+        resultfile = JOIN(CURRENT_LOG_DIR, resultfile)
         ep = etree.parse(testxml)
         suiteparent = ep.getroot()
         no_test_definition = 1
@@ -409,19 +425,19 @@ Note: \n\
                     tset.remove(testcase)
         try:
             with open(resultfile, 'w') as output:
-                tree = etree.ElementTree(element=suiteparent)
-                tree.write(output)
+                TREE = etree.ElementTree(element=suiteparent)
+                TREE.write(output)
         except IOError, e:
             print "[ Error: create filtered result file: \
             %s failed, error: %s ]\n" % (resultfile, e)
-            
+
         START_TIME = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
         if not options.bautoonly:
             if options.bmanualonly:
                 try:
                     wfilters['execution_type'] = ["manual"]
                     runner.add_filter_rules(**wfilters)
-                    runner.prepare_run(testxml, resultdir=log_dir)
+                    runner.prepare_run(testxml, resultdir=CURRENT_LOG_DIR)
                 except IOError, e:
                     print "[ Error: prepare_run test xml: \
                     %s from testkit-lite failed, error: %s ]\n" % (testxml, e)
@@ -429,10 +445,10 @@ Note: \n\
                 try:
                     wfilters['execution_type'] = ["auto"]
                     runner.add_filter_rules(**wfilters)
-                    runner.prepare_run(testxml, resultdir=log_dir)
+                    runner.prepare_run(testxml, resultdir=CURRENT_LOG_DIR)
                     wfilters['execution_type'] = ["manual"]
                     runner.add_filter_rules(**wfilters)
-                    runner.prepare_run(testxml, resultdir=log_dir)
+                    runner.prepare_run(testxml, resultdir=CURRENT_LOG_DIR)
                 except IOError, e:
                     print "[ Error: prepare_run test xml: \
                     %s from testkit-lite failed, error: %s ]\n" % (testxml, e)
@@ -440,13 +456,13 @@ Note: \n\
             try:
                 wfilters['execution_type'] = ["auto"]
                 runner.add_filter_rules(**wfilters)
-                runner.prepare_run(testxml, resultdir=log_dir)
+                runner.prepare_run(testxml, resultdir=CURRENT_LOG_DIR)
             except IOError, e:
                 print "[ Error: prepare_run test xml: \
                 %s from testkit-lite failed, error: %s ]\n" % (testxml, e)
     try:
-        runner.run_case(log_dir)
-        runner.merge_resultfile(START_TIME, log_dir)
+        runner.run_case(CURRENT_LOG_DIR)
+        runner.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
         print "[ all tasks for testkit lite are accomplished, goodbye ]"
     except Exception, e:
         print "[ Error: run_and_merge_resultfile from testkit-lite failed, \
