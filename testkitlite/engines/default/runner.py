@@ -612,47 +612,56 @@ class TRunner:
                     parameters.setdefault("type", tcase.get('type'))
                     case_detail_tmp.setdefault("case_id", tcase.get('id'))
                     case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
-                    case_detail_tmp.setdefault("order", str(case_order))
-                    case_detail_tmp.setdefault("test_script_entry", "none")
-                    case_detail_tmp.setdefault("step_desc", "none")
-                    case_detail_tmp.setdefault("expected", "none")
-                    case_detail_tmp.setdefault("pre_condition", "none")
-                    case_detail_tmp.setdefault("post_condition", "none")
+                    case_detail_tmp.setdefault("order", str(case_order))                    
+                    
 
                     if tcase.find('description/test_script_entry') is not None:
                         case_detail_tmp.setdefault(
                             "test_script_entry", tcase.find(
                                 'description/test_script_entry').text
                         )
+                    else:
+                        case_detail_tmp.setdefault("test_script_entry", "none")
+
                     for this_step in tcase.getiterator("step"):
                         if this_step.find("step_desc") is not None:
                             case_detail_tmp.setdefault(
                                 "step_desc",
                                 this_step.find("step_desc").text
                             )
+                        else:
+                            case_detail_tmp.setdefault("step_desc", "none")
+
 
                         if this_step.find("expected") is not None:
                             case_detail_tmp.setdefault(
                                 "expected",
                                 this_step.find("expected").text
                             )
+                        else:
+                            case_detail_tmp.setdefault("expected", "none")
 
                     if tcase.find('description/pre_condition') is not None:
                         case_detail_tmp.setdefault(
                             "pre_condition",
                             tcase.find('description/pre_condition').text
                         )
+                    else:
+                        case_detail_tmp.setdefault("pre_condition", "none")
 
                     if tcase.find('description/post_condition') is not None:
                         case_detail_tmp.setdefault(
                             "post_condition",
                             tcase.find('description/post_condition').text
                         )
+                    else:
+                        case_detail_tmp.setdefault("post_condition", "none")
 
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
-            self.set_parameters = parameters
+            self.set_parameters = parameters 
+       
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, \
             error: %s ]\n" % error
@@ -936,7 +945,7 @@ class TRunner:
             parse_tree = etree.parse(testxml)
             tsuite = parse_tree.getroot().getiterator('suite')[0]
             starup_parameters['client-command'] = tsuite.get("launcher")
-            starup_parameters['pkg-name'] = tsuite.get("name")
+            starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['stub-name'] = self.stub_name
         except IOError, error:
             print "[ Error: prepare starup parameters, error: %s ]" % error
