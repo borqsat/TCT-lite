@@ -56,14 +56,15 @@ def shell_command(cmdline):
                             shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
-    while True:
-        if not proc.poll is None:
-            break
     stdout = proc.stdout.readlines()
     return stdout
 
+test_server_result = []
+test_server_status = {}
 stdout_buffer = []
 stderr_buffer = []
+lockobj = threading.Lock()
+lockcmd = threading.Lock()
 
 class SdbCommThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
@@ -79,25 +80,22 @@ class SdbCommThread(threading.Thread):
                                 shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        global stdout_buffer
-        global stderr_buffer
         
         while True:
-            outlines = proc.stdout.readlines()
-            errlines = proc.stderr.readlines()
+            outlines, errlines = proc.communicate()
 
+            global stdout_buffer
+            lockcmd.acquire()
             stdout_buffer.extend(outlines)
-            stderr_buffer.extend(errlines)
-
-            for l in stdout_buffer:
-                print l, 
+            lockcmd.release()
             # break_flag = False
             # for line in outlines:
             #     if string.find(line, self.endflag) != -1:
             #         break_flag = True
             #         break
-            if not proc.poll is None:
+            if not proc.poll() is None:
                 break
+            time.sleep(0.5)
 
 class HttpCommThread(threading.Thread):
 
@@ -105,21 +103,24 @@ class HttpCommThread(threading.Thread):
     def __init__(self, test_block_queue):
         super(HttpCommThread, self).__init__()
         self.data_queue = test_block_queue
-        self.http_result = {"cases":[]}
+        global test_server_result
+        lockobj.acquire()
+        test_server_result = {"cases":[]}
+        lockobj.release()
 
     def set_result(self, result_data):
         """set http result response to the result buffer"""
         if "cases" in result_data:
-            self.http_result["cases"].extend(result_data["cases"])
-
-    def get_result(self):
-        """get http result buffer"""
-        return self.http_result
+            global test_server_result
+            lockobj.acquire()
+            test_server_result["cases"].extend(result_data["cases"])
+            lockobj.release()
 
     def run(self):
         if self.data_queue is None:
             return
 
+        set_finished = False
         for test_block in self.data_queue:
             ret = http_request("http://127.0.0.1:8080/init_test", "POST", test_block)
             if ret is None:
@@ -127,17 +128,32 @@ class HttpCommThread(threading.Thread):
 
             while True:
                 ret =  http_request("http://127.0.0.1:8080/check_server_status", "GET", {})
-                print "check_server_status",ret
                 if ret is None:
                     break
-                ### check if test set block is finished
+
+                global test_server_status                    
+                lockobj.acquire()
+                test_server_status = ret
+                lockobj.release()
+
+                ### check if test set is finished
                 if ret["finished"] == 1:
-                    ret =  http_request("http://127.0.0.1:8080/get_test_result", "GET", {})
-                    ## to process for result 
+                    set_finished = True
+                    ret = http_request("http://127.0.0.1:8080/generate_xml", "GET", {})
                     if not ret is None:
                         self.set_result(ret)
                     break
+                ### check if current test block is finished
+                elif ret["block_finished"] == 1:
+                    ret =  http_request("http://127.0.0.1:8080/generate_xml", "GET", {})
+                    if not ret is None:
+                        self.set_result(ret)
+                    break
+                
                 time.sleep(3)
+
+            if set_finished:
+                break
 
 class TizenMobile:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
@@ -145,7 +161,7 @@ class TizenMobile:
     def __init__(self):
         self.__test_listen_port = "8080"
         self.__test_async_shell = None
-        self.__test_set_block = 100
+        self.__test_set_block = 20
         self.__test_set_casecount = 0
 
     def __set_forward_tcp(self, hport=None, dport=None):
@@ -252,29 +268,27 @@ class TizenMobile:
             return None
 
         stub_entry = "%s --testsuite:%s --client-command:%s" % \
-                    (params["stub-name"], params["testsuite-name"], params["client-command"] )
+                    (params["stub-name"], params["testsuite-name"], params["client-command"])
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
-        print cmd
+        print "stub startup", cmd
         self.__test_async_shell = SdbCommThread(cmd, "bye")
         self.__test_async_shell.start()
+        time.sleep(2)
         ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
-        result = False
-        time.sleep(3)
+        print "__set_forward_tcp"
+
         timecnt = 0
-        interval = 0.2
-        while True:
-            print "check server ", result
-            if timecnt > 5:
-                result = False
-                break
+        result = ""
+        print "startup server..."
+        while timecnt < 5:
             ret = http_request(self.__get_url("/check_server"), "GET", {})
+            print "startup result", ret
             if ret is None:
-                time.sleep(interval)
-                timecnt += interval
+                time.sleep(1)
+                timecnt += 1
             else:
-                result = True
+                result = "11223344"
                 break
-        print "startup server ", result
         return result
 
     def run_test(self, sessionid, test_set):
@@ -297,8 +311,7 @@ class TizenMobile:
             blknum = casecount / self.__test_set_block + 1
 
         idx = 1
-        self.__test_set_blocks = []
-        self.__test_set_counter = 1
+        test_set_blocks = []
         while idx <= blknum:
             block_data = {}
             block_data["totalBlk"] = str(blknum)
@@ -312,12 +325,10 @@ class TizenMobile:
             else: 
                 end = idx * self.__test_set_block
             block_data["cases"] = cases[start:end]
-            self.__test_set_blocks.append(block_data)
-            print "[=====================block[%d]========================]" % idx
-            print block_data
+            test_set_blocks.append(block_data)
             idx += 1
 
-        self.__test_async_http = HttpCommThread(self.__test_set_blocks)
+        self.__test_async_http = HttpCommThread(test_set_blocks)
         self.__test_async_http.start()
 
         return True
@@ -327,56 +338,49 @@ class TizenMobile:
         if sessionid is None: 
             return None
         data = {"sessionid": sessionid}
-        ret = http_request(self.__get_url("/check_server_status"), "GET", {})
-        if ret is None:
-            return None
-        result = {}
-        result["finished"] = str(ret["finished"])
+        result = {"finished": "0"}
+        global test_server_status
+        lockobj.acquire()     
+        result["finished"] = str(test_server_status["finished"])
+        if "block_finished" in test_server_status:
+            result["block_finished"] = str(test_server_status["block_finished"])          
+        lockobj.release()
+
         global stdout_buffer
-        if result["finished"] == "0": #running status
-            output = stdout_buffer
-            stdout_buffer = []
-            print "output", stdout_buffer
-            if not output is None:
-                result["msg"] = output
-            else:
-                result["msg"] = []
+        lockcmd.acquire()
+        output = []
+        output.extend(stdout_buffer)
+        stdout_buffer = []
+        lockcmd.release()
+        print "[server_test_status]:", result
+        print "[server_test_msg]:", output
+        if not output is None:
+            result["msg"] = output
+        else:
+            result["msg"] = []
         return result
 
     def get_test_result(self, sessionid):
         """get the test result for a test set """
         result = {}
-        if sessionid is None: 
+        if sessionid is None:
             return result
 
-        try:    
-            result = self.__test_async_http.get_result()
+        try:
+            global test_server_result
+            lockobj.acquire()
+            result = test_server_result
+            lockobj.release()
+            print "[server_test_result]:" % result
         except Exception, e:
             print e
 
-        # result["cases"] = []
-        # count = 0
-        # for data in self.__test_set_blocks:
-        #     result["casecount"] = data["casecount"]
-        #     cases = data["cases"]
-        #     for item in cases:
-        #         count += 1
-        #         if count % 4 == 0:
-        #             item["result"] = "FAIL"
-        #             item["stdout"] = "the function catch exception in source code xxx line"
-        #             item["start_time"] = "2013-03-05 11:11:11"
-        #             item["end_time"] = "2013-03-05 11:11:11"
-        #         else:
-        #             item["result"] = "PASS"
-        #             item["stdout"] = "N/A"
-        #             item["start_time"] = "2013-03-05 11:11:11"
-        #             item["end_time"] = "2013-03-05 11:11:11"
-        #         result["cases"].append(item)
         return result
 
     def finalize_test(self, sessionid):
         """clear the test stub and related resources"""
         if sessionid is None: return False
+        self.__test_async_shell.kill()
         data = {"sessionid": sessionid}
         ret = http_request(self.__get_url("/shut_down_server"), "GET", {})
         if not ret is None:
