@@ -339,13 +339,7 @@ class TRunner:
                                 self.__write_set_result(
                                     test_xml_set, set_result)
                                 # shut down server
-                                try:
-                                    print '[ show down server ]'
-                                    self.connector.finalize_test(
-                                        self.session_id)
-                                except Exception, error:
-                                    print "[ Error: fail to close webapi http server, error: %s ]" % error
-
+                                self.__shut_down_server(self.session_id)                                
                                 break
                 except IOError, error:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % error
@@ -967,16 +961,26 @@ class TRunner:
         session_status = self.connector.get_test_status(self.session_id)
         # session_status["finished"] == "0" is running
         # session_status["finished"] == "1" is end
-        if session_status["finished"] == "0":
-            progress_msg_list = session_status["msg"]
-            for line in progress_msg_list:
-                print line,
-            return False
-        elif session_status["finished"] == "1":
-            return True
+        if not session_status == None:
+            if session_status["finished"] == "0":
+                progress_msg_list = session_status["msg"]
+                for line in progress_msg_list:
+                    print line,
+                return False
+            elif session_status["finished"] == "1":
+                return True
         else:
             print "[ session status error ,pls finalize test ]\n"
-            return False
+            # return True to finished this set  ,becasue server error          
+            return True
+
+    def __shut_down_server(self, sessionid):
+        try:
+            print '[ show down server ]'
+            self.connector.finalize_test(sessionid)
+        except Exception, error:
+            print "[ Error: fail to close webapi http server, error: %s ]" % error
+
 
 
 def get_version_info():
