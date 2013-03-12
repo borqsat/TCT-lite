@@ -24,7 +24,8 @@
 
 import sys
 sys.path.append("../../")
-from testkitlite.engines.default.runner import TRunner
+from testkitlite.engines.default.runner import *
+from commodule.connector import Connector
 import unittest
 import json
 from optparse import OptionParser  
@@ -32,8 +33,11 @@ from optparse import OptionParser
 #test Class 
 class RunnerTestCase(unittest.TestCase):
     def setUp(self):
-        self.runner = TRunner()
-        self.log_dir = "/opt/testkit/lite"
+        self.CONNECTOR = Connector({"testremote": "tizenMobile"}).get_connector()
+        self.runner = TRunner(self.CONNECTOR)
+        self.log_dir = os.path.join(os.path.expandvars('$HOME'),"testresult")
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
 
     def tearDown(self):
         self.runner = None
@@ -57,6 +61,9 @@ class RunnerTestCase(unittest.TestCase):
                                 help="")
         parser.add_option("--deviceid",dest="device_serial", action="store",
                                 help="set sdb device serial information" )
+        parser.add_option("--stubname", dest="stubname",
+                    action="store",
+                    help="set stub name")
 
         args = ["-D", "yes","--output","/home/test/","-e","WRTLauncher cts-webapi-tizen-alarm-tests",
                 "--fullscreen","none","--non-active","none","--enable-memory-collection","none",
@@ -85,17 +92,17 @@ class RunnerTestCase(unittest.TestCase):
 
     def test_run_case(self):
         self.runner.exe_sequence = ['cts-webapi-tizen-alarm-tests.auto']
-        self.runner.testsuite_dict = {'cts-webapi-tizen-alarm-tests.auto': ['/opt/testkit/lite/2013-03-04-17:02:30.801521/cts-webapi-tizen-alarm-tests.auto.xml']}
+        self.runner.testsuite_dict = {'cts-webapi-tizen-alarm-tests.auto': ['/home/test/autotest/2013-03-11-14:17:08.864498/cts-webapi-tizen-alarm-tests.auto.xml']}
         self.runner.run_case(self.log_dir)
 
     def test_merge_resultfile(self):
-        start_time = '2013-03-04-17:02:30.801521'#depend you start test time 
+        start_time = '2013-03-11-12:16:33.637293'#depend you start test time 
         self.runner.merge_resultfile(start_time, self.log_dir)
 
 
 def suite():
     suite = unittest.TestSuite()
-    #suite.addTest(RunnerTestCase("test_add_filter_rules"))
+    suite.addTest(RunnerTestCase("test_set_global_parameters"))
     return suite
 
 #run test
