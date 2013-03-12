@@ -81,20 +81,21 @@ class SdbCommThread(threading.Thread):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         
-        while True:
-            outlines, errlines = proc.communicate()
+        while proc.poll() is None:
+            outlines = proc.stdout.readlines()
+            #for l in outlines:
+            #    print l,
 
             global stdout_buffer
             lockcmd.acquire()
             stdout_buffer.extend(outlines)
+            #stdout_buffer = ["testing output\r\n"]
             lockcmd.release()
             # break_flag = False
             # for line in outlines:
             #     if string.find(line, self.endflag) != -1:
             #         break_flag = True
             #         break
-            if not proc.poll() is None:
-                break
             time.sleep(0.5)
 
 class HttpCommThread(threading.Thread):
@@ -122,12 +123,12 @@ class HttpCommThread(threading.Thread):
 
         set_finished = False
         for test_block in self.data_queue:
-            ret = http_request("http://127.0.0.1:8080/init_test", "POST", test_block)
+            ret = http_request("http://127.0.0.1:9000/init_test", "POST", test_block)
             if ret is None:
                 break
 
             while True:
-                ret =  http_request("http://127.0.0.1:8080/check_server_status", "GET", {})
+                ret =  http_request("http://127.0.0.1:9000/check_server_status", "GET", {})
                 if ret is None:
                     break
 
@@ -139,13 +140,13 @@ class HttpCommThread(threading.Thread):
                 ### check if test set is finished
                 if ret["finished"] == 1:
                     set_finished = True
-                    ret = http_request("http://127.0.0.1:8080/generate_xml", "GET", {})
+                    ret = http_request("http://127.0.0.1:9000/generate_xml", "GET", {})
                     if not ret is None:
                         self.set_result(ret)
                     break
                 ### check if current test block is finished
                 elif ret["block_finished"] == 1:
-                    ret =  http_request("http://127.0.0.1:8080/generate_xml", "GET", {})
+                    ret =  http_request("http://127.0.0.1:9000/generate_xml", "GET", {})
                     if not ret is None:
                         self.set_result(ret)
                     break
@@ -159,9 +160,9 @@ class TizenMobile:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
 
     def __init__(self):
-        self.__test_listen_port = "8080"
+        self.__test_listen_port = "9000"
         self.__test_async_shell = None
-        self.__test_set_block = 20
+        self.__test_set_block = 50
         self.__test_set_casecount = 0
 
     def __set_forward_tcp(self, hport=None, dport=None):
@@ -172,6 +173,7 @@ class TizenMobile:
             return None
         cmd = "sdb forward %s:tcp %s:tcp" % (hport, dport)
         result = shell_command(cmd)
+        print "sdb forward", result
         return result
 
     def __get_url(self, api):
@@ -267,15 +269,16 @@ class TizenMobile:
             print "\"client-command\" is required for launch!"
             return None
 
-        stub_entry = "%s --testsuite:%s --client-command:%s" % \
-                    (params["stub-name"], params["testsuite-name"], params["client-command"])
-        cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
-        print "stub startup", cmd
-        self.__test_async_shell = SdbCommThread(cmd, "bye")
-        self.__test_async_shell.start()
-        time.sleep(2)
         ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
-        print "__set_forward_tcp"
+        ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
+        ret = self.__set_forward_tcp(self.__test_listen_port, "8000")                
+        stub_entry = "%s --testsuite:%s --client-command:%s" % \
+                     (params["stub-name"], params["testsuite-name"], params["client-command"])
+        cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
+        print "stub startup ", cmd
+        self.__test_async_shell = SdbCommThread(cmd, "bye")
+        self.__test_async_shell.start()       
+        time.sleep(3)
 
         timecnt = 0
         result = ""
@@ -292,7 +295,10 @@ class TizenMobile:
         return result
 
     def run_test(self, sessionid, test_set):
-        """process the execution of a test set"""
+        """
+            process the execution for a test set
+            may be split to serveral blocks, which decided by the block_size
+        """
 
         print "run_test entry"
 
@@ -317,7 +323,7 @@ class TizenMobile:
             block_data["totalBlk"] = str(blknum)
             block_data["currentBlk"] = str(idx)
             block_data["casecount"] = data["casecount"]
-            block_data["exetype"] = data["exetype"] 
+            block_data["exetype"] = data["exetype"]
             block_data["type"] = data["type"]
             start = (idx - 1) * self.__test_set_block
             if idx == blknum: 
@@ -326,6 +332,7 @@ class TizenMobile:
                 end = idx * self.__test_set_block
             block_data["cases"] = cases[start:end]
             test_set_blocks.append(block_data)
+            print "[Data block %d] %s" % (idx, block_data)
             idx += 1
 
         self.__test_async_http = HttpCommThread(test_set_blocks)
@@ -337,19 +344,20 @@ class TizenMobile:
         """poll the test task status"""
         if sessionid is None: 
             return None
-        data = {"sessionid": sessionid}
-        result = {"finished": "0"}
-        global test_server_status
-        lockobj.acquire()     
-        result["finished"] = str(test_server_status["finished"])
-        if "block_finished" in test_server_status:
-            result["block_finished"] = str(test_server_status["block_finished"])          
-        lockobj.release()
 
+        result = {"finished":"0"}
+        global test_server_status
         global stdout_buffer
-        lockcmd.acquire()
+        if "finished" in test_server_status:
+            result["finished"] = str(test_server_status["finished"])
+        if "block_finished" in test_server_status:
+            result["block_finished"] = str(test_server_status["block_finished"]) 
         output = []
         output.extend(stdout_buffer)
+        lockobj.acquire()
+        test_server_status = {}
+        lockobj.release()
+        lockcmd.acquire()
         stdout_buffer = []
         lockcmd.release()
         print "[server_test_status]:", result
