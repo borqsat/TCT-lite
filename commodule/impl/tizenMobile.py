@@ -38,15 +38,15 @@ def http_request(url, rtype="POST", data=None):
             ret = requests.post(url, data=json.dumps(data), headers=headers)
             if ret: 
                 result = ret.json()
-        except requests.exceptions.ConnectionError:
-            result = None
+        except Exception, e:
+            result = {}
     elif rtype == "GET":
         try:        
             ret = requests.get(url, params=data)
             if ret: 
                 result = ret.json()
-        except requests.exceptions.ConnectionError:
-            result = None
+        except Exception, e:
+            result = {}
 
     return result
 
@@ -90,7 +90,6 @@ class SdbCommThread(threading.Thread):
             sys.stdout.write(rbuffile2.read())
             sys.stdout.flush()
         
-        print "--------->sub command"
         # loop for timeout and print
         rbuffile1.seek(0)
         rbuffile2.seek(0)
@@ -172,7 +171,7 @@ class TizenMobile:
     def __init__(self):
         self.__test_listen_port = "9000"
         self.__test_async_shell = None
-        self.__test_set_block = 50
+        self.__test_set_block = 200
         self.__test_set_casecount = 0
 
     def __set_forward_tcp(self, hport=None, dport=None):
@@ -277,19 +276,19 @@ class TizenMobile:
             print "\"client-command\" is required for launch!"
             return None
 
-        ###kill the stub process###
-        cmd = "sdb shell killall %s " % params["stub-name"]
-        ret =  shell_command(cmd)
-        ###launch the new stub process###
-        stub_entry = "%s --testsuite:%s --client-command:%s" % \
-                     (params["stub-name"], params["testsuite-name"], params["client-command"])
-        cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
-        print "startup stub: ", cmd
-        self.__test_async_shell = SdbCommThread(cmd, "goodbye")
-        self.__test_async_shell.start()
-        ###set forward between host and device###        
-        ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
-        time.sleep(3)
+        if self.__test_async_shell is None:
+            ###kill the stub process###
+            cmd = "sdb shell killall %s " % params["stub-name"]
+            ret =  shell_command(cmd)
+            ###launch an new stub process###
+            stub_entry = "%s --testsuite:%s --client-command:%s" % \
+                         (params["stub-name"], params["testsuite-name"], params["client-command"])
+            cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
+            self.__test_async_shell = SdbCommThread(cmd, "goodbye")
+            self.__test_async_shell.start()
+            ###set forward between host and device###        
+            ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
+            time.sleep(3)
 
         ###check if http server is ready for data transfer### 
         timecnt = 0
@@ -388,7 +387,8 @@ class TizenMobile:
         """clear the test stub and related resources"""
         if sessionid is None: return False
         data = {"sessionid": sessionid}
-        ret = http_request(self.__get_url("/shut_down_server"), "GET", {})
+        ###ret = http_request(self.__get_url("/shut_down_server"), "GET", {})
+        ###time.sleep(30)
         return True
 
 testremote = TizenMobile()
