@@ -56,15 +56,12 @@ def shell_command(cmdline):
                             shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
-    stdout = proc.stdout.readlines()
-    return stdout
+    result = proc.stdout.readlines()
+    return result
 
 test_server_result = []
 test_server_status = {}
-stdout_buffer = []
-stderr_buffer = []
 lockobj = threading.Lock()
-lockcmd = threading.Lock()
 
 class SdbCommThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
@@ -75,31 +72,44 @@ class SdbCommThread(threading.Thread):
         self.cmdline = cmd
         self.endflag = endflag
 
-    def run(self):
+    def run(self):        
+        BUFFILE1 = os.path.expanduser("~") + os.sep + ".shellexec_buffile_stdout"
+        BUFFILE2 = os.path.expanduser("~") + os.sep + ".shellexec_buffile_stderr"
+
+        LOOP_DELTA = 0.2
+        wbuffile1 = file(BUFFILE1, "w")
+        wbuffile2 = file(BUFFILE2, "w")
+        rbuffile1 = file(BUFFILE1, "r")
+        rbuffile2 = file(BUFFILE2, "r")
         proc = subprocess.Popen(self.cmdline,
                                 shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+                                stdout=wbuffile1,
+                                stderr=wbuffile2)
+        def print_log():
+            sys.stdout.write(rbuffile1.read())
+            sys.stdout.write(rbuffile2.read())
+            sys.stdout.flush()
         
-        while proc.poll() is None:
-            outlines = proc.stdout.readlines()
-            #for l in outlines:
-            #    print l,
-
-            global stdout_buffer
-            lockcmd.acquire()
-            stdout_buffer.extend(outlines)
-            #stdout_buffer = ["testing output\r\n"]
-            lockcmd.release()
-            # break_flag = False
-            # for line in outlines:
-            #     if string.find(line, self.endflag) != -1:
-            #         break_flag = True
-            #         break
-            time.sleep(0.5)
+        print "--------->sub command"
+        # loop for timeout and print
+        rbuffile1.seek(0)
+        rbuffile2.seek(0)
+        while True:
+            if not proc.poll() is None:
+                break
+            print_log()
+            time.sleep(LOOP_DELTA)
+        # print left output
+        print_log()
+        # close file
+        wbuffile1.close()
+        wbuffile2.close()
+        rbuffile1.close()
+        rbuffile2.close()
+        os.remove(BUFFILE1)
+        os.remove(BUFFILE2)
 
 class HttpCommThread(threading.Thread):
-
     """sdb communication for serve_forever app in async mode"""
     def __init__(self, test_block_queue):
         super(HttpCommThread, self).__init__()
@@ -171,9 +181,8 @@ class TizenMobile:
             return None
         if dport is None: 
             return None
-        cmd = "sdb forward %s:tcp %s:tcp" % (hport, dport)
+        cmd = "sdb forward tcp:%s tcp:%s" % (hport, dport)
         result = shell_command(cmd)
-        print "sdb forward", result
         return result
 
     def __get_url(self, api):
@@ -208,24 +217,23 @@ class TizenMobile:
                 screen_size_str = "%s x %s" % (match.group(3), match.group(4))
         # get architecture
         ret = shell_command("sdb -s %s shell uname -m" % deviceid)
-        if len(ret) > 1:
+        if len(ret) > 0:
             device_model_str = ret[0]
         # get hostname
-        ret = shell_command("sdb -s %s shell uname -m" % deviceid)
-        if len(ret) > 1:
+        ret = shell_command("sdb -s %s shell uname -n" % deviceid)
+        if len(ret) > 0:
             device_name_str = ret[0]
         # get os version
         ret = shell_command("sdb -s %s shell cat /etc/issue" % deviceid)
         for line in ret:
-            if len(line) > 1:os_version_str = "%s %s" % (os_version_str, line)
+            if len(line) > 1:
+                os_version_str = "%s %s" % (os_version_str, line)
         os_version_str = os_version_str[0:-1]
-        
         device_info["resolution"] = resolution_str
         device_info["screen_size"] = screen_size_str
         device_info["device_model"] = device_model_str
         device_info["device_name"] = device_name_str
         device_info["os_version"] = os_version_str
-
         return device_info
 
     def install_package(self, deviceid, pkgpath):
@@ -269,25 +277,28 @@ class TizenMobile:
             print "\"client-command\" is required for launch!"
             return None
 
-        ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
-        ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
-        ret = self.__set_forward_tcp(self.__test_listen_port, "8000")                
+        ###kill the stub process###
+        cmd = "sdb shell killall %s " % params["stub-name"]
+        ret =  shell_command(cmd)
+        ###launch the new stub process###
         stub_entry = "%s --testsuite:%s --client-command:%s" % \
                      (params["stub-name"], params["testsuite-name"], params["client-command"])
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
-        print "stub startup ", cmd
-        self.__test_async_shell = SdbCommThread(cmd, "bye")
-        self.__test_async_shell.start()       
+        print "startup stub: ", cmd
+        self.__test_async_shell = SdbCommThread(cmd, "goodbye")
+        self.__test_async_shell.start()
+        ###set forward between host and device###        
+        ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
         time.sleep(3)
 
+        ###check if http server is ready for data transfer### 
         timecnt = 0
         result = ""
-        print "startup server..."
-        while timecnt < 5:
+        while timecnt < 10:
             ret = http_request(self.__get_url("/check_server"), "GET", {})
-            print "startup result", ret
+            print "check_server, get response: ", ret
             if ret is None:
-                time.sleep(1)
+                time.sleep(0.3)
                 timecnt += 1
             else:
                 result = "11223344"
@@ -332,7 +343,6 @@ class TizenMobile:
                 end = idx * self.__test_set_block
             block_data["cases"] = cases[start:end]
             test_set_blocks.append(block_data)
-            print "[Data block %d] %s" % (idx, block_data)
             idx += 1
 
         self.__test_async_http = HttpCommThread(test_set_blocks)
@@ -346,26 +356,15 @@ class TizenMobile:
             return None
 
         result = {"finished":"0"}
+        output = []
         global test_server_status
-        global stdout_buffer
         if "finished" in test_server_status:
             result["finished"] = str(test_server_status["finished"])
         if "block_finished" in test_server_status:
             result["block_finished"] = str(test_server_status["block_finished"]) 
-        output = []
-        output.extend(stdout_buffer)
-        lockobj.acquire()
-        test_server_status = {}
-        lockobj.release()
-        lockcmd.acquire()
-        stdout_buffer = []
-        lockcmd.release()
+
         print "[server_test_status]:", result
-        print "[server_test_msg]:", output
-        if not output is None:
-            result["msg"] = output
-        else:
-            result["msg"] = []
+        result["msg"] = output
         return result
 
     def get_test_result(self, sessionid):
@@ -388,12 +387,8 @@ class TizenMobile:
     def finalize_test(self, sessionid):
         """clear the test stub and related resources"""
         if sessionid is None: return False
-        self.__test_async_shell.kill()
         data = {"sessionid": sessionid}
         ret = http_request(self.__get_url("/shut_down_server"), "GET", {})
-        if not ret is None:
-            return True
-        else:
-            return False
+        return True
 
 testremote = TizenMobile()

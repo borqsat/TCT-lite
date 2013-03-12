@@ -82,7 +82,7 @@ def main(argvs):
     else: 
         print "unknown sub command name \"%s\"" % subcmd
 
-    print "result:", ret
+    #print "result:", ret
 
 if __name__ == '__main__':
     main(sys.argv)
