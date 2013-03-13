@@ -20,6 +20,7 @@
 #              Liu,chengtao <liux.chengtao@intel.com>
 
 import sys
+import time
 
 class Connector:
     """Communication module for automatic test"""
@@ -59,22 +60,29 @@ def main(argvs):
         ret = conn.get_installed_package("emulator-26100")
     elif subcmd == "remove_package":
         ret = conn.remove_package("emulator-26100", \
-              "cts-webapi-tizen-contact-tests-1.1.9-7.1.i586")
+                                  "cts-webapi-tizen-contact-tests-1.1.9-7.1.i586")
     elif subcmd == "init_test":
-        ret = conn.init_test()
+        ret = conn.init_test("emulator-26100", \
+                             {"stub_entry":"/tmp/httpserver"})
+        while True:
+            ret = conn.get_test_status("0011223344556677")
+            if ret == {}:
+                break
+            print "get status:", ret
+            time.sleep(0.6)
+
     elif subcmd == "run_test":
-        ret = conn.run_test()
+        ret = conn.run_test("0011223344556677")
     elif subcmd == "get_test_status":
-        ret = conn.get_test_status()
+        ret = conn.get_test_status("0011223344556677")
     elif subcmd == "get_test_result":
-        ret = conn.get_test_result()
+        ret = conn.get_test_result("0011223344556677")
     elif subcmd == "finalize_test":
-        ret = conn.finalize_test()
+        ret = conn.finalize_test("0011223344556677")
     else: 
         print "unknown sub command name \"%s\"" % subcmd
 
-    for l in ret:
-        print "%s" % l,
+    #print "result:", ret
 
 if __name__ == '__main__':
     main(sys.argv)
