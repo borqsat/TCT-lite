@@ -46,7 +46,7 @@ public:
     bool is_manual();
     void to_json(char* str);
     void result_to_json(char* str);
-    void set_result(char* test_result, char* test_msg, char* end_time);
+    void set_result(const char* test_result, const char* test_msg, char* end_time);
     void set_start_at(char* start_time, void(*fn)(int));
     void cancel_time_check();
 

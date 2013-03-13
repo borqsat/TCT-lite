@@ -16,7 +16,8 @@ TestCase::TestCase()
 
         stdout = NULL;
 
-        timeout = 90;
+        timeout = 90;// default 90 seconds
+        is_executed = false;
 }
 
 TestCase::~TestCase()
@@ -50,12 +51,12 @@ TestCase::~TestCase()
                 post_con = NULL;
         }
         if (steps) {
-                delete steps;
+                delete[] steps;
                 steps = NULL;
         }
 
         if (stdout) {
-                delete stdout;
+                delete[] stdout;
                 stdout = NULL;
         }
 }
@@ -131,7 +132,7 @@ void TestCase::result_to_json(char* str)
     result_json_len = strlen(str);
 }
 
-void TestCase::set_result(char* test_result, char* test_msg, char* end_time)
+void TestCase::set_result(const char* test_result, const char* test_msg, char* end_time)
 {
         is_executed = true;
         cancel_time_check();
@@ -170,10 +171,10 @@ void TestCase::set_start_at(char *start_time, void(*fn)(int))
             sa.sa_handler = fn;
             sigaction ( SIGALRM, &sa, NULL );
 
-            timer.it_value.tv_sec = 0 ;
-            timer.it_value.tv_usec = 900000;
+            timer.it_value.tv_sec = timeout;
+            timer.it_value.tv_usec = 0;
             timer.it_interval.tv_sec = 0;
-            timer.it_interval.tv_usec = 900000 ;
+            timer.it_interval.tv_usec = 0;
 
             setitimer ( ITIMER_REAL, &timer, NULL ) ;
         }

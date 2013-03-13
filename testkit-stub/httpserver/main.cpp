@@ -2,13 +2,10 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <stdio.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
 #include <netdb.h>
 #include <sys/types.h>
-#include <stdio.h>
-#include <errno.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <netinet/ip.h>
@@ -69,6 +66,10 @@ void parse(int count,char *argv[],HttpServer *httpserver)
 		{
 			httpserver->g_test_suite = new char[strlen(value)+1];
 			strcpy(httpserver->g_test_suite,value);
+
+			// we use shell cmd to get packageid from testsuite, then form the g_client_command
+			httpserver->g_client_command = new char[strlen(value)+128];
+			sprintf(httpserver->g_client_command, "aul_test launch `wrt-launcher -l | grep %s | awk '{print $NF}'`", value);
 		}
 		else if(strcmp(key, "--exe_sequence")==0)
 		{
@@ -76,9 +77,9 @@ void parse(int count,char *argv[],HttpServer *httpserver)
 			strcpy(httpserver->g_exe_sequence,value);
 		}
 		else if(strcmp(key, "--client_command")==0)
-		{
-			httpserver->g_client_command = new char[strlen(value)+1];
-			strcpy(httpserver->g_client_command,value);
+		{// not use now
+			//httpserver->g_client_command = new char[strlen(value)+1];
+			//strcpy(httpserver->g_client_command,value);
 		}
 		else if(strcmp(key, "--enable_memory_collection")==0)
 		{
@@ -90,21 +91,19 @@ void parse(int count,char *argv[],HttpServer *httpserver)
 int main( int   argc,
           char *argv[] )
 {
-	//get the parameters from cmd line
-	//printf("argc is %d\n", argc);	
-    HttpServer httpserver; 
+	HttpServer httpserver; 
     if (argc > 1)
 	{
 		parse(argc,argv,&httpserver);	
-	}   
+		/*printf("%s\n",httpserver.g_port);
+		printf("%s\n",httpserver.g_hide_status);
+		printf("%s\n",httpserver.g_pid_log);
+		printf("%s\n",httpserver.g_test_suite);
+		printf("%s\n",httpserver.g_exe_sequence);
+		printf("%s\n",httpserver.g_client_command);
+		printf("%s\n",httpserver.g_enable_memory_collection);*/
+	}   	
 	
-	/*printf("%s\n",httpserver.g_port);
-	printf("%s\n",httpserver.g_hide_status);
-	printf("%s\n",httpserver.g_pid_log);
-	printf("%s\n",httpserver.g_test_suite);
-	printf("%s\n",httpserver.g_exe_sequence);
-	printf("%s\n",httpserver.g_client_command);
-	printf("%s\n",httpserver.g_enable_memory_collection);*/
     httpserver.StartUp();
 
     return 0;
