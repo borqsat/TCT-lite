@@ -107,9 +107,9 @@ class TRunner:
         # set the external test WRTLauncher
         if options.exttest:
             self.external_test = options.exttest
-        #set stub name
+        # set stub name
         if options.stubname:
-            self.stub_name = options.stubname         
+            self.stub_name = options.stubname
 
     def set_pid_log(self, pid_log):
         """ get pid_log file """
@@ -339,13 +339,7 @@ class TRunner:
                                 self.__write_set_result(
                                     test_xml_set, set_result)
                                 # shut down server
-                                try:
-                                    print '[ show down server ]'
-                                    self.connector.finalize_test(
-                                        self.session_id)
-                                except Exception, error:
-                                    print "[ Error: fail to close webapi http server, error: %s ]" % error
-
+                                self.__shut_down_server(self.session_id)                                
                                 break
                 except IOError, error:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % error
@@ -577,8 +571,7 @@ class TRunner:
             print "[Warning: found 0 case from the result files, \
             if it's not right, please check the test xml files, or the filter values ]"
         else:
-            print "  [ pass rate: %.2f%% ]" \
-                % (int(self.testresult_dict["pass"]) * 100 / int(total_case_number))
+            print "  [ pass rate: %.2f%% ]" % (int(self.testresult_dict["pass"]) * 100 / int(total_case_number))
             print "  [ PASS case number: %s ]" % self.testresult_dict["pass"]
             print "  [ FAIL case number: %s ]" % self.testresult_dict["fail"]
             print "  [ BLOCK case number: %s ]" % self.testresult_dict["block"]
@@ -612,56 +605,37 @@ class TRunner:
                     parameters.setdefault("type", tcase.get('type'))
                     case_detail_tmp.setdefault("case_id", tcase.get('id'))
                     case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
-                    case_detail_tmp.setdefault("order", str(case_order))                    
-                    
+                    case_detail_tmp.setdefault("order", str(case_order))
+                    case_detail_tmp.setdefault("test_script_entry", "none")
+                    case_detail_tmp.setdefault("step_desc", "none")
+                    case_detail_tmp.setdefault("expected", "none")
+                    case_detail_tmp.setdefault("pre_condition", "none")
+                    case_detail_tmp.setdefault("post_condition", "none")
 
                     if tcase.find('description/test_script_entry') is not None:
-                        case_detail_tmp.setdefault(
-                            "test_script_entry", tcase.find(
-                                'description/test_script_entry').text
-                        )
-                    else:
-                        case_detail_tmp.setdefault("test_script_entry", "none")
-
+                        case_detail_tmp["test_script_entry"] = tcase.find(
+                            'description/test_script_entry').text
                     for this_step in tcase.getiterator("step"):
                         if this_step.find("step_desc") is not None:
-                            case_detail_tmp.setdefault(
-                                "step_desc",
-                                this_step.find("step_desc").text
-                            )
-                        else:
-                            case_detail_tmp.setdefault("step_desc", "none")
-
+                            case_detail_tmp[
+                                "step_desc"] = this_step.find("step_desc").text
 
                         if this_step.find("expected") is not None:
-                            case_detail_tmp.setdefault(
-                                "expected",
-                                this_step.find("expected").text
-                            )
-                        else:
-                            case_detail_tmp.setdefault("expected", "none")
+                            case_detail_tmp[
+                                "expected"] = this_step.find("expected").text
 
                     if tcase.find('description/pre_condition') is not None:
-                        case_detail_tmp.setdefault(
-                            "pre_condition",
-                            tcase.find('description/pre_condition').text
-                        )
-                    else:
-                        case_detail_tmp.setdefault("pre_condition", "none")
+                        case_detail_tmp["pre_condition"] = tcase.find(
+                            'description/pre_condition').text
 
                     if tcase.find('description/post_condition') is not None:
-                        case_detail_tmp.setdefault(
-                            "post_condition",
-                            tcase.find('description/post_condition').text
-                        )
-                    else:
-                        case_detail_tmp.setdefault("post_condition", "none")
+                        case_detail_tmp['post_condition'] = tcase.find(
+                            'description/post_condition').text
 
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
-            self.set_parameters = parameters 
-       
+            self.set_parameters = parameters
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, \
             error: %s ]\n" % error
@@ -929,12 +903,11 @@ class TRunner:
         # init stub and get the session_id
         session_id = self.connector.init_test(self.deviceid, starup_prms)
         if session_id == None:
-            print "[ Error: Initialization Error, error: %s ]" % error
+            print "[ Error: Initialization Error]" 
             return False
         else:
             self.set_session_id(session_id)
             return True
-
 
     def __prepare_starup_parameters(self, testxml):
         """ prepare_starup_parameters """
@@ -988,16 +961,26 @@ class TRunner:
         session_status = self.connector.get_test_status(self.session_id)
         # session_status["finished"] == "0" is running
         # session_status["finished"] == "1" is end
-        if session_status["finished"] == "0":
-            progress_msg_list = session_status["msg"]
-            for line in progress_msg_list:
-                print line,
-            return False
-        elif session_status["finished"] == "1":
-            return True
+        if not session_status == None:
+            if session_status["finished"] == "0":
+                progress_msg_list = session_status["msg"]
+                for line in progress_msg_list:
+                    print line,
+                return False
+            elif session_status["finished"] == "1":
+                return True
         else:
             print "[ session status error ,pls finalize test ]\n"
-            return False
+            # return True to finished this set  ,becasue server error          
+            return True
+
+    def __shut_down_server(self, sessionid):
+        try:
+            print '[ show down server ]'
+            self.connector.finalize_test(sessionid)
+        except Exception, error:
+            print "[ Error: fail to close webapi http server, error: %s ]" % error
+
 
 
 def get_version_info():
