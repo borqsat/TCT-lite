@@ -1,1 +1,11 @@
+normal build:
 g++ main.cpp ../testcase.cpp ../httpserver.cpp -o ut -ljson-glib-1.0 `pkg-config --cflags glib-2.0 --cflags json-glib-1.0`
+
+debug build:
+g++ main.cpp ../testcase.cpp ../httpserver.cpp -o ut -g -ljson-glib-1.0 `pkg-config --cflags glib-2.0 --cflags json-glib-1.0`
+
+debug:
+gdb ./ut
+
+memory check:
+valgrind --tool=memcheck --leak-check=yes ./ut

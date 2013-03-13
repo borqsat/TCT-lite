@@ -1,1 +1,5 @@
+http server:
 g++ main.cpp httpserver.cpp testcase.cpp -o httpserver -ljson-glib-1.0 `pkg-config --cflags glib-2.0 --cflags json-glib-1.0`
+
+native stub:
+g++ shell_exec.cpp -o shell_exec
