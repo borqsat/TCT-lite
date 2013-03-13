@@ -29,6 +29,9 @@ import requests
 import json
 import re
 
+def get_url(baseurl, api):
+    return "%s%s" % (baseurl, api)
+
 def http_request(url, rtype="POST", data=None):
     """http request to the device http server"""
     result = None
@@ -59,10 +62,9 @@ def shell_command(cmdline):
     result = proc.stdout.readlines()
     return result
 
+lockobj = threading.Lock()
 test_server_result = []
 test_server_status = {}
-lockobj = threading.Lock()
-
 class SdbCommThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
     def __init__(self, cmd=None, endflag=None):
@@ -89,7 +91,8 @@ class SdbCommThread(threading.Thread):
             sys.stdout.write(rbuffile1.read())
             sys.stdout.write(rbuffile2.read())
             sys.stdout.flush()
-        
+            pass
+
         # loop for timeout and print
         rbuffile1.seek(0)
         rbuffile2.seek(0)
@@ -110,9 +113,10 @@ class SdbCommThread(threading.Thread):
 
 class HttpCommThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
-    def __init__(self, test_block_queue):
+    def __init__(self, server_url, test_data_queue):
         super(HttpCommThread, self).__init__()
-        self.data_queue = test_block_queue
+        self.server_url = server_url
+        self.data_queue = test_data_queue
         global test_server_result
         lockobj.acquire()
         test_server_result = {"cases":[]}
@@ -131,17 +135,21 @@ class HttpCommThread(threading.Thread):
             return
 
         set_finished = False
+        cur_block = 0
+        total_block = len(self.data_queue)
         for test_block in self.data_queue:
-            ret = http_request("http://127.0.0.1:9000/init_test", "POST", test_block)
+            cur_block += 1
+            ret = http_request(get_url(self.server_url, "/init_test"), "POST", test_block)
             if ret is None:
                 break
 
             while True:
-                ret =  http_request("http://127.0.0.1:9000/check_server_status", "GET", {})
+                ret =  http_request(get_url(self.server_url, "/check_server_status"), "GET", {})
                 if ret is None:
                     break
 
-                global test_server_status                    
+                print "[ test progress: block (%d/%d), finished: %s ]" % (cur_block, total_block, ret["finished"])
+                global test_server_status
                 lockobj.acquire()
                 test_server_status = ret
                 lockobj.release()
@@ -149,13 +157,13 @@ class HttpCommThread(threading.Thread):
                 ### check if test set is finished
                 if ret["finished"] == 1:
                     set_finished = True
-                    ret = http_request("http://127.0.0.1:9000/generate_xml", "GET", {})
+                    ret = http_request(get_url(self.server_url, "/generate_xml"), "GET", {})
                     if not ret is None:
                         self.set_result(ret)
                     break
                 ### check if current test block is finished
                 elif ret["block_finished"] == 1:
-                    ret =  http_request("http://127.0.0.1:9000/generate_xml", "GET", {})
+                    ret =  http_request(get_url(self.server_url, "/generate_xml"), "GET", {})
                     if not ret is None:
                         self.set_result(ret)
                     break
@@ -169,9 +177,10 @@ class TizenMobile:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
 
     def __init__(self):
-        self.__test_listen_port = "9000"
+        self.__test_server_ip = "127.0.0.1"
+        self.__test_server_port = "9000"
         self.__test_async_shell = None
-        self.__test_set_block = 200
+        self.__test_set_block = 100
         self.__test_set_casecount = 0
 
     def __set_forward_tcp(self, hport=None, dport=None):
@@ -182,11 +191,8 @@ class TizenMobile:
             return None
         cmd = "sdb forward tcp:%s tcp:%s" % (hport, dport)
         result = shell_command(cmd)
+        self.__forward_server_url = "http://%s:%s" % (self.__test_server_ip, self.__test_server_port)
         return result
-
-    def __get_url(self, api):
-        url = "http://127.0.0.1:%s%s" % (self.__test_listen_port, api)
-        return url
 
     def get_device_ids(self):
         """get tizen deivce list of ids"""
@@ -260,7 +266,6 @@ class TizenMobile:
     def init_test(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
 
-        print "init_test entry"
         if params is None:
             return None
 
@@ -287,15 +292,15 @@ class TizenMobile:
             self.__test_async_shell = SdbCommThread(cmd, "goodbye")
             self.__test_async_shell.start()
             ###set forward between host and device###        
-            ret = self.__set_forward_tcp(self.__test_listen_port, "8000")
+            ret = self.__set_forward_tcp(self.__test_server_port, "8000")
             time.sleep(3)
 
         ###check if http server is ready for data transfer### 
         timecnt = 0
         result = ""
         while timecnt < 10:
-            ret = http_request(self.__get_url("/check_server"), "GET", {})
-            print "check_server, get response: ", ret
+            ret = http_request(get_url(self.__forward_server_url, "/check_server"), "GET", {})
+            print "check_server, get ready flag: ", ret
             if ret is None:
                 time.sleep(0.3)
                 timecnt += 1
@@ -309,9 +314,6 @@ class TizenMobile:
             process the execution for a test set
             may be split to serveral blocks, which decided by the block_size
         """
-
-        print "run_test entry"
-
         if sessionid is None: 
             return False
         if not "casecount" in test_set : 
@@ -344,7 +346,7 @@ class TizenMobile:
             test_set_blocks.append(block_data)
             idx += 1
 
-        self.__test_async_http = HttpCommThread(test_set_blocks)
+        self.__test_async_http = HttpCommThread(self.__forward_server_url, test_set_blocks)
         self.__test_async_http.start()
 
         return True
@@ -353,17 +355,14 @@ class TizenMobile:
         """poll the test task status"""
         if sessionid is None: 
             return None
-
-        result = {"finished":"0"}
-        output = []
+        result = {}
+        result["msg"] = []
         global test_server_status
         if "finished" in test_server_status:
             result["finished"] = str(test_server_status["finished"])
-        if "block_finished" in test_server_status:
-            result["block_finished"] = str(test_server_status["block_finished"]) 
+        else:
+            result["finished"] = "0"
 
-        print "[server_test_status]:", result
-        result["msg"] = output
         return result
 
     def get_test_result(self, sessionid):
@@ -387,7 +386,7 @@ class TizenMobile:
         """clear the test stub and related resources"""
         if sessionid is None: return False
         data = {"sessionid": sessionid}
-        ###ret = http_request(self.__get_url("/shut_down_server"), "GET", {})
+        ###ret = http_request(get_url(self.__forward_server_url, "/shut_down_server"), "GET", {})
         ###time.sleep(30)
         return True
 
