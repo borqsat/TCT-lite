@@ -613,6 +613,7 @@ class TRunner:
                     case_detail_tmp.setdefault("expected", "none")
                     case_detail_tmp.setdefault("pre_condition", "none")
                     case_detail_tmp.setdefault("post_condition", "none")
+                    case_detail_tmp.setdefault("onload_delay", "3")
 
                     if tcase.find('description/test_script_entry') is not None:
                         case_detail_tmp["test_script_entry"] = tcase.find(
@@ -634,11 +635,13 @@ class TRunner:
                         case_detail_tmp['post_condition'] = tcase.find(
                             'description/post_condition').text
 
+                    if tcase.get('onload_delay') is not None:
+                        case_detail_tmp['onload_delay'] = tcase.get('onload_delay')
+
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
             self.set_parameters = parameters
-            print self.set_parameters
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, \
             error: %s ]\n" % error
