@@ -55,34 +55,26 @@ def main(argvs):
         ret = conn.get_device_info("emulator-26100") 
     elif subcmd == "install_package":
         ret = conn.install_package("emulator-26100", \
-                                   "/home/test_packages/test.rpm")
+                                   "/home/packages/tct-webapi-tizen-contact-tests-1.1.9-7.1.i586.rpm")
     elif subcmd == "get_installed_package":
         ret = conn.get_installed_package("emulator-26100")
     elif subcmd == "remove_package":
         ret = conn.remove_package("emulator-26100", \
-                                  "cts-webapi-tizen-contact-tests-1.1.9-7.1.i586")
+                                  "tct-webapi-tizen-contact-tests-1.1.9-7.1.i586")
     elif subcmd == "init_test":
-        ret = conn.init_test("emulator-26100", \
-                             {"stub_entry":"/tmp/httpserver"})
-        while True:
-            ret = conn.get_test_status("0011223344556677")
-            if ret == {}:
-                break
-            print "get status:", ret
-            time.sleep(0.6)
-
+        pass
     elif subcmd == "run_test":
-        ret = conn.run_test("0011223344556677")
+        pass
     elif subcmd == "get_test_status":
-        ret = conn.get_test_status("0011223344556677")
+        pass
     elif subcmd == "get_test_result":
-        ret = conn.get_test_result("0011223344556677")
+        pass
     elif subcmd == "finalize_test":
-        ret = conn.finalize_test("0011223344556677")
+        pass
     else: 
         print "unknown sub command name \"%s\"" % subcmd
 
-    #print "result:", ret
+    print "result:", ret
 
 if __name__ == '__main__':
     main(sys.argv)
