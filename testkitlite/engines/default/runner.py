@@ -596,6 +596,8 @@ class TRunner:
                 parameters.setdefault(
                     "casecount", str(len(tset.getiterator('testcase')))
                 )
+                parameters.setdefault("current_set_name", xml_set_tmp)
+
                 for tcase in tset.getiterator('testcase'):
                     case_detail_tmp = {}
                     parameters.setdefault(
@@ -636,6 +638,7 @@ class TRunner:
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
             self.set_parameters = parameters
+            print self.set_parameters
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, \
             error: %s ]\n" % error
