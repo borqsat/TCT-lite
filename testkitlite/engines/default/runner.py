@@ -637,7 +637,6 @@ class TRunner:
 
                     if tcase.get('onload_delay') is not None:
                         case_detail_tmp['onload_delay'] = tcase.get('onload_delay')
-                    print tcase.get('onload_delay')
 
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
