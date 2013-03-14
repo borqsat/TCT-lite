@@ -638,7 +638,6 @@ class TRunner:
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
             self.set_parameters = parameters
-            print self.set_parameters
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, \
             error: %s ]\n" % error
