@@ -87,7 +87,6 @@ def get_forward_connect(device_id, remote_port=None):
     cmd = "sdb -s %s forward tcp:%s tcp:%s" % (device_id, host_port, remote_port)
     result = shell_command(cmd)
     url_forward = "http://%s:%s" % (HOST, host_port)
-    print "[ forward server %s ]" % url_forward
     return url_forward
 
 lockobj = threading.Lock()
@@ -184,6 +183,7 @@ class TestSetExecThread(threading.Thread):
                     lockobj.acquire()
                     test_server_status = ret
                     lockobj.release()
+
                     ### check if test set is finished
                     if ret["finished"] == 1:
                         set_finished = True
@@ -283,49 +283,59 @@ class TizenMobile:
 
     def init_test(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
-
         if params is None:
             return None
 
+        result = ""
+        stub_name = ""
         stub_server_port = "8000"
+        testsuite_name = ""
+        client_command = ""       
         if not "stub-name" in params:
-            print "\"stub-name\" is required for launch!"
+            print "\"stub-name\" is required!"
             return None
-
-        if not "testsuite-name" in params:
-            print "\"testsuite-name\" is required for launch!"
-            return None
-
-        if not "client-command" in params:
-            print "\"client-command\" is required for launch!"
-            return None
+        else:
+            stub_name = params["stub-name"]
 
         if "stub-port" in params:
             stub_server_port = params["stub-port"]
 
-        if self.__test_async_shell is None:
-            ###kill the stub process###
-            cmd = "sdb shell killall %s " % params["stub-name"]
-            ret =  shell_command(cmd)
-            print "[ waiting for kill http server ]"
-            time.sleep(30)
-            ###launch an new stub process###
-            print "[ launch instance of http server ]"
-            stub_entry = "%s --testsuite:%s --client-command:%s" % \
-                         (params["stub-name"], params["testsuite-name"], params["client-command"])
-            cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
-            self.__test_async_shell = StubExecThread(cmd, "goodbye")
-            self.__test_async_shell.start()
-            ###set forward between host and device###        
-            self.__forward_server_url = get_forward_connect(deviceid, stub_server_port)
-            time.sleep(3)
+        if not "testsuite-name" in params:
+            print "\"testsuite-name\" is required!"
+            return None
+        else:
+            testsuite_name = params["testsuite-name"]
+
+        if not "client-command" in params:
+            print "\"client-command\" is required!"
+            return None
+        else:
+            client_command = params["client-command"]
+
+        ###kill the stub process###
+        cmd = "sdb shell killall %s " % stub_name
+        ret =  shell_command(cmd)
+        print "[ waiting for kill http server ]"
+        time.sleep(3)
+
+        ###launch an new stub process###
+        print "[ launch instance of http server ]"
+        stub_entry = "%s --testsuite:%s --client-command:%s" % \
+                     (stub_name, testsuite_name, client_command)
+        cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
+        self.__test_async_shell = StubExecThread(cmd, "goodbye")
+        self.__test_async_shell.start()
+
+        ###set forward between host and device###        
+        self.__forward_server_url = get_forward_connect(deviceid, stub_server_port)
+        print "[ forward server %s ]" % self.__forward_server_url
+        time.sleep(2)
 
         ###check if http server is ready for data transfer### 
         timecnt = 0
-        result = ""
         while timecnt < 10:
             ret = http_request(get_url(self.__forward_server_url, "/check_server"), "GET", {})
-            print "check_server, get ready flag: ", ret
+            print "[ check server status, get ]", ret
             if ret is None:
                 time.sleep(0.2)
                 timecnt += 1
@@ -387,6 +397,10 @@ class TizenMobile:
         else:
             result["finished"] = "0"
 
+        lockobj.acquire()
+        test_server_status = {"finished": "0"}
+        lockobj.release()
+
         return result
 
     def get_test_result(self, sessionid):
@@ -400,7 +414,7 @@ class TizenMobile:
             lockobj.acquire()
             result = test_server_result
             lockobj.release()
-            print "[server_test_result]:" % result
+            print "[ server test result]:" % result
         except Exception, e:
             print e
 
@@ -410,8 +424,7 @@ class TizenMobile:
         """clear the test stub and related resources"""
         if sessionid is None: return False
         data = {"sessionid": sessionid}
-        ###ret = http_request(get_url(self.__forward_server_url, "/shut_down_server"), "GET", {})
-        ###time.sleep(30)
+        ret = http_request(get_url(self.__forward_server_url, "/shut_down_server"), "GET", {})
         return True
 
 testremote = TizenMobile()
