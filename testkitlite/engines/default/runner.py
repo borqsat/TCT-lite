@@ -618,22 +618,27 @@ class TRunner:
                     if tcase.find('description/test_script_entry') is not None:
                         case_detail_tmp["test_script_entry"] = tcase.find(
                             'description/test_script_entry').text
+
                     for this_step in tcase.getiterator("step"):
                         if this_step.find("step_desc") is not None:
-                            case_detail_tmp[
-                                "step_desc"] = this_step.find("step_desc").text
+                            text = this_step.find("step_desc").text
+                            if text is not None:
+                                case_detail_tmp["step_desc"] = text
 
                         if this_step.find("expected") is not None:
-                            case_detail_tmp[
-                                "expected"] = this_step.find("expected").text
+                            text = this_step.find("expected").text
+                            if text is not None:
+                                case_detail_tmp["expected"] = text
 
                     if tcase.find('description/pre_condition') is not None:
-                        case_detail_tmp["pre_condition"] = tcase.find(
-                            'description/pre_condition').text
+                        text = tcase.find('description/pre_condition').text
+                        if text is not None:
+                            case_detail_tmp["pre_condition"] = text
 
                     if tcase.find('description/post_condition') is not None:
-                        case_detail_tmp['post_condition'] = tcase.find(
-                            'description/post_condition').text
+                        text = tcase.find('description/post_condition').text
+                        if text is not None:
+                            case_detail_tmp['post_condition'] = text
 
                     if tcase.get('onload_delay') is not None:
                         case_detail_tmp['onload_delay'] = tcase.get('onload_delay')
