@@ -40,17 +40,17 @@ def http_request(url, rtype="POST", data=None):
         headers = {'content-type': 'application/json'}
         try:
             ret = requests.post(url, data=json.dumps(data), headers=headers)
-            if ret: 
+            if ret:
                 result = ret.json()
         except Exception, e:
-            result = {}
+            pass
     elif rtype == "GET":
         try:        
             ret = requests.get(url, params=data)
             if ret: 
                 result = ret.json()
         except Exception, e:
-            result = {}
+            pass
 
     return result
 
@@ -162,42 +162,45 @@ class TestSetExecThread(threading.Thread):
         if self.data_queue is None:
             return
 
+        global test_server_status
         set_finished = False
         cur_block = 0
+        err_cnt = 0
         total_block = len(self.data_queue)
         for test_block in self.data_queue:
             cur_block += 1
             ret = http_request(get_url(self.server_url, "/init_test"), "POST", test_block)
-            if ret is None:
+            if ret is None or ret is {}:
                 break
 
             while True:
                 ret =  http_request(get_url(self.server_url, "/check_server_status"), "GET", {})
-                if ret is None:
-                    break
-
-                if "finished" in ret:
+                if ret is None or ret is {}:
+                    err_cnt += 1
+                    if err_cnt >= 10:
+                        lockobj.acquire()
+                        test_server_status = {"finished": 1}
+                        lockobj.release()
+                        break
+                elif "finished" in ret:
                     print "[ test suite: %s, block: %d/%d , finished: %s ]" % (self.test_set_name, cur_block, total_block, ret["finished"])
-
-                    global test_server_status
+                    err_cnt = 0
                     lockobj.acquire()
                     test_server_status = ret
                     lockobj.release()
-
-                    ### check if test set is finished
+                    ### check if current test set is finished
                     if ret["finished"] == 1:
                         set_finished = True
                         ret = http_request(get_url(self.server_url, "/generate_xml"), "GET", {})
                         if not ret is None:
                             self.set_result(ret)
                         break
-                    ### check if current test block is finished
+                    ### check if current block is finished
                     elif ret["block_finished"] == 1:
                         ret =  http_request(get_url(self.server_url, "/generate_xml"), "GET", {})
                         if not ret is None:
                             self.set_result(ret)
                         break
-                
                 time.sleep(2)
 
             if set_finished:
@@ -286,7 +289,7 @@ class TizenMobile:
         if params is None:
             return None
 
-        result = ""
+        result = None
         stub_name = ""
         stub_server_port = "8000"
         testsuite_name = ""
@@ -318,17 +321,17 @@ class TizenMobile:
         print "[ waiting for kill http server ]"
         time.sleep(3)
 
+        ###set forward between host and device###        
+        self.__forward_server_url = get_forward_connect(deviceid, stub_server_port)
+        print "[ forward server %s ]" % self.__forward_server_url
+
         ###launch an new stub process###
-        print "[ launch instance of http server ]"
+        print "[ launch instance of stub ]"
         stub_entry = "%s --testsuite:%s --client-command:%s" % \
                      (stub_name, testsuite_name, client_command)
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
         self.__test_async_shell = StubExecThread(cmd, "goodbye")
         self.__test_async_shell.start()
-
-        ###set forward between host and device###        
-        self.__forward_server_url = get_forward_connect(deviceid, stub_server_port)
-        print "[ forward server %s ]" % self.__forward_server_url
         time.sleep(2)
 
         ###check if http server is ready for data transfer### 
@@ -337,7 +340,7 @@ class TizenMobile:
             ret = http_request(get_url(self.__forward_server_url, "/check_server"), "GET", {})
             print "[ check server status, get ]", ret
             if ret is None:
-                time.sleep(0.2)
+                time.sleep(0.3)
                 timecnt += 1
             else:
                 result = "0011223344556677"
@@ -392,13 +395,12 @@ class TizenMobile:
         result = {}
         result["msg"] = []
         global test_server_status
+        lockobj.acquire()
         if "finished" in test_server_status:
             result["finished"] = str(test_server_status["finished"])
         else:
             result["finished"] = "0"
-
-        lockobj.acquire()
-        test_server_status = {"finished": "0"}
+        test_server_status = {"finished": 0}
         lockobj.release()
 
         return result
