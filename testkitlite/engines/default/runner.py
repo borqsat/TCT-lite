@@ -955,7 +955,29 @@ class TRunner:
                     for case_result in case_results:
                         if tcase.get("id") == case_result['case_id']:
                             tcase.set('result', case_result['result'])
+
+                            if tcase.find("./result_info") is not None:
+                                tcase.remove(tcase.find("./result_info"))
+                            result_info = etree.SubElement(tcase, "result_info")
+                            actual_result = etree.SubElement(result_info, "actual_result")
+                            actual_result.text = case_result['result']
+                            
+                            start  = etree.SubElement(result_info, "start")
+                            end    = etree.SubElement(result_info, "end")
+                            stdout = etree.SubElement(result_info, "stdout") 
+                            stderr = etree.SubElement(result_info, "stderr")
+                            if case_result.has_key('start_time') :
+                                start.text  = case_result['start_time']
+                            if case_result.has_key('end_time') :
+                                end.text    = case_result['end_time']
+                            if case_result.has_key('stdout') :
+                                stdout.text = case_result['stdout']
+                            if case_result.has_key('stderr') :
+                                stderr.text = case_result['stderr']
+
+
             parse_tree.write(set_result_xml)
+
             print "[ cases result saved to resultfile ]\n"
         except IOError, error:
             print "[ Error: fail to write cases result, error: %s ]\n" % error
