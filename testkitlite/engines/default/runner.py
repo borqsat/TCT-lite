@@ -455,6 +455,7 @@ class TRunner:
         # copy result to -o option
         try:
             if self.resultfile:
+                print "[ copy result xml to output file: %s ]" % self.resultfile
                 copyfile(mergefile, self.resultfile)
         except IOError, error:
             print "[ Error: fail to copy the result file to: %s, \
