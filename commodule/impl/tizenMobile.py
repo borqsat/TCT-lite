@@ -152,7 +152,7 @@ class TestSetExecThread(threading.Thread):
 
     def set_result(self, result_data):
         """set http result response to the result buffer"""
-        if "cases" in result_data:
+        if not result_data is None:
             global test_server_result
             lockobj.acquire()
             test_server_result["cases"].extend(result_data["cases"])
@@ -183,23 +183,21 @@ class TestSetExecThread(threading.Thread):
                         lockobj.release()
                         break
                 elif "finished" in ret:
-                    print "[ test suite: %s, block: %d/%d , finished: %s ]" % (self.test_set_name, cur_block, total_block, ret["finished"])
-                    err_cnt = 0
                     lockobj.acquire()
                     test_server_status = ret
                     lockobj.release()
+                    print "[ test suite: %s, block: %d/%d , finished: %s ]" % (self.test_set_name, cur_block, total_block, ret["finished"])
+                    err_cnt = 0
                     ### check if current test set is finished
                     if ret["finished"] == 1:
                         set_finished = True
                         ret = http_request(get_url(self.server_url, "/generate_xml"), "GET", {})
-                        if not ret is None:
-                            self.set_result(ret)
+                        self.set_result(ret)
                         break
                     ### check if current block is finished
                     elif ret["block_finished"] == 1:
                         ret =  http_request(get_url(self.server_url, "/generate_xml"), "GET", {})
-                        if not ret is None:
-                            self.set_result(ret)
+                        self.set_result(ret)
                         break
                 time.sleep(2)
 
@@ -410,13 +408,11 @@ class TizenMobile:
         result = {}
         if sessionid is None:
             return result
-
         try:
             global test_server_result
             lockobj.acquire()
             result = test_server_result
             lockobj.release()
-            print "[ server test result]:" % result
         except Exception, e:
             print e
 
