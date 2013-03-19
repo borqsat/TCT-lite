@@ -342,7 +342,7 @@ class TRunner:
                                 self.__write_set_result(
                                     test_xml_set, set_result)
                                 # shut down server
-                                self.__shut_down_server(self.session_id)                                
+                                self.__shut_down_server(self.session_id)
                                 break
                 except IOError, error:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % error
@@ -604,6 +604,7 @@ class TRunner:
 
                 for tcase in tset.getiterator('testcase'):
                     case_detail_tmp = {}
+                    step_tmp = []
                     parameters.setdefault(
                         "exetype", tcase.get('execution_type')
                     )
@@ -613,8 +614,7 @@ class TRunner:
                     case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
                     case_detail_tmp.setdefault("order", str(case_order))
                     case_detail_tmp.setdefault("test_script_entry", "none")
-                    case_detail_tmp.setdefault("step_desc", "none")
-                    case_detail_tmp.setdefault("expected", "none")
+                    case_detail_tmp.setdefault("steps", "none")
                     case_detail_tmp.setdefault("pre_condition", "none")
                     case_detail_tmp.setdefault("post_condition", "none")
                     case_detail_tmp.setdefault("onload_delay", "3")
@@ -624,15 +624,25 @@ class TRunner:
                             'description/test_script_entry').text
 
                     for this_step in tcase.getiterator("step"):
+                        step_detail_tmp = {}
+                        step_detail_tmp.setdefault("order", "1")
+                        step_detail_tmp.setdefault("step_desc", "none")
+                        step_detail_tmp.setdefault("expected", "none")
+                        step_detail_tmp["order"] = str(this_step.get('order'))
+
                         if this_step.find("step_desc") is not None:
                             text = this_step.find("step_desc").text
                             if text is not None:
-                                case_detail_tmp["step_desc"] = text
+                                step_detail_tmp["step_desc"] = text
 
                         if this_step.find("expected") is not None:
                             text = this_step.find("expected").text
                             if text is not None:
-                                case_detail_tmp["expected"] = text
+                                step_detail_tmp["expected"] = text
+
+                        step_tmp.append(step_detail_tmp)
+
+                    case_detail_tmp['steps'] = step_tmp
 
                     if tcase.find('description/pre_condition') is not None:
                         text = tcase.find('description/pre_condition').text
@@ -645,7 +655,8 @@ class TRunner:
                             case_detail_tmp['post_condition'] = text
 
                     if tcase.get('onload_delay') is not None:
-                        case_detail_tmp['onload_delay'] = tcase.get('onload_delay')
+                        case_detail_tmp[
+                            'onload_delay'] = tcase.get('onload_delay')
 
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
@@ -918,7 +929,7 @@ class TRunner:
         # init stub and get the session_id
         session_id = self.connector.init_test(self.deviceid, starup_prms)
         if session_id == None:
-            print "[ Error: Initialization Error]" 
+            print "[ Error: Initialization Error]"
             return False
         else:
             self.set_session_id(session_id)
@@ -963,23 +974,22 @@ class TRunner:
                             if tcase.find("./result_info") is not None:
                                 tcase.remove(tcase.find("./result_info"))
                             result_info = etree.SubElement(tcase, "result_info")
-                            actual_result = etree.SubElement(result_info, "actual_result")
+                            actual_result = etree.SubElement(
+                                result_info, "actual_result")
                             actual_result.text = case_result['result']
-                            
-                            start  = etree.SubElement(result_info, "start")
-                            end    = etree.SubElement(result_info, "end")
-                            stdout = etree.SubElement(result_info, "stdout") 
+
+                            start = etree.SubElement(result_info, "start")
+                            end = etree.SubElement(result_info, "end")
+                            stdout = etree.SubElement(result_info, "stdout")
                             stderr = etree.SubElement(result_info, "stderr")
-                            if case_result.has_key('start_time') :
-                                start.text  = case_result['start_time']
-                            if case_result.has_key('end_time') :
-                                end.text    = case_result['end_time']
-                            if case_result.has_key('stdout') :
+                            if 'start_time' in case_result:
+                                start.text = case_result['start_time']
+                            if 'end_time' in case_result:
+                                end.text = case_result['end_time']
+                            if 'stdout' in case_result:
                                 stdout.text = case_result['stdout']
-                            if case_result.has_key('stderr') :
+                            if 'stderr' in case_result:
                                 stderr.text = case_result['stderr']
-
-
             parse_tree.write(set_result_xml)
 
             print "[ cases result saved to resultfile ]\n"
@@ -1008,7 +1018,7 @@ class TRunner:
                 return True
         else:
             print "[ session status error ,pls finalize test ]\n"
-            # return True to finished this set  ,becasue server error          
+            # return True to finished this set  ,becasue server error
             return True
 
     def __shut_down_server(self, sessionid):
@@ -1017,7 +1027,6 @@ class TRunner:
             self.connector.finalize_test(sessionid)
         except Exception, error:
             print "[ Error: fail to close webapi http server, error: %s ]" % error
-
 
 
 def get_version_info():
