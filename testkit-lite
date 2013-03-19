@@ -191,9 +191,6 @@ try:
         make_option("--comm", dest="commodule",
                     action="store",
                     help="set commodule type"),
-        make_option("--stubname", dest="stubname",
-                    action="store",
-                    help="set stub name")
     ]
 
     option_list.extend(map(lambda flt:
@@ -255,11 +252,6 @@ Note: \n\
     runner.set_pid_log(PID_FILE)
     # apply all options
     runner.set_global_parameters(options)
-
-    # check if there is a device_serial
-    if not options.device_serial and options.testxml:
-        print "[ Error: not specify a device_serial... ]\n"
-        sys.exit(1)
 
     # apply filter
     wfilters = {}

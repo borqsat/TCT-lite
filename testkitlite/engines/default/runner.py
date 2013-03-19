@@ -102,14 +102,17 @@ class TRunner:
         # set device_id
         if options.device_serial:
             self.deviceid = options.device_serial
+            print 'options: %s' % options.device_serial
+
+        if not options.device_serial:
+            self.deviceid = self.connector.get_device_ids()[0]
+            print 'no options: %s' % self.connector.get_device_ids()[0]
+
         if options.fullscreen:
             self.fullscreen = True
         # set the external test WRTLauncher
         if options.exttest:
             self.external_test = options.exttest
-        # set stub name
-        if options.stubname:
-            self.stub_name = options.stubname
 
     def set_pid_log(self, pid_log):
         """ get pid_log file """
@@ -455,6 +458,7 @@ class TRunner:
         # copy result to -o option
         try:
             if self.resultfile:
+                print "[ copy result xml to output file: %s ]" % self.resultfile
                 copyfile(mergefile, self.resultfile)
         except IOError, error:
             print "[ Error: fail to copy the result file to: %s, \
