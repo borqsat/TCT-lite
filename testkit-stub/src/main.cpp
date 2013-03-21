@@ -30,9 +30,6 @@ void parse(int count,char *argv[],HttpServer *httpserver)
 			string key = argvstr.substr(0,sepindex);
 			string value = argvstr.substr(sepindex+1);
 			
-			/*cout<<"key is:"+key<<endl;
-			cout<<"value is:"+value<<endl;*/
-			
 			if(key == "--port")
 			{
 				httpserver->g_port = value;
@@ -48,9 +45,6 @@ void parse(int count,char *argv[],HttpServer *httpserver)
 			else if(key == "--testsuite")
 			{
 				httpserver->g_test_suite = value;
-
-				// we use shell cmd to get packageid from testsuite, then form the g_client_command
-				httpserver->g_client_command = "aul_test launch `wrt-launcher -l | grep "+value+" | awk '{print $NF}'`";
 			}
 			else if(key == "--exe_sequence")
 			{
@@ -76,18 +70,9 @@ int main( int   argc,
 	HttpServer httpserver;
     if (argc > 1)
 	{
-		parse(argc,argv,&httpserver);	
-		cout<<"httpserver.g_port is:"+httpserver.g_port<<endl;
-		cout<<"httpserver.g_hide_status is:"+httpserver.g_hide_status<<endl;
-		cout<<"httpserver.g_pid_log is:"+httpserver.g_pid_log<<endl;
-		cout<<"httpserver.g_test_suite is:"+httpserver.g_test_suite<<endl;
-		cout<<"httpserver.g_exe_sequence is:"+httpserver.g_exe_sequence<<endl;
-		cout<<"httpserver.g_client_command is:"+httpserver.g_client_command<<endl;
-		cout<<"httpserver.g_enable_memory_collection is:"+httpserver.g_enable_memory_collection<<endl;
+		parse(argc,argv,&httpserver);
 	}
-	
     httpserver.StartUp();
-
     return 0;
 }
 

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <fstream>
 #include <string.h>
 #include "testcase.h"
 
@@ -37,7 +38,8 @@ public:
     bool get_auto_case(string content,string *type);
     void checkResult(TestCase* testcase);
     void killAllWidget();
-    void start_client(string cmd);
+    void start_client3();
+    bool start_client(string cmdstring);
 
     void find_purpose(struct HttpRequest *prequest, bool auto_test);
     void getCurrentTime();
@@ -45,7 +47,6 @@ public:
     void set_timer();
     struct sigaction sa;
     struct itimerval timer ;
-    char m_str_time[32];
     int gIsRun;
     int clientsocket;
     int start_auto_test;
@@ -77,6 +78,7 @@ public:
     string m_last_auto_result;
     bool m_need_restart_client;
 
+    int m_failto_launch;// time of fail to launch
 
     //some variables get from cmd line
     string g_port;
@@ -84,6 +86,7 @@ public:
     string g_pid_log;
     string g_test_suite;
     string g_exe_sequence;
-    string g_client_command;
     string g_enable_memory_collection;
+
+    ofstream outputFile;
 };
