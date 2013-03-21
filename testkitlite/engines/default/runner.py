@@ -102,11 +102,12 @@ class TRunner:
         # set device_id
         if options.device_serial:
             self.deviceid = options.device_serial
-            print 'options: %s' % options.device_serial
 
         if not options.device_serial:
-            self.deviceid = self.connector.get_device_ids()[0]
-            print 'no options: %s' % self.connector.get_device_ids()[0]
+            if len(self.connector.get_device_ids()) > 0:
+                self.deviceid = self.connector.get_device_ids()[0]
+            else:
+                raise Exception("[ No devices connected ]")
 
         if options.fullscreen:
             self.fullscreen = True
@@ -296,6 +297,9 @@ class TRunner:
 
     def __run_webapi_test(self, latest_dir):
         """ run webAPI test"""
+        if self.bdryrun:
+            print "[ WRTLauncher mode does not support dryrun ]"
+            return True
 
         list_auto = []
         list_manual = []
@@ -583,9 +587,6 @@ class TRunner:
 
     def __prepare_external_test_json(self, resultfile):
         """Run external test"""
-        if self.bdryrun:
-            print "[ WRTLauncher mode does not support dryrun ]"
-            return True
         parameters = {}
         xml_set_tmp = resultfile
         # split set_xml by <case> get case parameters
@@ -617,10 +618,9 @@ class TRunner:
                     case_detail_tmp.setdefault("steps", "none")
                     case_detail_tmp.setdefault("pre_condition", "none")
                     case_detail_tmp.setdefault("post_condition", "none")
-                    case_detail_tmp.setdefault("onload_delay", "3")
 
                     if tcase.find('description/test_script_entry') is not None:
-                        case_detail_tmp["test_script_entry"] = tcase.find(
+                        case_detail_tmp["entry"] = tcase.find(
                             'description/test_script_entry').text
 
                     for this_step in tcase.getiterator("step"):
