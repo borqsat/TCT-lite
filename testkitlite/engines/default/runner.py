@@ -614,7 +614,7 @@ class TRunner:
                     case_detail_tmp.setdefault("case_id", tcase.get('id'))
                     case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
                     case_detail_tmp.setdefault("order", str(case_order))
-                    case_detail_tmp.setdefault("test_script_entry", "none")
+                    case_detail_tmp.setdefault("entry", "none")
                     case_detail_tmp.setdefault("steps", "none")
                     case_detail_tmp.setdefault("pre_condition", "none")
                     case_detail_tmp.setdefault("post_condition", "none")
@@ -662,6 +662,7 @@ class TRunner:
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
             self.set_parameters = parameters
+            print self.set_parameters
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, \
             error: %s ]\n" % error
