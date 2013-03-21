@@ -23,24 +23,19 @@ public:
     string std_out;
     bool is_executed;
 
-    // below 9 value are sent from Com-module for each case.
-    string onload_delay;
-    string order; // case order
-    string case_id;
+    // below m_case are sent from Com-module for each case.
+    Json::Value m_case;
     string purpose;
-    string entry;
-    string pre_con;
-    string post_con;
-    string steps;
-    string e_result; // expect result
 
+    char m_str_time[32];// to store the time string
 public:
     void init(const Json::Value value);// the case_node should be a string in json format
     void print_info_string();
     Json::Value to_json();
     Json::Value result_to_json();
-    void set_result(string test_result, string test_msg, char* end_time);
-    void set_start_at(char* start_time);
+    void set_result(string test_result, string test_msg);
+    void set_start_at();
+    void getCurrentTime();
 
 protected:
 };

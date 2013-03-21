@@ -6,7 +6,6 @@ CC = g++
 INCLUDES = -I include
 LIBS = 
 CFLAGS =-Wall -Werror
-#CFLAGS =-Wall -Werror -g
 LINKFLAGS = -lpthread
 
 SRCDIR = src/json src

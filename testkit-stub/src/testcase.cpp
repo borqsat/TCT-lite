@@ -20,51 +20,27 @@ TestCase::~TestCase()
 
 void TestCase::init(const Json::Value value)
 {
-        order = value["order"].asString();
-        case_id = value["case_id"].asString();
-        purpose = value["purpose"].asString();
-        entry = value["test_script_entry"].asString();
-        pre_con = value["pre_condition"].asString();
-        post_con = value["post_condition"].asString();
-        steps = value["step_desc"].asString();
-        e_result = value["expected"].asString();
-        onload_delay = value["onload_delay"].asString();
+    m_case = value;
+    purpose = value["purpose"].asString(); // server will use this string directly
 }
 
 void TestCase::print_info_string()
 {
-        cout << "\n[case] execute case:\nTestCase: " << purpose << "\nTestEntry: " << entry << "\nOnloadDelay: " << onload_delay << endl;
-        /*try:
-            print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s" % (self.purpose, self.entry)
-        except Exception, e:
-            print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s" % (str2str(self.purpose), str2str(self.entry))
-            print "[ Error: found unprintable character in case purpose, error: %s ]\n" % e
-        */
+    cout << "\n[case] execute case:\nTestCase: " << purpose << "\nTestEntry: " << m_case["entry"].asString() << endl;
+    cout << "case_id: " << m_case["case_id"].asString() << endl;
 }
 
 Json::Value TestCase::to_json()
 {
-    Json::Value root;
-
-    root["purpose"] = purpose;
-    root["entry"] = entry;
-    root["expected"] = e_result;
-    root["case_id"] = case_id;
-    root["pre_condition"] = pre_con;
-    root["post_condition"] = post_con;
-    root["step_desc"] = steps;
-    root["order"] = order;
-    root["onload_delay"] = onload_delay;
-
-    return root;
+    return m_case;
 }
 
 Json::Value TestCase::result_to_json()
 {
     Json::Value root;
 
-    root["order"] = order;
-    root["case_id"] = case_id;
+    root["order"] = m_case["order"];
+    root["case_id"] = m_case["case_id"];
     root["result"] = result;
 
     if (std_out != "")
@@ -77,7 +53,7 @@ Json::Value TestCase::result_to_json()
     return root;
 }
 
-void TestCase::set_result(string test_result, string test_msg, char* end_time)
+void TestCase::set_result(string test_result, string test_msg)
 {
         is_executed = true;
         //cancel_time_check();// don't cancel timer
@@ -86,13 +62,24 @@ void TestCase::set_result(string test_result, string test_msg, char* end_time)
 
         std_out = test_msg;
 
-        if (end_time) 
-        {
-            end_at = end_time;
-        }
+        getCurrentTime();
+        end_at = m_str_time;
 }
 
-void TestCase::set_start_at(char *start_time)
+void TestCase::set_start_at()
 {
-        start_at = start_time;
+    getCurrentTime();
+    cout << "\nstart time: " << m_str_time << endl;
+    start_at = m_str_time;
+}
+
+void TestCase::getCurrentTime()
+{
+    memset(m_str_time,0,32);
+    time_t timer; 
+    struct tm* t_tm; 
+    time(&timer); 
+    t_tm = localtime(&timer);
+    sprintf(m_str_time,"%4d-%02d-%02d %02d:%02d:%02d", t_tm->tm_year+1900,
+    t_tm->tm_mon+1, t_tm->tm_mday, t_tm->tm_hour, t_tm->tm_min, t_tm->tm_sec);
 }
