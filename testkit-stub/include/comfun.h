@@ -1,16 +1,16 @@
 #include <stdio.h>
-#include <iostream>
 #include <string.h>
-
-class ComFun
-{
+#include <string>
+#include <vector>
+using namespace std;
+class ComFun {
 public:
 	ComFun();
 	virtual ~ComFun();
 public:
-	char CharToInt(char ch);
-	char StrToBin(char *str);
-	char* UrlDecode(const char *str);
+	static char CharToInt(char ch);
+	static char StrToBin(char *str);
+	static char* UrlDecode(const char *str);
+	static std::vector<std::string> split(std::string str, std::string pattern);
 };
-
 
