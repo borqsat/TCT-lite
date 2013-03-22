@@ -282,7 +282,7 @@ class TizenMobile:
         ret =  shell_command(cmd)
         return ret
 
-    def init_test(self, deviceid, params):
+    def __init_test_stub(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
         if params is None:
             return None
@@ -292,11 +292,7 @@ class TizenMobile:
         stub_server_port = "8000"
         testsuite_name = ""
         client_command = ""       
-        if not "stub-name" in params:
-            print "\"stub-name\" is required!"
-            return None
-        else:
-            stub_name = params["stub-name"]
+        stub_name = params["stub-name"]
 
         if "stub-port" in params:
             stub_server_port = params["stub-port"]
@@ -346,19 +342,24 @@ class TizenMobile:
                 break
         return result
 
-    def run_test(self, sessionid, test_set):
-        """
-            process the execution for a test set
-            may be split to serveral blocks, which decided by the block_size
-        """
-        if sessionid is None: 
-            return False
-        if not "casecount" in test_set : 
-            return False
-        test_set_name = os.path.split(test_set["current_set_name"])[1]
-        case_count = int(test_set["casecount"])
-        cases = test_set["cases"]
+    def init_test(self, deviceid, params):
+        if params is not None and "stub-name" in params:
+            self.__test_type = "webapi"
+            return self.__init_test_stub(deviceid, params)
+        else:
+            self.__test_type = "coreapi"
+            return "0011223344556677"
 
+    def __run_core_test(self, exetype, ttype, case_count, cases):
+        """
+            process the execution for core api test
+        """
+
+    def __run_web_test(self, test_set_name, exetype, ttype, case_count, cases):
+        """
+            process the execution for web api test
+            may be splitted to serveral blocks, with the unit size defined by block_size
+        """
         if case_count % self.__test_set_block == 0:
             blknum = case_count / self.__test_set_block
         else:
@@ -368,24 +369,41 @@ class TizenMobile:
         test_set_blocks = []
         while idx <= blknum:
             block_data = {}
+            block_data["exetype"] = exetype
+            block_data["type"] = ttype
             block_data["totalBlk"] = str(blknum)
             block_data["currentBlk"] = str(idx)
-            block_data["casecount"] = test_set["casecount"]
-            block_data["exetype"] = test_set["exetype"]
-            block_data["type"] = test_set["type"]
+            block_data["casecount"] = case_count
             start = (idx - 1) * self.__test_set_block
-            if idx == blknum: 
+            if idx == blknum:
                 end = case_count
-            else: 
+            else:
                 end = idx * self.__test_set_block
             block_data["cases"] = cases[start:end]
             test_set_blocks.append(block_data)
             idx += 1
-
         self.__test_async_http = TestSetExecThread(self.__forward_server_url, test_set_name, test_set_blocks)
         self.__test_async_http.start()
-
         return True
+
+    def run_test(self, sessionid, test_set):
+        """
+            process the execution for a test set
+        """
+        if sessionid is None:
+            return False
+        if not "casecount" in test_set : 
+            return False
+
+        test_set_name = os.path.split(test_set["current_set_name"])[1]
+        exetype = test_set["exetype"]
+        ttype = test_set["type"]
+        case_count = int(test_set["casecount"])
+        cases = test_set["cases"]
+        if self.__test_type == "webapi":
+            return self.__run_web_test(test_set_name, exetype, ttype, case_count, cases)
+        else:
+            return self.__run_core_test(test_set_name, exetype, ttype, case_count, cases)
 
     def get_test_status(self, sessionid):
         """poll the test task status"""
@@ -421,9 +439,11 @@ class TizenMobile:
 
     def finalize_test(self, sessionid):
         """clear the test stub and related resources"""
-        if sessionid is None: return False
-        data = {"sessionid": sessionid}
-        ret = http_request(get_url(self.__forward_server_url, "/shut_down_server"), "GET", {})
+        if sessionid is None: 
+            return False
+
+        if self.__test_type == "webapi":
+            ret = http_request(get_url(self.__forward_server_url, "/shut_down_server"), "GET", {})
         return True
 
 testremote = TizenMobile()
