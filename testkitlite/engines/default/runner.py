@@ -705,44 +705,57 @@ class TRunner:
 
     def execute(self, testxmlfile, resultfile):
         """core test cases execute"""
-        def exec_testcase(case, total_number, current_number):
+        def exec_testcase(case, total_number, current_number, current_set_name):
             """ run core test cases """
             case_result = "BLOCK"
-            return_code = None
             stderr = "none"
             stdout = "none"
             start_time = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
-            # print case info
-            test_script_entry = "none"
-            expected_result = "0"
-            actual_result = "none"
-            testentry_elm = case.find('description/test_script_entry')
-            if testentry_elm is not None:
-                test_script_entry = testentry_elm.text
-                expected_result = testentry_elm.get(
-                    'test_script_expected_result', "0")
-            print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s\nExpected Result: %s\nTotal: %s, Current: %s" % (case.get("id"), test_script_entry, expected_result, total_number, current_number)
-            # execute test script
-            if testentry_elm is not None:
-                if self.bdryrun:
-                    return_code, stderr, stdout = "none", "Dryrun error info", "Dryrun output"
-                else:
-                    print "[ execute test script, this might take some time, please wait ]"
-                    if testentry_elm.text is None:
-                        print "[ Warnning: test script is empty, please check your test xml file ]"
+
+            if case.get('execution_type') == 'manual'and self.skip_all_manual:
+                case.set('result', 'N/A')
+            else:
+                # prepare JSON
+                parameters = prepare_json_for_core(case, current_number)
+                parameters["current_set_name"] = current_set_name
+                self.set_parameters = parameters
+                print '---------', parameters
+                case_json = parameters["cases"][0]
+                # print case info
+                if case_json['entry'] is not None:
+                    print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s\nExpected Result: %s\nTotal: %s, Current: %s" % (case_json['case_id'], case_json['entry'], case_json['expected_result'], total_number, current_number)
+                    if self.bdryrun:
+                        case_result, stderr, stdout = "none", "Dryrun error info", "Dryrun output"
                     else:
+                        print "[ execute test script, this might take some time, please wait ]"
                         try:
-                            # run auto core test here
-                            # if testentry_elm.get("timeout")
-                            #    case = testentry_elm.text
-                            #    time_out = str2number(testentry_elm.get("timeout"))
-                            #
-                            if return_code is not None:
-                                actual_result = str(return_code)
-                            print "Script Return Code: %s" % actual_result
+                            # init test here
+                            self.__init_com_module()
+                            print self.session_id
+                            # send set JSON Data to com_module
+                            self.connector.run_test(
+                                self.session_id, self.set_parameters)
+                            while True:
+                                time.sleep(1)
+                                # check the test status ,if the set finished,get
+                                # the set_result,and finalize_test
+                                if self.__check_test_status():
+                                    set_result = self.connector.get_test_result(
+                                        self.session_id)
+                                    if set_result["cases"] is not None:
+                                        core_result = set_result["cases"]
+                                        stderr = core_result['stderr']
+                                        stdout = core_result['stdout']
+                                        case_result = core_result['result']
+                                    # shut down server
+                                    self.__shut_down_server(self.session_id)
+                                    break
                         except Exception, error:
                             print "[ Error: fail to execute test script, \
                             error: %s ]\n" % error
+                else:
+                    print "[ Warnning: test script is empty, please check your test xml file ]"
+
             # Construct result info node
             resinfo_elm = etree.Element('result_info')
             res_elm = etree.Element('actual_result')
@@ -756,8 +769,9 @@ class TRunner:
             resinfo_elm.append(stdout_elm)
             resinfo_elm.append(stderr_elm)
             case.append(resinfo_elm)
+
             start_elm.text = start_time
-            res_elm.text = actual_result
+            res_elm.text = case_result
             stdout_elm.text = stdout
             stderr_elm.text = stderr
 
@@ -765,92 +779,33 @@ class TRunner:
             insert_notes(case, stdout)
             self.__insert_measures(case, stdout)
 
-            # handle manual core cases
-            if case.get('execution_type') == 'manual':
-                case.set('result', 'BLOCK')
-                try:
-                    # print pre-condition info
-                    precondition_elm = case.find('description/pre_condition')
-                    if precondition_elm is not None:
-                        print "\n****\nPre-condition: %s\n ****\n" % precondition_elm.text
-                    # print step info
-                    for this_step in case.getiterator("step"):
-                        step_desc = "none"
-                        expected = "none"
-                        order = this_step.get("order")
-                        stepdesc_elm = this_step.find("step_desc")
-                        expected_elm = this_step.find("expected")
-                        if stepdesc_elm is not None:
-                            step_desc = stepdesc_elm.text
-                        if expected_elm is not None:
-                            expected = expected_elm.text
-                        print "********************\nStep Order: %s" % order
-                        print "Step Desc: %s" % step_desc
-                        print "Expected: %s\n********************\n" % expected
-                    if self.skip_all_manual:
-                        case_result = "N/A"
-                    else:
-                        while True:
-                            test_result = raw_input(
-                                '[ please input case result ] (p^PASS, f^FAIL, b^BLOCK, n^Next, d^Done):')
-                            if test_result == 'p':
-                                case_result = "PASS"
-                                break
-                            elif test_result == 'f':
-                                case_result = "FAIL"
-                                break
-                            elif test_result == 'b':
-                                case_result = "BLOCK"
-                                break
-                            elif test_result == 'n':
-                                case_result = "N/A"
-                                break
-                            elif test_result == 'd':
-                                case_result = "N/A"
-                                self.skip_all_manual = True
-                                break
-                            else:
-                                print "[ Warnning: you input: '%s' is invalid, \
-                                please try again ]" % test_result
-                except Exception, error:
-                    print "[ Error: fail to get core manual test step, \
-                    error: %s ]\n" % error
-            # handle auto core cases
-            else:
-                case_result = "BLOCK"
-                end_elm.text = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
-                # set test result
-                if return_code is not None:
-                    # sdx@kooltux.org:
-                    # if retcode is 69 ("service unavailable" in sysexits.h),
-                    # test environment is not correct
-                    if actual_result == "69":
-                        case_result = "N/A"
-                    elif actual_result == "time_out":
-                        case_result = "BLOCK"
-                    else:
-                        if expected_result == actual_result:
-                            case_result = "PASS"
-                        else:
-                            case_result = "FAIL"
             case.set('result', case_result)
             print "Case Result: %s" % case_result
+
             # Check performance test
             measures = case.getiterator('measurement')
             for measure in measures:
                 ind = measure.get('name')
                 fname = measure.get('file')
-                if fname and EXISTS(fname):
-                    try:
-                        config = ConfigParser.ConfigParser()
-                        config.read(fname)
-                        val = config.get(ind, 'value')
-                        measure.set('value', val)
-                    except Exception, error:
-                        print "[ Error: fail to parse performance value, \
-                        error: %s ]\n" % error
+
+                value = self.connector.get_measure(fname)
+                if value:
+                    measure.set('value', val)
+                else:
+                    print "[ Error: fail to get performance value ]"
+
+                # if fname and EXISTS(fname):
+                #     try:
+                #         config = ConfigParser.ConfigParser()
+                #         config.read(fname)
+                #         val = config.get(ind, 'value')
+                #         measure.set('value', val)
+                #     except Exception, error:
+                #         print "[ Error: fail to parse performance value, \
+                #         error: %s ]\n" % error
             # record end time
             end_elm.text = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
+
         # execute cases
         try:
             parse_tree = etree.parse(testxmlfile)
@@ -863,9 +818,11 @@ class TRunner:
                         total_number += 1
             for tsuite in root_em.getiterator('suite'):
                 for tset in tsuite.getiterator('set'):
+                    current_set_name = tset.get('name')
                     for tcase in tset.getiterator('testcase'):
                         current_number += 1
-                        exec_testcase(tcase, total_number, current_number)
+                        exec_testcase(
+                            tcase, total_number, current_number, current_set_name)
             parse_tree.write(resultfile)
             return True
         except IOError, error:
@@ -915,13 +872,16 @@ class TRunner:
                 out.append(measure)
         return out
 
-    def __init_com_module(self, testxml):
+    def __init_com_module(self, testxml=None):
         """
             send init test to com_module
             if webapi test,com_module will start httpserver
             else com_module send the test case to devices
         """
-        starup_prms = self.__prepare_starup_parameters(testxml)
+        if testxml is not None:
+            starup_prms = self.__prepare_starup_parameters(testxml)
+        else:
+            starup_prms = []
         # init stub and get the session_id
         session_id = self.connector.init_test(self.deviceid, starup_prms)
         if session_id == None:
@@ -1110,3 +1070,66 @@ def insert_notes(case, buf, pattern="###[NOTE]###"):
         notes_elm.text = extract_notes(buf, pattern)
     else:
         notes_elm.text += "\n" + extract_notes(buf, pattern)
+
+
+def prepare_json_for_core(tcase, case_order):
+    parameters = {}
+    case_detail_tmp = {}
+    case_tmp = []
+    step_tmp = []
+    parameters.setdefault("casecount", "1")
+    parameters.setdefault("exetype", tcase.get('execution_type'))
+    parameters.setdefault("type", tcase.get('type'))
+    case_detail_tmp.setdefault("case_id", tcase.get('id'))
+    case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
+    case_detail_tmp.setdefault("order", str(case_order))
+    case_detail_tmp.setdefault("onload_delay", "3")
+    if tcase.find('description/test_script_entry') is not None:
+        case_detail_tmp["entry"] = tcase.find(
+            'description/test_script_entry').text
+        if tcase.find('description/test_script_entry').get('timeout'):
+            case_detail_tmp["timeout"] = tcase.find(
+                'description/test_script_entry').get('timeout')
+        else:
+            case_detail_tmp["timeout"] = "90"
+        expected_result = tcase.find(
+            'description/test_script_entry').get('test_script_expected_result', "0")
+        case_detail_tmp["expected_result"] = expected_result
+
+    for this_step in tcase.getiterator("step"):
+        step_detail_tmp = {}
+        step_detail_tmp.setdefault("order", "1")
+        step_detail_tmp["order"] = str(this_step.get('order'))
+
+        if this_step.find("step_desc") is not None:
+            text = this_step.find("step_desc").text
+            if text is not None:
+                step_detail_tmp["step_desc"] = text
+
+        if this_step.find("expected") is not None:
+            text = this_step.find("expected").text
+            if text is not None:
+                step_detail_tmp["expected"] = text
+
+        step_tmp.append(step_detail_tmp)
+
+    case_detail_tmp['steps'] = step_tmp
+
+    if tcase.find('description/pre_condition') is not None:
+        text = tcase.find('description/pre_condition').text
+        if text is not None:
+            case_detail_tmp["pre_condition"] = text
+
+    if tcase.find('description/post_condition') is not None:
+        text = tcase.find('description/post_condition').text
+        if text is not None:
+            case_detail_tmp['post_condition'] = text
+
+    if tcase.get('onload_delay') is not None:
+        case_detail_tmp[
+            'onload_delay'] = tcase.get('onload_delay')
+
+    case_tmp.append(case_detail_tmp)
+
+    parameters.setdefault("cases", case_tmp)
+    return parameters
