@@ -44,10 +44,10 @@ clean:
 	rm -rf $(OBJ_PATH)
 	rm -f $(TARGET)
 
-install: $(TARGET)
-	cp $(TARGET) $(PREFIX_BIN)
+#install: $(TARGET)
+#	cp $(TARGET) $(PREFIX_BIN)
 
-uninstall:
-	rm -f $(PREFIX_BIN)/$(TARGET)
+#uninstall:
+#	rm -f $(PREFIX_BIN)/$(TARGET)
 
 rebuild: clean compile
