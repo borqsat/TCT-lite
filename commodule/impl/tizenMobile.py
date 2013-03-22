@@ -128,9 +128,9 @@ class StubExecThread(threading.Thread):
                 break
             print_log()
             time.sleep(LOOP_DELTA)
+
         # print left output
         print_log()
-        # close file
         wbuffile1.close()
         wbuffile2.close()
         rbuffile1.close()
@@ -186,17 +186,17 @@ class TestSetExecThread(threading.Thread):
                     lockobj.acquire()
                     test_server_status = ret
                     lockobj.release()
-                    print "[ test suite: %s, block: %d/%d , finished: %s ]" % (self.test_set_name, cur_block, total_block, ret["finished"])
                     err_cnt = 0
+                    print "[ test suite: %s, block: %d/%d , finished: %s ]" % (self.test_set_name, cur_block, total_block, ret["finished"])
                     ### check if current test set is finished
                     if ret["finished"] == 1:
                         set_finished = True
-                        ret = http_request(get_url(self.server_url, "/generate_xml"), "GET", {})
+                        ret = http_request(get_url(self.server_url, "/get_test_result"), "GET", {})
                         self.set_result(ret)
                         break
                     ### check if current block is finished
                     elif ret["block_finished"] == 1:
-                        ret =  http_request(get_url(self.server_url, "/generate_xml"), "GET", {})
+                        ret =  http_request(get_url(self.server_url, "/get_test_result"), "GET", {})
                         self.set_result(ret)
                         break
                 time.sleep(2)
@@ -324,7 +324,7 @@ class TizenMobile:
         print "[ forward server %s ]" % self.__forward_server_url
 
         ###launch an new stub process###
-        print "[ launch instance of stub ]"
+        print "[ launch the stub app ]"
         stub_entry = "%s --testsuite:%s --client-command:%s" % \
                      (stub_name, testsuite_name, client_command)
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
@@ -336,11 +336,12 @@ class TizenMobile:
         timecnt = 0
         while timecnt < 10:
             ret = http_request(get_url(self.__forward_server_url, "/check_server"), "GET", {})
-            print "[ check server status, get ]", ret
             if ret is None:
+                print "[ check server status, not ready yet! ]"               
                 time.sleep(0.3)
                 timecnt += 1
             else:
+                print "[ check server status, get ready! ]"
                 result = "0011223344556677"
                 break
         return result
