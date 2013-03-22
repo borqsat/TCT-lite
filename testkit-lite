@@ -185,15 +185,10 @@ try:
         make_option("--internal-version", dest="internal_version_info",
                     action="store_true",
                     help="Show internal version information"),
-        make_option("--deviceid", dest="device_serial",
-                    action="store",
+        make_option("--deviceid", dest="device_serial", action="store",
                     help="set sdb device serial information"),
-        make_option("--comm", dest="commodule",
-                    action="store",
-                    help="set commodule type"),
-        make_option("--stubname", dest="stubname",
-                    action="store",
-                    help="set stub name")
+        make_option("--comm", dest="commodule", action="store",
+                    help="set commodule type")
     ]
 
     option_list.extend(map(lambda flt:
@@ -245,7 +240,7 @@ Note: \n\
     else:
         COMMODULE_TYPE = "tizenMobile"
 
-    CONNECTOR = Connector({"testremote": "tizenMobile"}).get_connector()
+    CONNECTOR = Connector({"testremote": COMMODULE_TYPE}).get_connector()
     if CONNECTOR == None:
         print "[ Error: init commodule error... ]\n"
         sys.exit(1)
@@ -254,12 +249,8 @@ Note: \n\
     runner = TRunner(CONNECTOR)
     runner.set_pid_log(PID_FILE)
     # apply all options
-    runner.set_global_parameters(options)
 
-    # check if there is a device_serial
-    if not options.device_serial and options.testxml:
-        print "[ Error: not specify a device_serial... ]\n"
-        sys.exit(1)
+    runner.set_global_parameters(options)
 
     # apply filter
     wfilters = {}

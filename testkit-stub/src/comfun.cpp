@@ -28,9 +28,8 @@ char ComFun::StrToBin(char *str){
 char* ComFun::UrlDecode(const char *str)
 {
 	char tmp[2];
-	int i = 0,idx = 0,ndx,len = strlen(str);
+	int i = 0, len = strlen(str);
 	char *output = new char[len+1];
-	//output =  new char[len+1];
 	memset(output,0,len+1);
 	int j = 0;
 	while(i<len){

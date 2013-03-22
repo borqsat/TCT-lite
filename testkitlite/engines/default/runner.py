@@ -102,14 +102,18 @@ class TRunner:
         # set device_id
         if options.device_serial:
             self.deviceid = options.device_serial
+
+        if not options.device_serial:
+            if len(self.connector.get_device_ids()) > 0:
+                self.deviceid = self.connector.get_device_ids()[0]
+            else:
+                raise Exception("[ No devices connected ]")
+
         if options.fullscreen:
             self.fullscreen = True
         # set the external test WRTLauncher
         if options.exttest:
             self.external_test = options.exttest
-        # set stub name
-        if options.stubname:
-            self.stub_name = options.stubname
 
     def set_pid_log(self, pid_log):
         """ get pid_log file """
@@ -293,6 +297,9 @@ class TRunner:
 
     def __run_webapi_test(self, latest_dir):
         """ run webAPI test"""
+        if self.bdryrun:
+            print "[ WRTLauncher mode does not support dryrun ]"
+            return True
 
         list_auto = []
         list_manual = []
@@ -339,7 +346,7 @@ class TRunner:
                                 self.__write_set_result(
                                     test_xml_set, set_result)
                                 # shut down server
-                                self.__shut_down_server(self.session_id)                                
+                                self.__shut_down_server(self.session_id)
                                 break
                 except IOError, error:
                     print "[ Error: fail to run webapi test xml, error: %s ]" % error
@@ -455,6 +462,7 @@ class TRunner:
         # copy result to -o option
         try:
             if self.resultfile:
+                print "[ copy result xml to output file: %s ]" % self.resultfile
                 copyfile(mergefile, self.resultfile)
         except IOError, error:
             print "[ Error: fail to copy the result file to: %s, \
@@ -579,9 +587,6 @@ class TRunner:
 
     def __prepare_external_test_json(self, resultfile):
         """Run external test"""
-        if self.bdryrun:
-            print "[ WRTLauncher mode does not support dryrun ]"
-            return True
         parameters = {}
         xml_set_tmp = resultfile
         # split set_xml by <case> get case parameters
@@ -600,6 +605,7 @@ class TRunner:
 
                 for tcase in tset.getiterator('testcase'):
                     case_detail_tmp = {}
+                    step_tmp = []
                     parameters.setdefault(
                         "exetype", tcase.get('execution_type')
                     )
@@ -608,27 +614,29 @@ class TRunner:
                     case_detail_tmp.setdefault("case_id", tcase.get('id'))
                     case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
                     case_detail_tmp.setdefault("order", str(case_order))
-                    case_detail_tmp.setdefault("test_script_entry", "none")
-                    case_detail_tmp.setdefault("step_desc", "none")
-                    case_detail_tmp.setdefault("expected", "none")
-                    case_detail_tmp.setdefault("pre_condition", "none")
-                    case_detail_tmp.setdefault("post_condition", "none")
-                    case_detail_tmp.setdefault("onload_delay", "3")
 
                     if tcase.find('description/test_script_entry') is not None:
-                        case_detail_tmp["test_script_entry"] = tcase.find(
+                        case_detail_tmp["entry"] = tcase.find(
                             'description/test_script_entry').text
 
                     for this_step in tcase.getiterator("step"):
+                        step_detail_tmp = {}
+                        step_detail_tmp.setdefault("order", "1")
+                        step_detail_tmp["order"] = str(this_step.get('order'))
+
                         if this_step.find("step_desc") is not None:
                             text = this_step.find("step_desc").text
                             if text is not None:
-                                case_detail_tmp["step_desc"] = text
+                                step_detail_tmp["step_desc"] = text
 
                         if this_step.find("expected") is not None:
                             text = this_step.find("expected").text
                             if text is not None:
-                                case_detail_tmp["expected"] = text
+                                step_detail_tmp["expected"] = text
+
+                        step_tmp.append(step_detail_tmp)
+
+                    case_detail_tmp['steps'] = step_tmp
 
                     if tcase.find('description/pre_condition') is not None:
                         text = tcase.find('description/pre_condition').text
@@ -641,12 +649,14 @@ class TRunner:
                             case_detail_tmp['post_condition'] = text
 
                     if tcase.get('onload_delay') is not None:
-                        case_detail_tmp['onload_delay'] = tcase.get('onload_delay')
+                        case_detail_tmp[
+                            'onload_delay'] = tcase.get('onload_delay')
 
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
             self.set_parameters = parameters
+            print self.set_parameters
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, \
             error: %s ]\n" % error
@@ -914,7 +924,7 @@ class TRunner:
         # init stub and get the session_id
         session_id = self.connector.init_test(self.deviceid, starup_prms)
         if session_id == None:
-            print "[ Error: Initialization Error]" 
+            print "[ Error: Initialization Error]"
             return False
         else:
             self.set_session_id(session_id)
@@ -955,7 +965,28 @@ class TRunner:
                     for case_result in case_results:
                         if tcase.get("id") == case_result['case_id']:
                             tcase.set('result', case_result['result'])
+
+                            if tcase.find("./result_info") is not None:
+                                tcase.remove(tcase.find("./result_info"))
+                            result_info = etree.SubElement(tcase, "result_info")
+                            actual_result = etree.SubElement(
+                                result_info, "actual_result")
+                            actual_result.text = case_result['result']
+
+                            start = etree.SubElement(result_info, "start")
+                            end = etree.SubElement(result_info, "end")
+                            stdout = etree.SubElement(result_info, "stdout")
+                            stderr = etree.SubElement(result_info, "stderr")
+                            if 'start_time' in case_result:
+                                start.text = case_result['start_time']
+                            if 'end_time' in case_result:
+                                end.text = case_result['end_time']
+                            if 'stdout' in case_result:
+                                stdout.text = case_result['stdout']
+                            if 'stderr' in case_result:
+                                stderr.text = case_result['stderr']
             parse_tree.write(set_result_xml)
+
             print "[ cases result saved to resultfile ]\n"
         except IOError, error:
             print "[ Error: fail to write cases result, error: %s ]\n" % error
@@ -982,7 +1013,7 @@ class TRunner:
                 return True
         else:
             print "[ session status error ,pls finalize test ]\n"
-            # return True to finished this set  ,becasue server error          
+            # return True to finished this set  ,becasue server error
             return True
 
     def __shut_down_server(self, sessionid):
@@ -991,7 +1022,6 @@ class TRunner:
             self.connector.finalize_test(sessionid)
         except Exception, error:
             print "[ Error: fail to close webapi http server, error: %s ]" % error
-
 
 
 def get_version_info():
