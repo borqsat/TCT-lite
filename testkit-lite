@@ -188,7 +188,10 @@ try:
         make_option("--deviceid", dest="device_serial", action="store",
                     help="set sdb device serial information"),
         make_option("--comm", dest="commodule", action="store",
-                    help="set commodule type")
+                    help="set commodule type"),
+        make_option("--capability", dest="capability", action="store",
+                    help="get capability file")
+
     ]
 
     option_list.extend(map(lambda flt:
@@ -257,6 +260,10 @@ Note: \n\
     for flt in COMMON_FILTERS:
         if eval('options.w%s' % flt):
             wfilters[flt] = eval('options.w%s' % flt)
+    runner.add_filter_rules(**wfilters)
+
+    if options.capability:
+        wfilters = runner.get_capability(options.capability)
     runner.add_filter_rules(**wfilters)
 
     if not options.testxml:

@@ -614,6 +614,7 @@ class TRunner:
                     case_detail_tmp.setdefault("case_id", tcase.get('id'))
                     case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
                     case_detail_tmp.setdefault("order", str(case_order))
+                    case_detail_tmp.setdefault("onload_delay", "3")
 
                     if tcase.find('description/test_script_entry') is not None:
                         case_detail_tmp["entry"] = tcase.find(
@@ -1022,6 +1023,27 @@ class TRunner:
             self.connector.finalize_test(sessionid)
         except Exception, error:
             print "[ Error: fail to close webapi http server, error: %s ]" % error
+
+    def get_capability(self, file_name):
+        """get_capability from file """
+
+        capability_xml = file_name
+        capability = {}
+        parse_tree = etree.parse(capability_xml)
+        root_em = parse_tree.getroot()
+        for tcap in root_em.getiterator('capability'):
+            tmp_value = []
+            tmp_key = ''
+            if tcap.get("name"):
+                tmp_key = tcap.get("name")
+            if tcap.get("support"):
+                tmp_value.append(tcap.get("support"))
+            if tcap.get("type"):
+                tmp_value.append(tcap.get("type"))
+            if tcap.getiterator("value") and tcap.find("value").text is not None:
+                tmp_value.append(tcap.find("value").text)
+            capability[tmp_key] = tmp_value
+        return capability
 
 
 def get_version_info():
