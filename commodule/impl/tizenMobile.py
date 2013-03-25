@@ -30,6 +30,7 @@ import requests
 import json
 import re
 import uuid
+import autoexec
 
 def get_url(baseurl, api):
     return "%s%s" % (baseurl, api)
@@ -69,7 +70,7 @@ def get_forward_connect(device_id, remote_port=None):
     if remote_port is None:
         return None
 
-    HOST = "127.0.0.1"
+    HOST = "http://127.0.0.1"
     inner_port = 9000
     #TIME_OUT = 2
     # while True:
@@ -87,7 +88,7 @@ def get_forward_connect(device_id, remote_port=None):
     host_port = str(inner_port)
     cmd = "sdb -s %s forward tcp:%s tcp:%s" % (device_id, host_port, remote_port)
     result = shell_command(cmd)
-    url_forward = "http://%s:%s" % (HOST, host_port)
+    url_forward = "%s:%s" % (HOST, host_port)
     return url_forward
 
 lockobj = threading.Lock()
@@ -101,7 +102,6 @@ class StubExecThread(threading.Thread):
         self.stderr = []
         self.cmdline = cmd
         self.sessionid = sessionid
-        self.start()
 
     def run(self):        
         BUFFILE1 = os.path.expanduser("~") + os.sep + self.sessionid + "._buffile_stdout"
@@ -151,7 +151,6 @@ class TestSetExecThread(threading.Thread):
         lockobj.acquire()
         test_server_result = {"cases":[]}
         lockobj.release()
-        self.start()
 
     def set_result(self, result_data):
         """set http result response to the result buffer"""
@@ -329,6 +328,7 @@ class TizenMobile:
                      (stub_name, testsuite_name, client_command)
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
         self.__test_async_shell = StubExecThread(cmd, session_id)
+        self.__test_async_shell.start()        
         time.sleep(2)
 
         ###check if http server is ready for data transfer### 
@@ -386,6 +386,7 @@ class TizenMobile:
             test_set_blocks.append(block_data)
             idx += 1
         self.__test_async_http = TestSetExecThread(self.__forward_server_url, test_set_name, test_set_blocks)
+        self.__test_async_http.start()
         return True
 
     def run_test(self, sessionid, test_set):
