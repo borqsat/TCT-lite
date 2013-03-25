@@ -731,7 +731,6 @@ class TRunner:
                         try:
                             # init test here
                             self.__init_com_module()
-                            print self.session_id
                             # send set JSON Data to com_module
                             self.connector.run_test(
                                 self.session_id, self.set_parameters)
@@ -743,10 +742,10 @@ class TRunner:
                                     set_result = self.connector.get_test_result(
                                         self.session_id)
                                     if set_result["cases"] is not None:
-                                        core_result = set_result["cases"]
-                                        stderr = core_result['stderr']
-                                        stdout = core_result['stdout']
-                                        case_result = core_result['result']
+                                        core_result = set_result["cases"][0]
+                                        stderr = core_result["stderr"]
+                                        stdout = core_result["stdout"]
+                                        case_result = core_result["result"]
                                     # shut down server
                                     self.__shut_down_server(self.session_id)
                                     break
