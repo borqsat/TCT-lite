@@ -1,23 +1,24 @@
 #include <stdio.h>
 #include "comfun.h"
 
-ComFun::ComFun()
-{
+ComFun::ComFun() {
 
 }
-ComFun::~ComFun()
-{
+ComFun::~ComFun() {
 
 }
 
-char ComFun::CharToInt(char ch){
-	if(ch>='0' && ch<='9')return (char)(ch-'0');
-	if(ch>='a' && ch<='f')return (char)(ch-'a'+10);
-	if(ch>='A' && ch<='F')return (char)(ch-'A'+10);
+char ComFun::CharToInt(char ch) {
+	if (ch >= '0' && ch <= '9')
+		return (char) (ch - '0');
+	if (ch >= 'a' && ch <= 'f')
+		return (char) (ch - 'a' + 10);
+	if (ch >= 'A' && ch <= 'F')
+		return (char) (ch - 'A' + 10);
 	return -1;
 }
 
-char ComFun::StrToBin(char *str){
+char ComFun::StrToBin(char *str) {
 	char tempWord[2];
 	char chn;
 	tempWord[0] = CharToInt(str[0]); //make the B to 11 -- 00001011
@@ -25,28 +26,26 @@ char ComFun::StrToBin(char *str){
 	chn = (tempWord[0] << 4) | tempWord[1]; //to change the BO to 10110000
 	return chn;
 }
-char* ComFun::UrlDecode(const char *str)
-{
+//url decode
+char* ComFun::UrlDecode(const char *str) {
 	char tmp[2];
 	int i = 0, len = strlen(str);
-	char *output = new char[len+1];
-	memset(output,0,len+1);
+	char *output = new char[len + 1];
+	memset(output, 0, len + 1);
 	int j = 0;
-	while(i<len){
-		if(*(str+i) == '%'){
-			tmp[0] = *(str+i+1);
-			tmp[1] = *(str+i+2);
-			*(output+j) = StrToBin(tmp);
-			i = i+3;
+	while (i < len) {
+		if (*(str + i) == '%') {
+			tmp[0] = *(str + i + 1);
+			tmp[1] = *(str + i + 2);
+			*(output + j) = StrToBin(tmp);
+			i = i + 3;
 			j++;
-		}
-		else if(*(str+i) == '+'){
-			*(output+j) = ' ';
+		} else if (*(str + i) == '+') {
+			*(output + j) = ' ';
 			i++;
 			j++;
-		}
-		else{
-			*(output+j) = *(str+i);
+		} else {
+			*(output + j) = *(str + i);
 			i++;
 			j++;
 		}
@@ -54,7 +53,20 @@ char* ComFun::UrlDecode(const char *str)
 	return output;
 }
 
-/*ComFun comfun;	
-const char *gb2312 = "totalBlk=1&currentBlk=0&suite=abc&set=def&cases%5B0%5D%5Border%5D=1&cases%5B1%5D%5Border%5D=2";
-char *decode = comfun.UrlDecode(gb2312);
-printf("decode is %s\n",decode);*/	
+//split function for string
+std::vector<std::string> ComFun::split(std::string str, std::string pattern) {
+	std::string::size_type pos;
+	std::vector < std::string > result;
+	str += pattern; //extend string so that operate easyly
+	unsigned int size = str.size();
+
+	for (unsigned int i = 0; i < size; i++) {
+		pos = str.find(pattern, i);
+		if (pos < size) {
+			std::string s = str.substr(i, pos - i);
+			result.push_back(s);
+			i = pos + pattern.size() - 1;
+		}
+	}
+	return result;
+}
