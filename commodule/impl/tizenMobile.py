@@ -29,6 +29,7 @@ import subprocess
 import requests
 import json
 import re
+import uuid
 
 def get_url(baseurl, api):
     return "%s%s" % (baseurl, api)
@@ -94,16 +95,17 @@ test_server_result = []
 test_server_status = {}
 class StubExecThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
-    def __init__(self, cmd=None, endflag=None):
+    def __init__(self, cmd=None, sessionid=None):
         super(StubExecThread, self).__init__()
         self.stdout = []
         self.stderr = []
         self.cmdline = cmd
-        self.endflag = endflag
+        self.sessionid = sessionid
+        self.start()
 
     def run(self):        
-        BUFFILE1 = os.path.expanduser("~") + os.sep + ".shellexec_buffile_stdout"
-        BUFFILE2 = os.path.expanduser("~") + os.sep + ".shellexec_buffile_stderr"
+        BUFFILE1 = os.path.expanduser("~") + os.sep + self.sessionid + "._buffile_stdout"
+        BUFFILE2 = os.path.expanduser("~") + os.sep + self.sessionid + "._buffile_stderr"
 
         LOOP_DELTA = 0.2
         wbuffile1 = file(BUFFILE1, "w")
@@ -149,6 +151,7 @@ class TestSetExecThread(threading.Thread):
         lockobj.acquire()
         test_server_result = {"cases":[]}
         lockobj.release()
+        self.start()
 
     def set_result(self, result_data):
         """set http result response to the result buffer"""
@@ -320,12 +323,12 @@ class TizenMobile:
         print "[ forward server %s ]" % self.__forward_server_url
 
         ###launch an new stub process###
+        session_id = str(uuid.uuid1())
         print "[ launch the stub app ]"
         stub_entry = "%s --testsuite:%s --client-command:%s" % \
                      (stub_name, testsuite_name, client_command)
         cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
-        self.__test_async_shell = StubExecThread(cmd, "goodbye")
-        self.__test_async_shell.start()
+        self.__test_async_shell = StubExecThread(cmd, session_id)
         time.sleep(2)
 
         ###check if http server is ready for data transfer### 
@@ -337,8 +340,8 @@ class TizenMobile:
                 time.sleep(0.3)
                 timecnt += 1
             else:
+                result = session_id
                 print "[ check server status, get ready! ]"
-                result = "0011223344556677"
                 break
         return result
 
@@ -348,7 +351,7 @@ class TizenMobile:
             return self.__init_test_stub(deviceid, params)
         else:
             self.__test_type = "coreapi"
-            return "0011223344556677"
+            return str(uuid.uuid1())
 
     def __run_core_test(self, exetype, ttype, case_count, cases):
         """
@@ -383,7 +386,6 @@ class TizenMobile:
             test_set_blocks.append(block_data)
             idx += 1
         self.__test_async_http = TestSetExecThread(self.__forward_server_url, test_set_name, test_set_blocks)
-        self.__test_async_http.start()
         return True
 
     def run_test(self, sessionid, test_set):
