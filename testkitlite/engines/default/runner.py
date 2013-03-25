@@ -84,6 +84,7 @@ class TRunner:
         self.set_parameters = {}
         self.connector = connector
         self.stub_name = "httpserver"
+        self.capabilities = {}
 
     def set_global_parameters(self, options):
         "get all options "
@@ -128,6 +129,10 @@ class TRunner:
     def set_session_id(self, session_id):
         """ set the set test session id which is get form com_module """
         self.session_id = session_id
+
+    def set_capability(self, capabilities):
+        """ set capabilitys  """
+        self.capabilities = capabilities
 
     def prepare_run(self, testxmlfile, resultdir=None):
         """
@@ -680,6 +685,9 @@ class TRunner:
             for tcase in tset.getiterator('testcase'):
                 if not self.__apply_filter_case_check(tcase):
                     tset.remove(tcase)
+                else:
+                    if not self.__apply_capability_filter_case_check(tcase):
+                        tset.remove(tcase)
 
     def __apply_filter_case_check(self, tcase):
         """filter cases"""
@@ -701,6 +709,25 @@ class TRunner:
                         t_val.append(i.text)
                     if len(set(rules[key]) & set(t_val)) == 0:
                         return False
+        return True
+
+    def __apply_capability_filter_case_check(self, tcase):
+        """ check the case required capability with  self.capabilities """
+
+        if tcase.get('check_unsupport_error'):
+            if tcase.get('check_unsupport_error').lower() == "true":
+                # check_unsupport_error is true,can not filter
+                return True
+        for tcap in tcase.getiterator('capability'):
+            capability = get_capability_form_node(tcap)
+            for (k, v) in capability.items():
+                if k in self.capabilities:
+                    if capability[k] != self.capabilities[k]:
+                        # if capability value is not equal ,remove the case
+                        return False
+                else:
+                    # if does not hava this capability ,remove case
+                    return False
         return True
 
     def execute(self, testxmlfile, resultfile):
@@ -987,22 +1014,42 @@ class TRunner:
         """get_capability from file """
 
         capability_xml = file_name
-        capability = {}
-        parse_tree = etree.parse(capability_xml)
-        root_em = parse_tree.getroot()
-        for tcap in root_em.getiterator('capability'):
-            tmp_value = []
-            tmp_key = ''
-            if tcap.get("name"):
-                tmp_key = tcap.get("name")
-            if tcap.get("support"):
-                tmp_value.append(tcap.get("support"))
-            if tcap.get("type"):
-                tmp_value.append(tcap.get("type"))
+        capabilities = {}
+        try:
+            parse_tree = etree.parse(capability_xml)
+            root_em = parse_tree.getroot()
+            for tcap in root_em.getiterator('capability'):
+                capability = get_capability_form_node(tcap)
+                capabilities = dict(capabilities, **capability)
+
+            self.set_capability(capabilities)
+        except IOError, error:
+            print "[ Error: fail to parse capability xml, error: %s ]" % error
+
+
+def get_capability_form_node(capability_em):
+    ''' splite capability key and value form element tree'''
+    tmp_key = ''
+    capability = {}
+    tcap = capability_em
+    if tcap.get("name"):
+        tmp_key = tcap.get("name")
+
+    if tcap.get("type").lower() == 'boolean':
+        if tcap.get("support").lower() == 'true':
+            capability[tmp_key] = tcap.get("support")
+
+    if tcap.get("type").lower() == 'integer':
+        if tcap.get("support").lower() == 'true':
             if tcap.getiterator("value") and tcap.find("value").text is not None:
-                tmp_value.append(tcap.find("value").text)
-            capability[tmp_key] = tmp_value
-        return capability
+                capability[tmp_key] = int(tcap.find("value").text)
+
+    if tcap.get("type").lower() == 'string':
+        if tcap.get("support").lower() == 'true':
+            if tcap.getiterator("value") and tcap.find("value").text is not None:
+                capability[tmp_key] = tcap.find("value").text
+
+    return capability
 
 
 def get_version_info():

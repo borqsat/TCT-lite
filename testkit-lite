@@ -255,15 +255,15 @@ Note: \n\
 
     runner.set_global_parameters(options)
 
+    # set capability
+    if options.capability:
+        runner.get_capability(options.capability)
+
     # apply filter
     wfilters = {}
     for flt in COMMON_FILTERS:
         if eval('options.w%s' % flt):
             wfilters[flt] = eval('options.w%s' % flt)
-    runner.add_filter_rules(**wfilters)
-
-    if options.capability:
-        wfilters = runner.get_capability(options.capability)
     runner.add_filter_rules(**wfilters)
 
     if not options.testxml:
