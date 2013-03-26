@@ -61,16 +61,14 @@ def main(argvs):
     elif subcmd == "remove_package":
         ret = conn.remove_package("emulator-26100", \
                                   "tct-webapi-tizen-contact-tests-1.1.9-7.1.i586")
-    elif subcmd == "init_test":
-        pass
-    elif subcmd == "run_test":
-        pass
-    elif subcmd == "get_test_status":
-        pass
-    elif subcmd == "get_test_result":
-        pass
-    elif subcmd == "finalize_test":
-        pass
+    elif subcmd == "download_file":
+        ret = conn.download_file("emulator-26100", \
+                                  "/usr/share/tct-webapi-tizen-time-tests/tests.xml",\
+                                  "/usr/share/tct-webapi-tizen-time-tests/tests.xml")
+    elif subcmd == "upload_file":
+        ret = conn.upload_file("emulator-26100", \
+                                  "/usr/share/tct-webapi-tizen-time-tests/tests.xml",\
+                                  "/usr/share/tct-webapi-tizen-time-tests/tests.xml")
     else: 
         print "unknown sub command name \"%s\"" % subcmd
 

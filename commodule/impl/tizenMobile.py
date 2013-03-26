@@ -72,19 +72,20 @@ def get_forward_connect(device_id, remote_port=None):
 
     HOST = "http://127.0.0.1"
     inner_port = 9000
-    #TIME_OUT = 2
-    # while True:
-    #     sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #     sk.settimeout(TIME_OUT)
-    #     try:
-    #         sk.bind((HOST, inner_port))
-    #         sk.close()
-    #         bflag = False
-    #     except socket.error, e:
-    #         if e.errno == 98 or e.errno == 13:
-    #             bflag = True
-    #     if bflag: inner_port += 1
-    #     else: break
+    TIME_OUT = 2
+    bflag = False
+    while True:
+        sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sk.settimeout(TIME_OUT)
+        try:
+            sk.bind((HOST, inner_port))
+            sk.close()
+            bflag = False
+        except socket.error, e:
+            if e.errno == 98 or e.errno == 13:
+                bflag = True
+        if bflag: inner_port += 1
+        else: break
     host_port = str(inner_port)
     cmd = "sdb -s %s forward tcp:%s tcp:%s" % (device_id, host_port, remote_port)
     result = shell_command(cmd)
@@ -176,7 +177,7 @@ class TestSetExecThread(threading.Thread):
                 break
 
             while True:
-                ret =  http_request(get_url(self.server_url, "/check_server_status"), "GET", {})
+                ret = http_request(get_url(self.server_url, "/check_server_status"), "GET", {})
                 if ret is None or ret is {}:
                     err_cnt += 1
                     if err_cnt >= 10:
@@ -278,18 +279,29 @@ class TizenMobile:
         ret =  shell_command(cmd)
         return ret
 
-    def remove_package(self, deviceid, pkgid):
-        """remove a installed package from device"""
-        cmd = "sdb -s %s shell rpm -e %s" % (deviceid, pkgid)
+    def get_installed_package(self, deviceid):
+        """get list of installed package from device"""
+        cmd = "sdb -s %s shell rpm -qa | grep tct" % (deviceid)
+        ret =  shell_command(cmd)
+        return ret
+
+    def download_file(self, deviceid, remote_path, local_path):
+        """get list of installed package from device"""
+        cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
+        ret =  shell_command(cmd)
+        return ret
+
+    def upload_file(self, deviceid, remote_path, local_path):
+        """get list of installed package from device"""
+        cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
         ret =  shell_command(cmd)
         return ret
 
     def __init_test_stub(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
-        if params is None:
-            return None
-
         result = None
+        if params is None:
+            return result
         stub_name = ""
         stub_server_port = "8000"
         testsuite_name = ""
@@ -301,13 +313,13 @@ class TizenMobile:
 
         if not "testsuite-name" in params:
             print "\"testsuite-name\" is required!"
-            return None
+            return result
         else:
             testsuite_name = params["testsuite-name"]
 
         if not "client-command" in params:
             print "\"client-command\" is required!"
-            return None
+            return result
         else:
             client_command = params["client-command"]
 
@@ -353,16 +365,18 @@ class TizenMobile:
             self.__test_type = "coreapi"
             return str(uuid.uuid1())
 
-    def __run_core_test(self, exetype, ttype, case_count, cases):
+    def __run_core_test(self, exetype, ctype, case_count, cases):
         """
             process the execution for core api test
         """
+        pass
 
-    def __run_web_test(self, test_set_name, exetype, ttype, case_count, cases):
+    def __run_web_test(self, test_set_name, exetype, ctype, case_count, cases):
         """
             process the execution for web api test
             may be splitted to serveral blocks, with the unit size defined by block_size
         """
+        blknum = 0
         if case_count % self.__test_set_block == 0:
             blknum = case_count / self.__test_set_block
         else:
@@ -373,7 +387,7 @@ class TizenMobile:
         while idx <= blknum:
             block_data = {}
             block_data["exetype"] = exetype
-            block_data["type"] = ttype
+            block_data["type"] = ctype
             block_data["totalBlk"] = str(blknum)
             block_data["currentBlk"] = str(idx)
             block_data["casecount"] = case_count
@@ -400,13 +414,13 @@ class TizenMobile:
 
         test_set_name = os.path.split(test_set["current_set_name"])[1]
         exetype = test_set["exetype"]
-        ttype = test_set["type"]
+        ctype = test_set["type"]
         case_count = int(test_set["casecount"])
         cases = test_set["cases"]
         if self.__test_type == "webapi":
-            return self.__run_web_test(test_set_name, exetype, ttype, case_count, cases)
+            return self.__run_web_test(test_set_name, exetype, ctype, case_count, cases)
         else:
-            return self.__run_core_test(test_set_name, exetype, ttype, case_count, cases)
+            return self.__run_core_test(test_set_name, exetype, ctype, case_count, cases)
 
     def get_test_status(self, sessionid):
         """poll the test task status"""
