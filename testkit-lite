@@ -259,6 +259,16 @@ Note: \n\
     if options.capability:
         runner.get_capability(options.capability)
 
+    if "device:" in options.testxml[0]:
+        print 'device remote file'
+        remote_testlits = options.testxml[0]
+        remote_testlits = remote_testlits.split(':')[1]
+        testlistarrary = remote_testlits.split(' ')
+        for remote_file in testlistarrary:
+            runner.connector.downloadFile(
+                self.deviceid, remote_file, remote_file)
+        options.testxml = testlistarrary
+
     # apply filter
     wfilters = {}
     for flt in COMMON_FILTERS:

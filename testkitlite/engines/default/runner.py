@@ -680,14 +680,16 @@ class TRunner:
                 if rules.get('set'):
                     if tset.get('name') not in rules['set']:
                         tsuite.remove(tset)
-
-        for tset in root_em.getiterator('set'):
-            for tcase in tset.getiterator('testcase'):
-                if not self.__apply_filter_case_check(tcase):
-                    tset.remove(tcase)
-                else:
-                    if not self.__apply_capability_filter_case_check(tcase):
+        for tsuite in root_em.getiterator('suite'):
+            for tset in tsuite.getiterator('set'):
+                tset_status = self.__apply_capability_filter_set_check(tset)
+                for tcase in tset.getiterator('testcase'):
+                    if not self.__apply_filter_case_check(tcase):
                         tset.remove(tcase)
+                    else:
+                        if not tset_status:
+                            if not self.__apply_capability_filter_case_check(tcase):
+                                tset.remove(tcase)
 
     def __apply_filter_case_check(self, tcase):
         """filter cases"""
@@ -718,16 +720,21 @@ class TRunner:
             if tcase.get('check_unsupport_error').lower() == "true":
                 # check_unsupport_error is true,can not filter
                 return True
-        for tcap in tcase.getiterator('capability'):
-            capability = get_capability_form_node(tcap)
-            for (k, v) in capability.items():
-                if k in self.capabilities:
-                    if capability[k] != self.capabilities[k]:
-                        # if capability value is not equal ,remove the case
+        return False
+
+    def __apply_capability_filter_set_check(self, tset):
+        """ check the set required capability with  self.capabilities """
+        for tcaps in tset.getiterator('capabilities'):
+            for tcap in tcaps.getiterator('capability'):
+                capability = get_capability_form_node(tcap)
+                for (k, v) in capability.items():
+                    if k in self.capabilities:
+                        if capability[k] != self.capabilities[k]:
+                            # if capability value is not equal ,remove the case
+                            return False
+                    else:
+                        # if does not hava this capability ,remove case
                         return False
-                else:
-                    # if does not hava this capability ,remove case
-                    return False
         return True
 
     def execute(self, testxmlfile, resultfile):
@@ -908,6 +915,7 @@ class TRunner:
             starup_prms = self.__prepare_starup_parameters(testxml)
         else:
             starup_prms = []
+
         # init stub and get the session_id
         session_id = self.connector.init_test(self.deviceid, starup_prms)
         if session_id == None:
@@ -928,6 +936,8 @@ class TRunner:
             starup_parameters['client-command'] = tsuite.get("launcher")
             starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['stub-name'] = self.stub_name
+            if len(self.capabilities) > 0:
+                starup_parameters['capability'] = self.capabilities
         except IOError, error:
             print "[ Error: prepare starup parameters, error: %s ]" % error
         return starup_parameters
