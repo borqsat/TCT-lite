@@ -29,6 +29,7 @@ import subprocess
 import requests
 import json
 import re
+import uuid
 
 def get_url(baseurl, api):
     return "%s%s" % (baseurl, api)
@@ -70,19 +71,20 @@ def get_forward_connect(device_id, remote_port=None):
 
     HOST = "127.0.0.1"
     inner_port = 9000
-    #TIME_OUT = 2
-    # while True:
-    #     sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #     sk.settimeout(TIME_OUT)
-    #     try:
-    #         sk.bind((HOST, inner_port))
-    #         sk.close()
-    #         bflag = False
-    #     except socket.error, e:
-    #         if e.errno == 98 or e.errno == 13:
-    #             bflag = True
-    #     if bflag: inner_port += 1
-    #     else: break
+    TIME_OUT = 2
+    bflag = False
+    while True:
+        sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sk.settimeout(TIME_OUT)
+        try:
+            sk.bind((HOST, inner_port))
+            sk.close()
+            bflag = False
+        except socket.error, e:
+            if e.errno == 98 or e.errno == 13:
+                bflag = True
+        if bflag: inner_port += 1
+        else: break
     host_port = str(inner_port)
     cmd = "sdb -s %s forward tcp:%s tcp:%s" % (device_id, host_port, remote_port)
     result = shell_command(cmd)
@@ -94,16 +96,16 @@ test_server_result = []
 test_server_status = {}
 class StubExecThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
-    def __init__(self, cmd=None, endflag=None):
+    def __init__(self, cmd=None, sessionid=None):
         super(StubExecThread, self).__init__()
         self.stdout = []
         self.stderr = []
         self.cmdline = cmd
-        self.endflag = endflag
+        self.sessionid = sessionid
 
     def run(self):        
-        BUFFILE1 = os.path.expanduser("~") + os.sep + ".shellexec_buffile_stdout"
-        BUFFILE2 = os.path.expanduser("~") + os.sep + ".shellexec_buffile_stderr"
+        BUFFILE1 = os.path.expanduser("~") + os.sep + self.sessionid + "_stdout"
+        BUFFILE2 = os.path.expanduser("~") + os.sep + self.sessionid + "_stderr"
 
         LOOP_DELTA = 0.2
         wbuffile1 = file(BUFFILE1, "w")
@@ -174,7 +176,7 @@ class TestSetExecThread(threading.Thread):
                 break
 
             while True:
-                ret =  http_request(get_url(self.server_url, "/check_server_status"), "GET", {})
+                ret = http_request(get_url(self.server_url, "/check_server_status"), "GET", {})
                 if ret is None or ret is {}:
                     err_cnt += 1
                     if err_cnt >= 10:
@@ -212,6 +214,7 @@ class TizenMobile:
         self.__test_async_shell = None
         self.__test_async_http = None
         self.__test_set_block = 100
+        self.__test_type = None
 
     def get_device_ids(self):
         """get tizen deivce list of ids"""
@@ -276,40 +279,51 @@ class TizenMobile:
         ret =  shell_command(cmd)
         return ret
 
-    def remove_package(self, deviceid, pkgid):
-        """remove a installed package from device"""
-        cmd = "sdb -s %s shell rpm -e %s" % (deviceid, pkgid)
+    def get_installed_package(self, deviceid):
+        """get list of installed package from device"""
+        cmd = "sdb -s %s shell rpm -qa | grep tct" % (deviceid)
         ret =  shell_command(cmd)
         return ret
 
-    def init_test(self, deviceid, params):
-        """init the test runtime, mainly process the star up of test stub"""
-        if params is None:
-            return None
+    def download_file(self, deviceid, remote_path, local_path):
+        """get list of installed package from device"""
+        cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
+        ret =  shell_command(cmd)
+        return ret
 
+    def upload_file(self, deviceid, remote_path, local_path):
+        """get list of installed package from device"""
+        cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
+        ret =  shell_command(cmd)
+        return ret
+
+    def __init_test_stub(self, deviceid, params):
+        """init the test runtime, mainly process the star up of test stub"""
         result = None
+        if params is None:
+            return result
         stub_name = ""
         stub_server_port = "8000"
         testsuite_name = ""
         client_command = ""       
-        if not "stub-name" in params:
-            print "\"stub-name\" is required!"
-            return None
-        else:
-            stub_name = params["stub-name"]
+        stub_name = params["stub-name"]
+        capability_opt = None
+
+        if "capability" in params:
+            capability_opt = params["capability"]
 
         if "stub-port" in params:
             stub_server_port = params["stub-port"]
 
         if not "testsuite-name" in params:
-            print "\"testsuite-name\" is required!"
-            return None
+            print "\"testsuite-name\" is required for web tests!"
+            return result
         else:
             testsuite_name = params["testsuite-name"]
 
         if not "client-command" in params:
-            print "\"client-command\" is required!"
-            return None
+            print "\"client-command\" is required for web tests!"
+            return result
         else:
             client_command = params["client-command"]
 
@@ -324,11 +338,12 @@ class TizenMobile:
         print "[ forward server %s ]" % self.__forward_server_url
 
         ###launch an new stub process###
+        session_id = str(uuid.uuid1())
         print "[ launch the stub app ]"
         stub_entry = "%s --testsuite:%s --client-command:%s" % \
                      (stub_name, testsuite_name, client_command)
-        cmd = "sdb -s %s shell %s" % (deviceid, stub_entry)
-        self.__test_async_shell = StubExecThread(cmd, "goodbye")
+        cmdline = "sdb -s %s shell %s" % (deviceid, stub_entry)
+        self.__test_async_shell = StubExecThread(cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
         time.sleep(2)
 
@@ -341,10 +356,79 @@ class TizenMobile:
                 time.sleep(0.3)
                 timecnt += 1
             else:
+                result = session_id
                 print "[ check server status, get ready! ]"
-                result = "0011223344556677"
+                if capability_opt is not None:
+                    print "[ check server status, get ready! ]"
+                    ret = http_request(get_url(self.__forward_server_url, "/set_capability"), "POST", capability_opt)
                 break
         return result
+
+    def init_test(self, deviceid, params):
+        if params is not None and "stub-name" in params:
+            self.__test_type = "webapi"
+            return self.__init_test_stub(deviceid, params)
+        else:
+            self.__test_type = "coreapi"
+            return str(uuid.uuid1())
+
+    def __run_core_test(self, test_set_name, exetype, ctype, case_count, cases):
+        """
+            process the execution for core api test
+        """
+        return True
+
+    def __run_web_test(self, test_set_name, exetype, ctype, case_count, cases):
+        """
+            process the execution for web api test
+            may be splitted to serveral blocks, with the unit size defined by block_size
+        """
+        blknum = 0
+        if case_count % self.__test_set_block == 0:
+            blknum = case_count / self.__test_set_block
+        else:
+            blknum = case_count / self.__test_set_block + 1
+
+        idx = 1
+        test_set_blocks = []
+        while idx <= blknum:
+            block_data = {}
+            block_data["exetype"] = exetype
+            block_data["type"] = ctype
+            block_data["totalBlk"] = str(blknum)
+            block_data["currentBlk"] = str(idx)
+            block_data["casecount"] = case_count
+            start = (idx - 1) * self.__test_set_block
+            if idx == blknum:
+                end = case_count
+            else:
+                end = idx * self.__test_set_block
+            block_data["cases"] = cases[start:end]
+            test_set_blocks.append(block_data)
+            idx += 1
+        self.__test_async_http = TestSetExecThread(self.__forward_server_url, test_set_name, test_set_blocks)
+        self.__test_async_http.start()
+        return True
+
+    # def run_test(self, sessionid, test_set):
+    #     """
+    #         process the execution for a test set
+    #     """
+    #     if sessionid is None:
+    #         return False
+    #     if not "casecount" in test_set : 
+    #         return False
+
+    #     test_set_name = os.path.split(test_set["current_set_name"])[1]
+    #     case_count = int(test_set["casecount"])
+    #     cases = test_set["cases"]
+    #     exetype = test_set["exetype"]
+    #     ctype = test_set["type"]
+
+    #     if self.__test_type == "webapi":
+    #         return self.__run_web_test(test_set_name, exetype, ctype, case_count, cases)
+    #     else:
+    #         return self.__run_core_test(test_set_name, exetype, ctype, case_count, cases)
 
     def run_test(self, sessionid, test_set):
         """
@@ -421,9 +505,11 @@ class TizenMobile:
 
     def finalize_test(self, sessionid):
         """clear the test stub and related resources"""
-        if sessionid is None: return False
-        data = {"sessionid": sessionid}
-        ret = http_request(get_url(self.__forward_server_url, "/shut_down_server"), "GET", {})
+        if sessionid is None: 
+            return False
+
+        if self.__test_type == "webapi":
+            ret = http_request(get_url(self.__forward_server_url, "/shut_down_server"), "GET", {})
         return True
 
 testremote = TizenMobile()
