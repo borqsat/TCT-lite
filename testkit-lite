@@ -265,7 +265,7 @@ Note: \n\
         remote_testlits = remote_testlits.split(':')[1]
         testlistarrary = remote_testlits.split(' ')
         for remote_file in testlistarrary:
-            runner.connector.downloadFile(
+            runner.connector.download_file(
                 self.deviceid, remote_file, remote_file)
         options.testxml = testlistarrary
     else:
