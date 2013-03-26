@@ -265,9 +265,16 @@ Note: \n\
         remote_testlits = remote_testlits.split(':')[1]
         testlistarrary = remote_testlits.split(' ')
         for remote_file in testlistarrary:
-            runner.connector.downloadFile(
+            runner.connector.download_file(
                 self.deviceid, remote_file, remote_file)
         options.testxml = testlistarrary
+    else:
+        print 'device local file'
+        if len(options.testxml) == 1:            
+            local_testlists = options.testxml[0]
+            testlistarrary = local_testlists.split(' ')        
+            options.testxml = testlistarrary
+            print options.testxml
 
     # apply filter
     wfilters = {}
