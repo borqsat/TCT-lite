@@ -268,6 +268,13 @@ Note: \n\
             runner.connector.downloadFile(
                 self.deviceid, remote_file, remote_file)
         options.testxml = testlistarrary
+    else:
+        print 'device local file'
+        if len(options.testxml) == 1:            
+            local_testlists = options.testxml[0]
+            testlistarrary = local_testlists.split(' ')        
+            options.testxml = testlistarrary
+            print options.testxml
 
     # apply filter
     wfilters = {}
