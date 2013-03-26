@@ -188,7 +188,10 @@ try:
         make_option("--deviceid", dest="device_serial", action="store",
                     help="set sdb device serial information"),
         make_option("--comm", dest="commodule", action="store",
-                    help="set commodule type")
+                    help="set commodule type"),
+        make_option("--capability", dest="capability", action="store",
+                    help="get capability file")
+
     ]
 
     option_list.extend(map(lambda flt:
@@ -251,6 +254,20 @@ Note: \n\
     # apply all options
 
     runner.set_global_parameters(options)
+
+    # set capability
+    if options.capability:
+        runner.get_capability(options.capability)
+
+    if "device:" in options.testxml[0]:
+        print 'device remote file'
+        remote_testlits = options.testxml[0]
+        remote_testlits = remote_testlits.split(':')[1]
+        testlistarrary = remote_testlits.split(' ')
+        for remote_file in testlistarrary:
+            runner.connector.downloadFile(
+                self.deviceid, remote_file, remote_file)
+        options.testxml = testlistarrary
 
     # apply filter
     wfilters = {}
