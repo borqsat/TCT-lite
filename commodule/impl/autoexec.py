@@ -52,16 +52,6 @@ def shell_exec(cmd,  timeout=None, boutput=False):
     # start execution process
     cmdPopen = subprocess.Popen(args=cmd, shell=True,
                                 stdout=wbuffile1, stderr=wbuffile2)
-    # pid_log,
-    # write pid only for external execution
-    # if pid_log is not "no_log":
-    #     try:
-    #         with open(pid_log, "a") as fd:
-    #             pid = str(cmdPopen.pid)
-    #             fd.writelines(pid + '\n')
-    #     except:
-    #         pass
-            
     def print_log():
         sys.stdout.write(rbuffile1.read())
         sys.stdout.write(rbuffile2.read())
