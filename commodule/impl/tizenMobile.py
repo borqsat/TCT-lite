@@ -320,6 +320,12 @@ class TizenMobile:
             return result
         else:
             testsuite_name = params["testsuite-name"]
+            cmd = "sdb -s %s shell wrt-launcher -l | grep %s | awk '{print $NF}'" % \
+                (deviceid, testsuite_name)
+            ret = shell_command(cmd)
+            if len(ret) == 0:
+                print "[ test suite \"%s\" not found in device! ]" % testsuite_name
+                return None
 
         if not "client-command" in params:
             print "\"client-command\" is required for web tests!"
