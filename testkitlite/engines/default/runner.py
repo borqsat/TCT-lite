@@ -1052,7 +1052,7 @@ def get_capability_form_node(capability_em):
 
     if tcap.get("type").lower() == 'boolean':
         if tcap.get("support").lower() == 'true':
-            capability[tmp_key] = tcap.get("support")
+            capability[tmp_key] = True
 
     if tcap.get("type").lower() == 'integer':
         if tcap.get("support").lower() == 'true':
