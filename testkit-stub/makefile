@@ -1,4 +1,5 @@
 TARGET = httpserver
+UT_TARGET = ut
 OBJ_PATH = objs
 PREFIX_BIN =
 
@@ -8,46 +9,64 @@ LIBS =
 CFLAGS =-Wall -Werror
 LINKFLAGS = -lpthread
 
-SRCDIR = src/json src
+JSON_SRCDIR = src/json
+SERVER_SRCDIR = src
+MAIN_SRCDIR = src/main
+UT_SRCDIR = src/ut
 
-#C_SOURCES = $(wildcard *.c)
-C_SRCDIR = $(SRCDIR)
-C_SOURCES = $(foreach d,$(C_SRCDIR),$(wildcard $(d)/*.c) )
-C_OBJS = $(patsubst %.c, $(OBJ_PATH)/%.o, $(C_SOURCES))
+JSON_SOURCES = $(foreach d,$(JSON_SRCDIR),$(wildcard $(d)/*.cpp) )
+JSON_OBJS = $(patsubst %.cpp, $(OBJ_PATH)/%.o, $(JSON_SOURCES))
 
-#CPP_SOURCES = $(wildcard *.cpp)
-CPP_SRCDIR = $(SRCDIR)
-CPP_SOURCES = $(foreach d,$(CPP_SRCDIR),$(wildcard $(d)/*.cpp) )
-CPP_OBJS = $(patsubst %.cpp, $(OBJ_PATH)/%.o, $(CPP_SOURCES))
+SERVER_SOURCES = $(foreach d,$(SERVER_SRCDIR),$(wildcard $(d)/*.cpp) )
+SERVER_OBJS = $(patsubst %.cpp, $(OBJ_PATH)/%.o, $(SERVER_SOURCES))
+
+MAIN_SOURCES = $(foreach d,$(MAIN_SRCDIR),$(wildcard $(d)/*.cpp) )
+MAIN_OBJS = $(patsubst %.cpp, $(OBJ_PATH)/%.o, $(MAIN_SOURCES))
+
+UT_SOURCES = $(foreach d,$(UT_SRCDIR),$(wildcard $(d)/*.cpp) )
+UT_OBJS = $(patsubst %.cpp, $(OBJ_PATH)/%.o, $(UT_SOURCES))
 
 default:init compile
+ut:init ut_compile
 
 $(C_OBJS):$(OBJ_PATH)/%.o:%.c
 	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $@
 
-$(CPP_OBJS):$(OBJ_PATH)/%.o:%.cpp
+$(JSON_OBJS):$(OBJ_PATH)/%.o:%.cpp
+	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $@
+
+$(SERVER_OBJS):$(OBJ_PATH)/%.o:%.cpp
+	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $@
+
+$(MAIN_OBJS):$(OBJ_PATH)/%.o:%.cpp
+	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $@
+
+$(UT_OBJS):$(OBJ_PATH)/%.o:%.cpp
 	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $@
 
 init:
-	$(foreach d,$(SRCDIR), mkdir -p $(OBJ_PATH)/$(d);)
+	$(foreach d,$(JSON_SRCDIR), mkdir -p $(OBJ_PATH)/$(d);)
+	$(foreach d,$(SERVER_SRCDIR), mkdir -p $(OBJ_PATH)/$(d);)
+	$(foreach d,$(MAIN_SRCDIR), mkdir -p $(OBJ_PATH)/$(d);)
+	$(foreach d,$(UT_SRCDIR), mkdir -p $(OBJ_PATH)/$(d);)
 
-test:
-	@echo "C_SOURCES: $(C_SOURCES)"
-	@echo "C_OBJS: $(C_OBJS)"
-	@echo "CPP_SOURCES: $(CPP_SOURCES)"
-	@echo "CPP_OBJS: $(CPP_OBJS)"
+ut_compile:$(JSON_OBJS) $(SERVER_OBJS) $(MAIN_OBJS)
+	$(CC)  $^ -o $(UT_TARGET)  $(LINKFLAGS) $(LIBS)
 
-compile:$(C_OBJS) $(CPP_OBJS)
+compile:$(JSON_OBJS) $(SERVER_OBJS) $(MAIN_OBJS)
 	$(CC)  $^ -o $(TARGET)  $(LINKFLAGS) $(LIBS)
 
 clean:
 	rm -rf $(OBJ_PATH)
 	rm -f $(TARGET)
+	rm -f $(UT_TARGET)
 
-#install: $(TARGET)
-#	cp $(TARGET) $(PREFIX_BIN)
-
-#uninstall:
-#	rm -f $(PREFIX_BIN)/$(TARGET)
+install: $(TARGET)
+	#cp $(TARGET) $(PREFIX_BIN)
+	install -d $(DESTDIR)/usr/bin/
+	install -m 755 $(TARGET) $(DESTDIR)/usr/bin/
+	
+uninstall:
+	rm -f $(PREFIX_BIN)/$(TARGET)
 
 rebuild: clean compile

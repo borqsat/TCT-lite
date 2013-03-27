@@ -33,6 +33,15 @@
 #define BAD_REQUEST -1
 
 //#define DEBUG
+#if defined(DEBUG) | defined(_DEBUG)
+    #ifndef DBG_ONLY
+      #define DBG_ONLY(x) do { x } while (0)         
+    #endif
+#else
+    #ifndef DBG_ONLY
+      #define DBG_ONLY(x) 
+    #endif
+#endif
 
 HttpServer::HttpServer() {
 	m_test_cases = NULL;
@@ -66,7 +75,6 @@ HttpServer::~HttpServer() {
 		delete[] m_test_cases;
 		m_test_cases = NULL;
 	}
-	//outputFile.close();
 }
 
 int HttpServer::sendsegment(int s, string buffer) {
@@ -102,11 +110,12 @@ void HttpServer::sendresponse(int s, int code, struct HttpRequest *prequest,
 		break;
 	}
 
-#ifdef DEBUG
-	cout << "=======sendresponse content is " << content << endl;
-	cout << "=======sendresponse content len is " << content.length() << endl;
-	cout << "=======buffer is " << buffer << endl;
-#endif
+    DBG_ONLY(
+	   cout << "=======sendresponse content is " << content << endl;
+	   cout << "=======sendresponse content len is " << content.length() << endl;
+	   cout << "=======buffer is " << buffer << endl;
+    );
+
 	sendsegment(s, buffer);
 }
 
@@ -116,31 +125,31 @@ int HttpServer::getrequest(string requestbuf, struct HttpRequest *prequest) {
 		prequest->method = splitstr[0];
 		prequest->path = splitstr[1];
 	}
-#ifdef DEBUG
-	cout << "prequest->method: " << prequest->method << endl << "prequest->path: " << prequest->path << endl;
-#endif
+    DBG_ONLY(
+	   cout << "prequest->method: " << prequest->method << endl << "prequest->path: " << prequest->path << endl;
+    );
 
 	if (prequest->path.find('?') == string::npos) {
 		//get the com module send data
 		int content_index = requestbuf.find("\r\n\r\n", 0);
-#ifdef DEBUG
-		cout<<"requestbuf is: " << requestbuf << endl;
-		cout << "content_index is " << content_index << endl;
-#endif
+        DBG_ONLY(
+            cout<<"requestbuf is: " << requestbuf << endl;
+            cout << "content_index is " << content_index << endl;
+        );
 		if (content_index > -1) {
 			prequest->content = requestbuf.substr(
 					content_index + strlen("\r\n\r\n"));
-#ifdef DEBUG
-			cout << "prequest->content is:" << prequest->content << endl;
-			cout << "prequest->content length " << prequest->content.length() << endl;
-#endif
+            DBG_ONLY(
+                cout << "prequest->content is:" << prequest->content << endl;
+    			cout << "prequest->content length " << prequest->content.length() << endl;
+            );
 		}
 	} else {
 		int session_index = prequest->path.find("?");
 		prequest->content = prequest->path.substr(session_index + 1);
-#ifdef DEBUG
-		cout << "prequest->content is " << prequest->content << endl;
-#endif
+        DBG_ONLY(
+    		cout << "prequest->content is " << prequest->content << endl;
+        );
 	}
 	if (prequest->method == "GET") {
 		return GET;
@@ -193,9 +202,9 @@ void HttpServer::cancel_time_check() {
 }
 
 void HttpServer::set_timer() {
-	timer.it_value.tv_sec = 30;
+	timer.it_value.tv_sec = 90;
 	timer.it_value.tv_usec = 0;
-	timer.it_interval.tv_sec = 60;
+	timer.it_interval.tv_sec = 90;
 	timer.it_interval.tv_usec = 0;
 	int ret = setitimer(ITIMER_REAL, &timer, NULL);
 	if (ret < 0)
@@ -203,9 +212,9 @@ void HttpServer::set_timer() {
 }
 
 void HttpServer::processpost(int s, struct HttpRequest *prequest) {
-#ifdef DEBUG
-	cout << "prequest->path is:" << prequest->path << endl;
-#endif
+    DBG_ONLY(
+	   cout << "prequest->path is:" << prequest->path << endl;
+    );
 	prequest->prefix = "application/json";
 	string json_str = "";
 	string json_parse_str = "";
@@ -215,15 +224,14 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 		m_set_finished = false;
 		m_timeout_count = 0;
 		cout << "[ init the test suit ]" << endl;
-		//outputFile << "[ init the test suit ]" << endl;
 		parse_json_str(prequest->content);
 
 		if (g_test_suite.length() > 0) {
 			start_client();
 		} else {
-#ifdef DEBUG
-			cout << "no g_client_command" << endl;
-#endif
+            DBG_ONLY(
+                cout << "no g_client_command" << endl;
+            );
 		}
 
 		m_block_case_index = 0;
@@ -233,7 +241,6 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 		json_str = "{\"OK\":1}";
 	} else if (prequest->path == "/check_server") {
 		cout << "[ checking server, and found the server is running ]" << endl;
-		//outputFile << "[ checking server, and found the server is running ]" << endl;
 		json_str = "{\"OK\":1}";
 	} else if (prequest->path == "/check_server_status") {
 		Json::Value status;
@@ -241,9 +248,9 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 		status["finished"] = m_set_finished ? 1 : 0;
 		status["launch_fail"] = m_failto_launch;
 		json_str = status.toStyledString();
-#ifdef DEBUG
-		cout << "m_totalBlocks=" <<m_totalBlocks << " m_current_block_index=" << m_current_block_index << " m_block_case_count=" << m_block_case_count << " m_totalcaseCount=" << m_totalcaseCount << " m_total_case_index=" << m_total_case_index << " m_block_case_index=" << m_block_case_index << " m_timeout_count="<<m_timeout_count<<endl;
-#endif
+        DBG_ONLY(
+            cout << "m_totalBlocks=" <<m_totalBlocks << " m_current_block_index=" << m_current_block_index << " m_block_case_count=" << m_block_case_count << " m_totalcaseCount=" << m_totalcaseCount << " m_total_case_index=" << m_total_case_index << " m_block_case_index=" << m_block_case_index << " m_timeout_count="<<m_timeout_count<<endl;
+        );
 	} else if (prequest->path == "/shut_down_server") {
 		killAllWidget(); // kill all widget when shutdown server
 		json_str = "{\"OK\":1}";
@@ -255,10 +262,8 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 			m_running_session = prequest->path.substr(index + 1);
 			cout << "[ sessionID: " << m_running_session
 					<< " is gotten from the client ]" << endl;
-			//outputFile<< "[ sessionID: " << m_running_session << "is gotten from the client ]" << endl;
 		} else {
 			cout << "[ invalid session id ]" << endl;
-			//outputFile << "[ invalid session id ]" << endl;
 		}
 	} else if (prequest->path.find("/ask_next_step") != string::npos) {
 		if (m_block_finished || m_set_finished)
@@ -267,46 +272,29 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 			json_str = "{\"step\":\"continue\"}";
 
 		m_timeout_count = 0; // reset the timeout count
-	} else if (prequest->path.find("/auto_test_task") != string::npos) // get current auto case
-			{
+	} else if (prequest->path.find("/auto_test_task") != string::npos) {// get current auto case
 		if (m_test_cases == NULL) {
 			json_str = "{\"OK\":\"no case\"}";
-#ifdef DEBUG
-			cout << json_str << endl;
-#endif
 		} else if (m_exeType != "auto") {
 			json_str = "{\"none\":0}";
-#ifdef DEBUG
-			cout << json_str << endl;
-#endif
 		} else {
 			string error_type = "";
 			bool find_tc = get_auto_case(prequest->content, &error_type);
 			if (find_tc == false) {
 				json_str = "{\"" + error_type + "\":0}";
-#ifdef DEBUG
-				cout << json_str << endl;
-#endif
 			} else {
 				json_str =
 						m_test_cases[m_block_case_index].to_json().toStyledString();
-#ifdef DEBUG
-				cout << "send case: m_block_case_index is " << m_block_case_index << endl;
-#endif
+                DBG_ONLY(
+                    cout << "send case: m_block_case_index is " << m_block_case_index << endl;
+                );
 			}
 		}
-	} else if (prequest->path.find("/manual_cases") != string::npos) // invoke by index.html
-			{
+	} else if (prequest->path.find("/manual_cases") != string::npos) {// invoke by index.html
 		if (!m_test_cases) {
 			json_str = "{\"OK\":\"no case\"}";
-#ifdef DEBUG
-			cout << json_str << endl;
-#endif
 		} else if (m_exeType == "auto") {
 			json_str = "{\"none\":0}";
-#ifdef DEBUG
-			cout << json_str << endl;
-#endif
 		} else {
 			Json::Value arrayObj;
 			for (int i = 0; i < m_block_case_count; i++)
@@ -317,30 +305,20 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 	} else if (prequest->path.find("/case_time_out") != string::npos) {
 		if (!m_test_cases) {
 			json_str = "{\"OK\":\"no case\"}";
-#ifdef DEBUG
-			cout << json_str << endl;
-#endif
 		} else if (m_block_case_index < m_block_case_count) {
 			checkResult(&m_test_cases[m_block_case_index]);
 			json_str = "{\"OK\":\"timeout\"}";
 		} else {
 			json_str = "{\"OK\":\"case out of index\"}";
-#ifdef DEBUG
-			cout << json_str << endl;
-#endif
 		}
 	} else if (prequest->path.find("/commit_manual_result") != string::npos) {
 		if ((prequest->content.length() == 0) || (!m_test_cases)) {
 			json_str = "{\"OK\":\"no case\"}";
-#ifdef DEBUG
-			cout << json_str << endl;
-#endif
 		} else {
 			find_purpose(prequest, false); // will set index in find_purpose
 			json_str = "{\"OK\":1}";
 		}
-	} else if (prequest->path.find("/check_execution_progress") != string::npos) //invoke by index.html
-			{
+	} else if (prequest->path.find("/check_execution_progress") != string::npos) {//invoke by index.html
 		char *total_count = new char[16];
 		sprintf(total_count, "%d", m_totalcaseCount);
 		char *current_index = new char[16];
@@ -350,20 +328,18 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 		string index_str(current_index);
 		json_str = "{\"total\":" + count_str + ",\"current\":" + index_str
 				+ ",\"last_test_result\":\"" + m_last_auto_result + "\"}";
-		printf("Total: %s, Current: %s\nLast Case Result: %s", total_count,
-				current_index, m_last_auto_result.c_str());
 
 		m_last_auto_result = "BLOCK"; // should not set as BLOCK here?
 
 		delete[] total_count;
 		delete[] current_index;
 	}
-	//generate_xml:from index_html,when click done,a maually block finished
+	//generate_xml:from index_html, a maually block finished when click done in widget
 	else if (prequest->path == "/generate_xml") {
 		cancel_time_check();
-#ifdef DEBUG
-		cout<<"===m_block_case_index is "<<m_block_case_index<<"\nm_block_case_count is "<<m_block_case_count<<"\nm_total_case_index is "<<m_total_case_index<<"\nm_totalcaseCount is "<<m_totalcaseCount<<endl;
-#endif        
+        DBG_ONLY(
+            cout<<"===m_block_case_index is "<<m_block_case_index<<"\nm_block_case_count is "<<m_block_case_count<<"\nm_total_case_index is "<<m_total_case_index<<"\nm_totalcaseCount is "<<m_totalcaseCount<<endl;
+        );
 		m_block_finished = true;
 		if (m_current_block_index == m_totalBlocks)
 			m_set_finished = true;
@@ -373,14 +349,11 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 	//from com module,when m_set_finished is true
 	else if (prequest->path == "/get_test_result") {
 		cancel_time_check();
-#ifdef DEBUG
-		cout<<"===m_block_case_index is "<<m_block_case_index<<"\nm_block_case_count is "<<m_block_case_count<<"\nm_total_case_index is "<<m_total_case_index<<"\nm_totalcaseCount is "<<m_totalcaseCount<<endl;
-#endif
+        DBG_ONLY(
+            cout<<"===m_block_case_index is "<<m_block_case_index<<"\nm_block_case_count is "<<m_block_case_count<<"\nm_total_case_index is "<<m_total_case_index<<"\nm_totalcaseCount is "<<m_totalcaseCount<<endl;
+        );
 		if (!m_test_cases) {
 			json_str = "{\"OK\":\"no case\"}";
-#ifdef DEBUG
-			cout << json_str << endl;
-#endif
 		} else {
 			Json::Value root;
 			Json::Value arrayObj;
@@ -395,44 +368,70 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 
 			json_str = root.toStyledString();
 		}
-	} else if (prequest->path == "/commit_result") //auto case commit result
-			{
+	} else if (prequest->path == "/commit_result") {//auto case commit result
 		if ((prequest->content.length() == 0) || (!m_test_cases)) {
 			json_str = "{\"OK\":\"no case\"}";
-#ifdef DEBUG
-			cout << json_str << endl;
-#endif
-			sendresponse(s, 200, prequest, json_str);
-			return;
-		}
+		} else {
+            m_block_case_index++;
+            m_total_case_index++;
 
-		m_block_case_index++;
-		m_total_case_index++;
+            DBG_ONLY(
+                cout<<"start ++index"<<endl;
+                cout<<"commit_result: m_block_case_index is "<<m_block_case_index<<endl;
+                cout<<"commit_result: m_total_case_index is "<<m_total_case_index<<endl;
+            );
+            find_purpose(prequest, true);
 
-#ifdef DEBUG
-		cout<<"start ++index"<<endl;
-#endif
+            json_str = "{\"OK\":1}";
+        }
+    } else if (prequest->path == "/set_capability") {// by com-module
+        Json::Reader reader;
 
-#ifdef DEBUG
-		cout<<"commit_result: m_block_case_index is "<<m_block_case_index<<endl;
-		cout<<"commit_result: m_total_case_index is "<<m_total_case_index<<endl;
-#endif
-		find_purpose(prequest, true);
+        reader.parse(prequest->content, m_capability);
+cout << m_capability.toStyledString() << endl;
 
-		json_str = "{\"OK\":1}";
+        json_str = "{\"OK\":1}";
+    } else if (prequest->path.find("/capability") != string::npos) {// by test suite. only one query parameter each time
+        char* tmp = ComFun::UrlDecode(prequest->content.c_str());
+        string content = tmp;
+        delete[] tmp; // free memory from comfun
+
+        json_str = "{\"support\":0}";
+        string name = "", value = "";
+        std::vector < std::string > splitstr = ComFun::split(content, "&");
+        for (unsigned int i = 0; i < splitstr.size(); i++) {
+            vector < string > resultkey = ComFun::split(splitstr[i], "=");
+            if (resultkey[0] == "name") name = resultkey[1];
+            if (resultkey[0] == "value") value = resultkey[1];
+        }
+cout << content << endl;
+cout << name << ":" << m_capability[name] << endl;
+        if (m_capability[name].isBool()) {// for bool value, omit the value part
+            json_str = "{\"support\":1}";
+        }
+        else if (m_capability[name].isInt()) {
+            if (m_capability[name].asInt() == atoi(value.c_str()))
+                json_str = "{\"support\":1}";
+        }
+        else if (m_capability[name].isString()) {
+            if (m_capability[name].asString() == value)
+                json_str = "{\"support\":1}";
+        }
+        cout << json_str << endl;
 	} else {
-#ifdef DEBUG
-		cout << "=================unknown request: " << prequest->path << endl;
-#endif
+        cout << "=================unknown request: " << prequest->path << endl;
 	}
+    
+    DBG_ONLY(cout << json_str << endl;);
+
 	if (json_str != "")
 		sendresponse(s, 200, prequest, json_str);
 }
 
 void HttpServer::find_purpose(struct HttpRequest *prequest, bool auto_test) {
-#ifdef DEBUG
-	cout << "find_purpose =============content:" << prequest->content << endl;
-#endif
+    DBG_ONLY(
+	   cout << "find_purpose =============content:" << prequest->content << endl;
+    );
 
 	string purpose = "";
 	string result = "";
@@ -442,20 +441,20 @@ void HttpServer::find_purpose(struct HttpRequest *prequest, bool auto_test) {
 	char* tmp = ComFun::UrlDecode(prequest->content.c_str());
 	content = tmp;
 	delete[] tmp; // free memory from comfun
-#ifdef DEBUG
-	cout<<"urldecode:content is "<<content<<endl;
-#endif
+    DBG_ONLY(
+	   cout<<"urldecode:content is "<<content<<endl;
+    );
 
 	std::vector < std::string > splitstr = ComFun::split(content, "&");
-#ifdef DEBUG
-	cout << "The result:" <<endl;
-#endif
+    DBG_ONLY(
+	   cout << "The result:" <<endl;
+    );
 	for (unsigned int i = 0; i < splitstr.size(); i++) {
 		vector < string > resultkey = ComFun::split(splitstr[i], "=");
-#ifdef DEBUG
-		cout << splitstr[i] << endl;
-		cout << resultkey[0] << endl;
-#endif
+        DBG_ONLY(
+            cout << splitstr[i] << endl;
+            cout << resultkey[0] << endl;
+        );
 		if (resultkey[0] == "purpose")
 			purpose = resultkey[1];
 		else if (resultkey[0] == "result")
@@ -463,11 +462,11 @@ void HttpServer::find_purpose(struct HttpRequest *prequest, bool auto_test) {
 		else if (resultkey[0] == "msg")
 			msg = resultkey[1];
 	}
-#ifdef DEBUG
-	cout<<"purpose:"+purpose<<endl;
-	cout<<"result:"+result<<endl;
-	cout<<"msg:"+msg<<endl;
-#endif
+    DBG_ONLY(
+	   cout<<"purpose:"+purpose<<endl;
+	   cout<<"result:"+result<<endl;
+	   cout<<"msg:"+msg<<endl;
+    );
 
 	bool found = false;
 	for (int i = 0; i < m_block_case_count; i++) {
@@ -501,14 +500,14 @@ void* processthread(void *para) {
 	httprequest.rangestart = 0;
 
 	while (1) {
-#ifdef DEBUG 
-		printf("clinetsocket id is %d\n", server->clientsocket);
-#endif
+        DBG_ONLY(
+            printf("clinetsocket id is %d\n", server->clientsocket);
+        );
 		iDataNum = recv(server->clientsocket, buffer + recvnum,
 				MAX_BUF - recvnum - 1, 0);
-#ifdef DEBUG
-		cout << "iDataNum is "<<iDataNum << endl;
-#endif      
+        DBG_ONLY(
+            cout << "iDataNum is "<<iDataNum << endl;
+        );
 		if (iDataNum <= 0) {
 			delete[] buffer;
 			close(server->clientsocket);
@@ -522,9 +521,7 @@ void* processthread(void *para) {
 				{
 			buffer[recvnum] = '\0';
 			recvstr = buffer;
-#ifdef DEBUG 
-			cout << "recvstr is: " << recvstr << endl;
-#endif
+            DBG_ONLY(cout << "recvstr is: " << recvstr << endl;);
 			break;
 		}
 	}
@@ -544,9 +541,9 @@ void* processthread(void *para) {
 }
 
 void timer_handler(int signum) {
-#ifdef DEBUG 
-	cout<<"time out\n"<<endl;
-#endif
+    DBG_ONLY(
+	   cout<<"time out\n"<<endl;
+    );
 	// when timeout, we send a http request to server, so server can check result. no other convinent way to do it?
 	const char *strings =
 			"GET /case_time_out HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: Close\r\n\r\n";
@@ -562,9 +559,9 @@ void timer_handler(int signum) {
 	} else {
 		write(sockfd, strings, strlen(strings));
 		close(sockfd);
-#ifdef DEBUG
-		cout<<"finish send timeout cmd\n"<<endl; //report error: accept client socket !!!: Interrupted system call?
-#endif
+        DBG_ONLY(
+            cout<<"finish send timeout cmd\n"<<endl; //report error: accept client socket !!!: Interrupted system call?
+        );
 	}
 }
 
@@ -573,20 +570,17 @@ bool HttpServer::get_auto_case(string content, string *type) {
 		if (content != "") {
 			string value = content.substr(content.find("=") + 1);
 			if (value.length() > 0) {
-#ifdef DEBUG
-				cout<<"value is:"+value<<endl;
-#endif
+                DBG_ONLY(
+                    cout<<"value is:"+value<<endl;
+                );
 				if (m_running_session == value) {
 					if (m_block_case_index < m_block_case_count) {
 						set_timer();
 						m_test_cases[m_block_case_index].set_start_at();
 						m_test_cases[m_block_case_index].print_info_string();
-						//outputFile << "[case] execute case:\nTestCase: " + m_test_cases[m_block_case_index].purpose + "\nTestEntry: " +m_test_cases[m_block_case_index].entry << endl;
 						return true;
 					} else {
-						cout << endl << "[ no auto case is available any more ]"
-								<< endl;
-						//outputFile <<"[ no auto case is available any more ]" << endl;
+						cout << endl << "[ no auto case is available any more ]" << endl;
 						*type = "none";
 						m_block_finished = true;
 						if (m_current_block_index == m_totalBlocks)
@@ -594,15 +588,12 @@ bool HttpServer::get_auto_case(string content, string *type) {
 					}
 				} else {
 					cout << "[ Error: invalid session ID ]" << endl;
-					//outputFile<< "[ Error: invalid session ID ]" <<endl;
 					*type = "invalid";
 				}
 			}
 		}
 	} else {
-		cout << "\n[ restart client process is activated, exit current client ]"
-				<< endl;
-		//outputFile << "\n[ restart client process is activated, exit current client ]" << endl;
+		cout << "\n[ restart client process is activated, exit current client ]" << endl;
 		*type = "stop";
 	}
 	return false;
@@ -610,16 +601,14 @@ bool HttpServer::get_auto_case(string content, string *type) {
 
 //start the socket server,listen to client
 void HttpServer::StartUp() {
-	//outputFile.open("httpserver_log.txt",ios::out|ios::app); 
-
-#ifdef DEBUG
+    DBG_ONLY(
 	cout<<"httpserver.g_port is:"+g_port<<endl;
 	cout<<"httpserver.g_hide_status is:"+g_hide_status<<endl;
 	cout<<"httpserver.g_pid_log is:"+g_pid_log<<endl;
 	cout<<"httpserver.g_test_suite is:"+g_test_suite<<endl;
 	cout<<"httpserver.g_exe_sequence is:"+g_exe_sequence<<endl;
 	cout<<"httpserver.g_enable_memory_collection is:"+g_enable_memory_collection<<endl;
-#endif
+    );
 
 	int serversocket;
 	gServerStatus = 1;
@@ -651,7 +640,6 @@ void HttpServer::StartUp() {
 	}
 	gIsRun = 1;
 	cout << "[Server is running.....]" << endl;
-	//outputFile<<"[Server is running.....]\n"<<endl;
     
     killAllWidget();
 
@@ -678,9 +666,9 @@ void HttpServer::StartUp() {
 }
 
 void HttpServer::checkResult(TestCase* testcase) {
-#ifdef DEBUG
+    DBG_ONLY(
 	cout << testcase->is_executed << endl;
-#endif
+    );
 	if (!testcase->is_executed) {
 		cout << "[ Warning: time is out, test case \"" << testcase->purpose
 				<< "\" is timeout, set the result to \"BLOCK\", and restart the client ]"
@@ -688,15 +676,14 @@ void HttpServer::checkResult(TestCase* testcase) {
 
 		testcase->set_result("BLOCK", "Time is out");
 
-		killAllWidget();
+        run_cmd(g_kill_cmd, "result: killed", true);
 
 		cout << "[ start new client in 5sec ]" << endl;
-		//outputFile << "[ start new client in 5sec ]" << endl;
 		sleep(5);
 
-#ifdef DEBUG
+        DBG_ONLY(
 		cout<<"========================m_block_case_index:"<<m_block_case_index<<endl;
-#endif
+        );
 	} else {
 		cout << "[ test case \"" << testcase->purpose
 				<< "\" is executed in time, and the result is testcase->result ]"
@@ -753,9 +740,13 @@ void HttpServer::killAllWidget() {
 }
 
 void HttpServer::start_client() {
-	string cmdstring = "wrt-launcher -s `wrt-launcher -l | grep " + g_test_suite
-			+ " | awk '{print $NF}'`";
-	while (!run_cmd(cmdstring, "result: launched", true)) {
+    if (m_invalid_suite) {
+        m_failto_launch++;
+        return;
+    }
+
+	while (!run_cmd(g_launch_cmd, "result: launched", true)) {
+        run_cmd(g_kill_cmd, "result: killed", true);
 		m_failto_launch++;
 		cout << m_failto_launch << endl;
 		sleep(10); // try until start widget success
@@ -763,6 +754,7 @@ void HttpServer::start_client() {
 	m_failto_launch = 0;
 }
 
+// run shell cmd. return true if the output equal to expectString. show cmd and output if showcmdAnyway.
 bool HttpServer::run_cmd(string cmdString, string expectString,
 		bool showcmdAnyway) {
 	bool ret = false;
@@ -777,6 +769,7 @@ bool HttpServer::run_cmd(string cmdString, string expectString,
 	}
 
 	while (fgets(buf, sizeof buf, pp)) {
+        m_output = buf;
 		if (strstr(buf, expectString.c_str()))
 			ret = true;
 		if (ret || showcmdAnyway) { // show cmd and result if ret or showcmdAnyWay
