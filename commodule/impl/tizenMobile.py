@@ -350,17 +350,20 @@ class TizenMobile:
         ###check if http server is ready for data transfer### 
         timecnt = 0
         while timecnt < 10:
-            ret = http_request(get_url(self.__forward_server_url, "/check_server"), "GET", {})
+            ret = http_request(get_url(self.__forward_server_url, "/check_server_status"), "GET", {})
             if ret is None:
-                print "[ check server status, not ready yet! ]"               
+                print "[ check server status, not ready yet! ]"
                 time.sleep(0.3)
                 timecnt += 1
             else:
-                result = session_id
-                print "[ check server status, get ready! ]"
-                if capability_opt is not None:
+                if "error_code" in ret:
+                    result = None
+                    print "[ check server status, get error code %d ! ]" % ret["error_code"]
+                else:
+                    result = session_id
                     print "[ check server status, get ready! ]"
-                    ret = http_request(get_url(self.__forward_server_url, "/set_capability"), "POST", capability_opt)
+                    if capability_opt is not None:
+                        ret = http_request(get_url(self.__forward_server_url, "/set_capability"), "POST", capability_opt)
                 break
         return result
 
