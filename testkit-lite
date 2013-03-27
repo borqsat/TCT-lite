@@ -202,19 +202,20 @@ try:
 
     try:
         # untrusted behaviour of %%prog
-        USAGE = "%%prog [options] -f <somewhere/test.xml>\n\
-examples: %%prog  -f  <somewhere>/test.xml\n\
-          %%prog  -f test.xml -D\n\
-          %%prog  -f test.xml -A\n\
-          %%prog  -f test.xml -M\n\
-          %%prog  -f test1.xml test2.xml test3.xml ...\n\
-          %%prog  -f test.xml -D -A --type type1 ...\n\
-          %%prog  -f test.xml -D -A --type type1 --status ready ...\n\
+        USAGE = "%%prog [options] -f device:\"<somewhere/test.xml>\"\n\
+examples: %%prog  -f device:\"<somewhere>/test.xml\"\n\
+          %%prog  -f device:\"test.xml\" -D\n\
+          %%prog  -f device:\"test.xml\" -A\n\
+          %%prog  -f device:\"test.xml\" -M\n\
+          %%prog  -f device:\"test.xml\" --capability <capability file>\n\
+          %%prog  -f device:\"test1.xml test2.xml test3.xml\" ...\n\
+          %%prog  -f device:\"test.xml\" -D -A --type type1 --capability <capability file> --comm <commoduletype>...\n\
+          %%prog  -f device:\"test.xml\" -D -A --type type1 --status ready ...\n\
 \n\
     run a webapi package: \n\
-          %%prog -f /usr/share/webapi-webkit-tests/tests.xml -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml --priority P0 --status ready ...\n\
+          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml --priority P0 --status ready ...\n\
     run both core and webapi packages: \n\
-          %%prog -f /usr/share/webapi-webkit-tests/tests.xml /usr/share/tts-bluez-tests/tests.xml -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml ...\n\
+          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml /usr/share/tts-bluez-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml ...\n\
 \n\
 Note: \n\
           1) Proxy settings should be disabled when execute webapi packages\n\
@@ -257,7 +258,9 @@ Note: \n\
 
     # set capability
     if options.capability:
-        runner.get_capability(options.capability)
+        get_capability_status = runner.get_capability(options.capability)
+        if not get_capability_status:
+            sys.exit(1)  
 
     if "device:" in options.testxml[0]:
         print 'device remote file'
