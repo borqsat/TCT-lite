@@ -77,6 +77,7 @@ HttpServer::~HttpServer() {
 	}
 }
 
+// send out the http response
 int HttpServer::sendsegment(int s, string buffer) {
 	int result = send(s, buffer.c_str(), buffer.length(), 0);
 	if (result < 0)
@@ -119,6 +120,7 @@ void HttpServer::sendresponse(int s, int code, struct HttpRequest *prequest,
 	sendsegment(s, buffer);
 }
 
+// parse the http request
 int HttpServer::getrequest(string requestbuf, struct HttpRequest *prequest) {
 	std::vector < std::string > splitstr = ComFun::split(requestbuf, " ");
 	if (splitstr.size() >= 2) {
@@ -159,12 +161,13 @@ int HttpServer::getrequest(string requestbuf, struct HttpRequest *prequest) {
 	return -1;
 }
 
+// parse the test case data sent by com-module with init_test cmd
 void HttpServer::parse_json_str(string case_node) {
 	Json::Reader reader;
 	Json::Value value;
 
 	bool parsed = reader.parse(case_node, value);
-	if (!parsed) // try to parse as a file
+	if (!parsed) // try to parse as a file at first
 	{ // "test.json" is for verify
 		cout << case_node << endl;
 		std::ifstream test(case_node.c_str(), std::ifstream::binary);
@@ -181,7 +184,7 @@ void HttpServer::parse_json_str(string case_node) {
 		m_block_case_count = arrayObj.size();
 
 		if (m_test_cases) {
-			delete[] m_test_cases; // core dump with this?
+			delete[] m_test_cases;
 			m_test_cases = NULL;
 		}
 		m_test_cases = new TestCase[m_block_case_count];
@@ -201,6 +204,7 @@ void HttpServer::cancel_time_check() {
 	// refer to http://linux.die.net/man/2/setitimer, each process only have 1 timer of the same type.
 }
 
+// set timeout value to 90 seconds for each case
 void HttpServer::set_timer() {
 	timer.it_value.tv_sec = 90;
 	timer.it_value.tv_usec = 0;
@@ -211,6 +215,7 @@ void HttpServer::set_timer() {
 		perror("error: set timer!!!");
 }
 
+// send out response according to different http request
 void HttpServer::processpost(int s, struct HttpRequest *prequest) {
     DBG_ONLY(
 	   cout << "prequest->path is:" << prequest->path << endl;
@@ -219,7 +224,7 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 	string json_str = "";
 	string json_parse_str = "";
 
-	if (prequest->path.find("/init_test") != string::npos) {
+	if (prequest->path.find("/init_test") != string::npos) {// invoke by com-module to send test data
 		m_block_finished = false;
 		m_set_finished = false;
 		m_timeout_count = 0;
@@ -235,18 +240,25 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 		}
 
 		m_block_case_index = 0;
-		if (m_current_block_index == 1)    //the first block,start client
+		if (m_current_block_index == 1) // the first block,start client
 			m_total_case_index = 0;
 
 		json_str = "{\"OK\":1}";
-	} else if (prequest->path == "/check_server") {
+	} else if (prequest->path == "/check_server") {// invoke by index.html to find server running or not
 		cout << "[ checking server, and found the server is running ]" << endl;
 		json_str = "{\"OK\":1}";
-	} else if (prequest->path == "/check_server_status") {
+	} else if (prequest->path == "/check_server_status") {// invoke by com-module to get server status
 		Json::Value status;
 		status["block_finished"] = m_block_finished ? 1 : 0;
 		status["finished"] = m_set_finished ? 1 : 0;
-		status["launch_fail"] = m_failto_launch;
+        if (m_invalid_suite) {
+            status["error_code"] = 1;
+            status["finished"] = 1; // finish current set if widget is invalid
+        }
+        else if (m_failto_launch > 10) {
+            status["error_code"] = 2;
+            status["finished"] = 1; // finish current set if can't launch widget
+        }
 		json_str = status.toStyledString();
         DBG_ONLY(
             cout << "m_totalBlocks=" <<m_totalBlocks << " m_current_block_index=" << m_current_block_index << " m_block_case_count=" << m_block_case_count << " m_totalcaseCount=" << m_totalcaseCount << " m_total_case_index=" << m_total_case_index << " m_block_case_index=" << m_block_case_index << " m_timeout_count="<<m_timeout_count<<endl;
@@ -255,7 +267,7 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 		killAllWidget(); // kill all widget when shutdown server
 		json_str = "{\"OK\":1}";
 		gIsRun = 0;
-	} else if (prequest->path.find("/init_session_id") != string::npos) {
+	} else if (prequest->path.find("/init_session_id") != string::npos) {// invoke by index.html to record a session id
 		json_str = "{\"OK\":1}";
 		int index = prequest->path.find('=');
 		if (index != -1) {
@@ -265,14 +277,14 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 		} else {
 			cout << "[ invalid session id ]" << endl;
 		}
-	} else if (prequest->path.find("/ask_next_step") != string::npos) {
+	} else if (prequest->path.find("/ask_next_step") != string::npos) {// invoke by index.html to check whether there are more cases
 		if (m_block_finished || m_set_finished)
 			json_str = "{\"step\":\"stop\"}";
 		else
 			json_str = "{\"step\":\"continue\"}";
 
 		m_timeout_count = 0; // reset the timeout count
-	} else if (prequest->path.find("/auto_test_task") != string::npos) {// get current auto case
+	} else if (prequest->path.find("/auto_test_task") != string::npos) {// invoke by index.html to get current auto case
 		if (m_test_cases == NULL) {
 			json_str = "{\"OK\":\"no case\"}";
 		} else if (m_exeType != "auto") {
@@ -290,7 +302,7 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
                 );
 			}
 		}
-	} else if (prequest->path.find("/manual_cases") != string::npos) {// invoke by index.html
+	} else if (prequest->path.find("/manual_cases") != string::npos) {// invoke by index.html to get all manual cases
 		if (!m_test_cases) {
 			json_str = "{\"OK\":\"no case\"}";
 		} else if (m_exeType == "auto") {
@@ -302,7 +314,7 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 
 			json_str = arrayObj.toStyledString();
 		}
-	} else if (prequest->path.find("/case_time_out") != string::npos) {
+	} else if (prequest->path.find("/case_time_out") != string::npos) {// invoke by timer to notify case timeout
 		if (!m_test_cases) {
 			json_str = "{\"OK\":\"no case\"}";
 		} else if (m_block_case_index < m_block_case_count) {
@@ -311,14 +323,14 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 		} else {
 			json_str = "{\"OK\":\"case out of index\"}";
 		}
-	} else if (prequest->path.find("/commit_manual_result") != string::npos) {
+	} else if (prequest->path.find("/commit_manual_result") != string::npos) {// invoke by index.html to provide result of a manual case.
 		if ((prequest->content.length() == 0) || (!m_test_cases)) {
 			json_str = "{\"OK\":\"no case\"}";
 		} else {
 			find_purpose(prequest, false); // will set index in find_purpose
 			json_str = "{\"OK\":1}";
 		}
-	} else if (prequest->path.find("/check_execution_progress") != string::npos) {//invoke by index.html
+	} else if (prequest->path.find("/check_execution_progress") != string::npos) {//invoke by index.html to get test result of last auto case
 		char *total_count = new char[16];
 		sprintf(total_count, "%d", m_totalcaseCount);
 		char *current_index = new char[16];
@@ -368,7 +380,10 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 
 			json_str = root.toStyledString();
 		}
-	} else if (prequest->path == "/commit_result") {//auto case commit result
+	}
+    // index.html invoke this with purpose and result of an auto case, auto case commit result. 
+    // we need find correct test case by purpose, and record test result to it.
+    else if (prequest->path == "/commit_result") {
 		if ((prequest->content.length() == 0) || (!m_test_cases)) {
 			json_str = "{\"OK\":\"no case\"}";
 		} else {
@@ -384,7 +399,7 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
 
             json_str = "{\"OK\":1}";
         }
-    } else if (prequest->path == "/set_capability") {// by com-module
+    } else if (prequest->path == "/set_capability") {// by com-module to send capability data
         Json::Reader reader;
 
         reader.parse(prequest->content, m_capability);
@@ -428,6 +443,7 @@ cout << name << ":" << m_capability[name] << endl;
 		sendresponse(s, 200, prequest, json_str);
 }
 
+// find correct case according the purpose sent by widget
 void HttpServer::find_purpose(struct HttpRequest *prequest, bool auto_test) {
     DBG_ONLY(
 	   cout << "find_purpose =============content:" << prequest->content << endl;
@@ -486,6 +502,7 @@ void HttpServer::find_purpose(struct HttpRequest *prequest, bool auto_test) {
 		m_last_auto_result = result;
 }
 
+// create new thread for each http request
 void* processthread(void *para) {
 	string recvstr = "";
 	char *buffer = new char[MAX_BUF]; // suppose 1 case need 1k, 100 cases will be sent each time, we need 100k memory?
@@ -540,6 +557,7 @@ void* processthread(void *para) {
 	return 0;
 }
 
+// send out timeout request to server if timeout. timer handler must be a global function, so can't invoke server's member function directly. 
 void timer_handler(int signum) {
     DBG_ONLY(
 	   cout<<"time out\n"<<endl;
@@ -565,6 +583,7 @@ void timer_handler(int signum) {
 	}
 }
 
+// prepare to run current auto case by set the start time, etc.
 bool HttpServer::get_auto_case(string content, string *type) {
 	if (!m_killing_widget) {
 		if (content != "") {
@@ -599,7 +618,7 @@ bool HttpServer::get_auto_case(string content, string *type) {
 	return false;
 }
 
-//start the socket server,listen to client
+//start the socket server, listen to client
 void HttpServer::StartUp() {
     DBG_ONLY(
 	cout<<"httpserver.g_port is:"+g_port<<endl;
@@ -665,6 +684,7 @@ void HttpServer::StartUp() {
 	close(serversocket);
 }
 
+// set result to current if timeout
 void HttpServer::checkResult(TestCase* testcase) {
     DBG_ONLY(
 	cout << testcase->is_executed << endl;
@@ -691,23 +711,12 @@ void HttpServer::checkResult(TestCase* testcase) {
 	}
 
 	m_timeout_count++;
-	if (m_timeout_count >= 3) // finish current block if timeout contineously for 3 times
-			{
-		m_timeout_count = 0;
-		if (m_current_block_index == m_totalBlocks) {
-			m_set_finished = true;
-			m_block_finished = true;
-		} else {
-			m_total_case_index += m_block_case_count - m_block_case_index;
-			m_block_finished = true;
-		}
-	} else {
-		m_block_case_index++;
-		m_total_case_index++;
-		start_client(); // start widget again in case it dead
-	}
+    m_block_case_index++;
+	m_total_case_index++;
+	start_client(); // start widget again in case it dead
 }
 
+// try to kill all widget listed by wrt-launch -l
 void HttpServer::killAllWidget() {
 	m_killing_widget = true;
 
@@ -739,6 +748,7 @@ void HttpServer::killAllWidget() {
 	m_killing_widget = false;
 }
 
+// try to start widget
 void HttpServer::start_client() {
     if (m_invalid_suite) {
         m_failto_launch++;
