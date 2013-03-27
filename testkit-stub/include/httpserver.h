@@ -68,6 +68,7 @@ public:
 	bool m_block_finished;
 	bool m_set_finished;
 
+	Json::Value m_capability;
 	//TestStatus   
 	int m_timeout_count; // continusously time out count
 
@@ -79,11 +80,16 @@ public:
 
 	int m_failto_launch; // time of fail to launch
 
+	string m_output;// output of shell cmd
+	bool m_invalid_suite;
+
 	//some variables get from cmd line
 	string g_port;
 	string g_hide_status;
 	string g_pid_log;
 	string g_test_suite;
+	string g_launch_cmd;
+	string g_kill_cmd;
 	string g_exe_sequence;
 	string g_enable_memory_collection;
 
