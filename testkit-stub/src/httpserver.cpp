@@ -388,6 +388,7 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
         Json::Reader reader;
 
         reader.parse(prequest->content, m_capability);
+cout << m_capability.toStyledString() << endl;
 
         json_str = "{\"OK\":1}";
     } else if (prequest->path.find("/capability") != string::npos) {// by test suite. only one query parameter each time
@@ -403,7 +404,8 @@ void HttpServer::processpost(int s, struct HttpRequest *prequest) {
             if (resultkey[0] == "name") name = resultkey[1];
             if (resultkey[0] == "value") value = resultkey[1];
         }
-
+cout << content << endl;
+cout << name << ":" << m_capability[name] << endl;
         if (m_capability[name].isBool()) {// for bool value, omit the value part
             json_str = "{\"support\":1}";
         }
