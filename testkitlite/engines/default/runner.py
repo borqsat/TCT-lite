@@ -334,7 +334,9 @@ class TRunner:
                     for test_xml_set in test_xml_set_list:
                         print "\n[ run set: %s ]" % test_xml_set
                         # init test here
-                        self.__init_com_module(test_xml_set)
+                        init_status = self.__init_com_module(test_xml_set)
+                        if not init_status:
+                            continue
                         # prepare the test JSON
                         self.__prepare_external_test_json(test_xml_set)
                         # send set JSON Data to com_module
@@ -1038,8 +1040,10 @@ class TRunner:
                 capabilities = dict(capabilities, **capability)
 
             self.set_capability(capabilities)
+            return True
         except IOError, error:
             print "[ Error: fail to parse capability xml, error: %s ]" % error
+            return False
 
 
 def get_capability_form_node(capability_em):
