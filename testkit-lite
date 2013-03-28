@@ -31,7 +31,7 @@ import ConfigParser
 import xml.etree.ElementTree as etree
 from optparse import OptionParser, make_option
 from datetime import datetime
-from commodule.connector import Connector
+
 
 JOIN = os.path.join
 EXISTS = os.path.exists
@@ -125,11 +125,12 @@ else:
 # init test engine here
 try:
     exec "from testkitlite.engines.%s.runner import TRunner" % ENGINE
+    exec "from commodule.connector import Connector"
     print "[ loading %s test engine ]" % ENGINE
 except ImportError, e:
     print "[ Error: loading test engine: %s failed, error: %s ]\n" % (ENGINE, e)
     print "try to run command \
-    'export PYTHONPATH=/usr/lib/python2.7/site-packages' to resolve this issue"
+    'export PYTHONPATH=/usr/lib/python2.7/dist-packages' to resolve this issue"
     sys.exit(1)
 
 
