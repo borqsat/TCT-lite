@@ -729,7 +729,7 @@ class TRunner:
             for tcap in tcaps.getiterator('capability'):
                 capname = None
                 capvalue = None
-                capname = tcap.get('name')
+                capname = tcap.get('name').lower()
                 if tcap.find('value') is not None:
                     capvalue = tcap.find('value').text
 
