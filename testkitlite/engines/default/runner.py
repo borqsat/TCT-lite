@@ -48,6 +48,7 @@ ABSPATH = os.path.abspath
 
 
 class TRunner:
+
     """
     Parse the testdefinition.xml files.
     Apply filter for each run.
@@ -85,6 +86,7 @@ class TRunner:
         self.connector = connector
         self.stub_name = "httpserver"
         self.capabilities = {}
+        self.has_capability = False
 
     def set_global_parameters(self, options):
         "get all options "
@@ -133,6 +135,7 @@ class TRunner:
     def set_capability(self, capabilities):
         """ set capabilitys  """
         self.capabilities = capabilities
+        self.has_capability = True
 
     def prepare_run(self, testxmlfile, resultdir=None):
         """
@@ -356,7 +359,8 @@ class TRunner:
                                 self.__shut_down_server(self.session_id)
                                 break
                 except IOError, error:
-                    print "[ Error: fail to run webapi test xml, error: %s ]" % error
+                    print "[ Error: fail to run webapi test xml, \
+                    error: %s ]" % error
 
     def __split_xml_to_set(self, webapi_file):
         """split xml by <set>"""
@@ -385,10 +389,10 @@ class TRunner:
             test_xml_set_tmp = etree.parse(test_xml_set)
             set_keep_number = 1
             print "[ process set: %s ]" % test_xml_set
-            for test_xml_set_temp_suite in test_xml_set_tmp.getiterator('suite'):
-                for test_xml_set_temp_set in test_xml_set_temp_suite.getiterator('set'):
+            for temp_suite in test_xml_set_tmp.getiterator('suite'):
+                for test_xml_set_temp_set in temp_suite.getiterator('set'):
                     if set_keep_number != set_number:
-                        test_xml_set_temp_suite.remove(test_xml_set_temp_set)
+                        temp_suite.remove(test_xml_set_temp_set)
                     else:
                         if not test_xml_set_temp_set.getiterator('testcase'):
                             test_xml_set_list_empty.append(test_xml_set)
@@ -416,7 +420,8 @@ class TRunner:
         mergefile = JOIN(latest_dir, mergefile)
         end_time = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
         print "\n[ test complete at time: %s ]" % end_time
-        print "[ start merging test result xml files, this might take some time, please wait ]"
+        print "[ start merging test result xml files, \
+        this might take some time, please wait ]"
         print "[ merge result files into %s ]" % mergefile
         root = etree.Element('test_definition')
         root.tail = "\n"
@@ -501,7 +506,7 @@ class TRunner:
                                 result_case_iterator = result_set.getiterator(
                                     'testcase')
                                 if result_case_iterator:
-                                    print "`----[ suite: %s, set: %s, time: %s ]" % (result_suite.get('name'), result_set.get('name'), datetime.today().strftime("%Y-%m-%d_%H_%M_%S"))
+                                    print "----[ suite: %s, set: %s, time: %s ]" % (result_suite.get('name'), result_set.get('name'), datetime.today().strftime("%Y-%m-%d_%H_%M_%S"))
                                     for result_case in result_case_iterator:
                                         try:
                                             self.__count_result(result_case)
@@ -664,7 +669,7 @@ class TRunner:
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
             self.set_parameters = parameters
-            print self.set_parameters
+
         except IOError, error:
             print "[ Error: fail to prepare cases parameters, \
             error: %s ]\n" % error
@@ -682,15 +687,18 @@ class TRunner:
                 if rules.get('set'):
                     if tset.get('name') not in rules['set']:
                         tsuite.remove(tset)
-        for tsuite in root_em.getiterator('suite'):
-            for tset in tsuite.getiterator('set'):
-                tset_status = self.__apply_capability_filter_set_check(tset)
-                if not tset_status:
-                    tsuite.remove(tset)
-                    continue
-                for tcase in tset.getiterator('testcase'):
-                    if not self.__apply_filter_case_check(tcase):
-                        tset.remove(tcase)
+
+            for tsuite in root_em.getiterator('suite'):
+                for tset in tsuite.getiterator('set'):
+                    # if there are capabilities ,do filter
+                    if self.has_capability:
+                        tset_status = self.__apply_capability_filter_set(tset)
+                        if not tset_status:
+                            tsuite.remove(tset)
+                            continue
+                    for tcase in tset.getiterator('testcase'):
+                        if not self.__apply_filter_case_check(tcase):
+                            tset.remove(tcase)
 
     def __apply_filter_case_check(self, tcase):
         """filter cases"""
@@ -714,16 +722,7 @@ class TRunner:
                         return False
         return True
 
-    # def __apply_capability_filter_case_check(self, tcase):
-    #     """ check the case required capability with  self.capabilities """
-
-    #     if tcase.get('check_unsupport_error'):
-    #         if tcase.get('check_unsupport_error').lower() == "true":
-    #             # check_unsupport_error is true,can not filter
-    #             return True
-    #     return False
-
-    def __apply_capability_filter_set_check(self, tset):
+    def __apply_capability_filter_set(self, tset):
         """ check the set required capability with  self.capabilities """
 
         for tcaps in tset.getiterator('capabilities'):
@@ -738,7 +737,7 @@ class TRunner:
                     if capvalue is not None:
                         if capvalue != self.capabilities[capname]:
                             # if capability value is not equal ,remove the case
-                            return False   
+                            return False
                 else:
                     # if does not hava this capability ,remove case
                     return False
@@ -1138,6 +1137,7 @@ def insert_notes(case, buf, pattern="###[NOTE]###"):
 
 
 def prepare_json_for_core(tcase, case_order):
+    """ prepare_json_for_core test"""
     parameters = {}
     case_detail_tmp = {}
     case_tmp = []
