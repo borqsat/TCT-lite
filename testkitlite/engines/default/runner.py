@@ -687,14 +687,15 @@ class TRunner:
                 if rules.get('set'):
                     if tset.get('name') not in rules['set']:
                         tsuite.remove(tset)
-        # if there are capabilities ,do filter
-        if self.has_capability:
+
             for tsuite in root_em.getiterator('suite'):
                 for tset in tsuite.getiterator('set'):
-                    tset_status = self.__apply_capability_filter_set(tset)
-                    if not tset_status:
-                        tsuite.remove(tset)
-                        continue
+                    # if there are capabilities ,do filter
+                    if self.has_capability:
+                        tset_status = self.__apply_capability_filter_set(tset)
+                        if not tset_status:
+                            tsuite.remove(tset)
+                            continue
                     for tcase in tset.getiterator('testcase'):
                         if not self.__apply_filter_case_check(tcase):
                             tset.remove(tcase)
