@@ -1051,7 +1051,7 @@ def get_capability_form_node(capability_em):
     capability = {}
     tcap = capability_em
     if tcap.get("name"):
-        tmp_key = tcap.get("name")
+        tmp_key = tcap.get("name").lower()
 
     if tcap.get("type").lower() == 'boolean':
         if tcap.get("support").lower() == 'true':
