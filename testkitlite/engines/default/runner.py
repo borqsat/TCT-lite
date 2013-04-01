@@ -86,6 +86,7 @@ class TRunner:
         self.connector = connector
         self.stub_name = "httpserver"
         self.capabilities = {}
+        self.has_capability = False
 
     def set_global_parameters(self, options):
         "get all options "
@@ -134,6 +135,7 @@ class TRunner:
     def set_capability(self, capabilities):
         """ set capabilitys  """
         self.capabilities = capabilities
+        self.has_capability = True
 
     def prepare_run(self, testxmlfile, resultdir=None):
         """
@@ -685,15 +687,17 @@ class TRunner:
                 if rules.get('set'):
                     if tset.get('name') not in rules['set']:
                         tsuite.remove(tset)
-        for tsuite in root_em.getiterator('suite'):
-            for tset in tsuite.getiterator('set'):
-                tset_status = self.__apply_capability_filter_set(tset)
-                if not tset_status:
-                    tsuite.remove(tset)
-                    continue
-                for tcase in tset.getiterator('testcase'):
-                    if not self.__apply_filter_case_check(tcase):
-                        tset.remove(tcase)
+        # if there are capabilities ,do filter
+        if self.has_capability:
+            for tsuite in root_em.getiterator('suite'):
+                for tset in tsuite.getiterator('set'):
+                    tset_status = self.__apply_capability_filter_set(tset)
+                    if not tset_status:
+                        tsuite.remove(tset)
+                        continue
+                    for tcase in tset.getiterator('testcase'):
+                        if not self.__apply_filter_case_check(tcase):
+                            tset.remove(tcase)
 
     def __apply_filter_case_check(self, tcase):
         """filter cases"""
