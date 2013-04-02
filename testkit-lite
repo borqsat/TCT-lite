@@ -47,6 +47,7 @@ if not platform.system() == "Linux":
 
 LOG_DIR = TESTKIT_DIR
 PID_FILE = JOIN(LOG_DIR, "pid.log")
+TEST_PACKAGES_DIR = JOIN(TESTKIT_DIR, "test_packages")
 COMMON_FILTERS = {
     "suite": [],
     "set": [],
@@ -80,6 +81,14 @@ try:
     os.chmod(PID_FILE, 0666)
 except IOError, e:
     pass
+
+try:
+    if not EXISTS(TEST_PACKAGES_DIR):
+        os.makedirs(TEST_PACKAGES_DIR)
+except IOError, e:
+    print "[ Error: can't create test package directory: %s, \
+    error: %s ]\n" % (TEST_PACKAGES_DIR, e)
+    sys.exit(1)
 
 # detect version option
 if "--version" in sys.argv:
@@ -256,11 +265,23 @@ Note: \n\
         print 'remote file'
         remote_testlits = options.testxml[0]
         remote_testlits = remote_testlits.split(':')[1]
-        testlistarrary = remote_testlits.split(' ')
+        testlistarrary = remote_testlits.split()
+        localarry = []
+
         for remote_file in testlistarrary:
-            runner.connector.download_file(
-                runner.deviceid, remote_file, remote_file)
-        options.testxml = testlistarrary
+            tmp_remote_file = os.path.split(remote_file)
+            tmp_remote_folder = os.path.basename(tmp_remote_file[0])
+            tmp_remote_test_xml = os.path.join(
+                tmp_remote_folder, tmp_remote_file[1])
+            local_test_package = os.path.join(
+                TEST_PACKAGES_DIR, tmp_remote_test_xml)
+            down_status = runner.connector.download_file(
+                runner.deviceid, remote_file, local_test_package)
+            if not down_status:
+                print 'remote file can not find,pls check the install test packages:%s' % remote_file
+                sys.exit(1)
+            localarry.append(local_test_package)
+        options.testxml = localarry
     else:
         print 'local file'
         if len(options.testxml) == 1:
