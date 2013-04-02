@@ -275,8 +275,11 @@ Note: \n\
                 tmp_remote_folder, tmp_remote_file[1])
             local_test_package = os.path.join(
                 TEST_PACKAGES_DIR, tmp_remote_test_xml)
-            runner.connector.download_file(
+            down_status = runner.connector.download_file(
                 runner.deviceid, remote_file, local_test_package)
+            if not down_status:
+                print 'remote file can not find,pls check the install test packages:%s' % remote_file
+                sys.exit(1)
             localarry.append(local_test_package)
         options.testxml = localarry
     else:
