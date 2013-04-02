@@ -61,7 +61,9 @@ def shell_command(cmdline):
                             shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
-    result = proc.stdout.readlines()
+    ret1 = proc.stdout.readlines()
+    ret2 = proc.stderr.readlines()
+    result = ret1 or ret2
     return result
 
 def get_forward_connect(device_id, remote_port=None):
@@ -289,7 +291,14 @@ class TizenMobile:
         """get list of installed package from device"""
         cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
         ret =  shell_command(cmd)
-        return ret
+        if not ret is None:
+            for l in ret:
+                if l.find("does not exist") != -1 or l.find("error:") != -1: 
+                    print "[ file \"%s\" not found in device! ]" % remote_path
+                    return False
+            return True
+        else:
+            return False
 
     def upload_file(self, deviceid, remote_path, local_path):
         """get list of installed package from device"""
