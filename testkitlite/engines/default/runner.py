@@ -631,6 +631,9 @@ class TRunner:
                     if tcase.find('description/test_script_entry') is not None:
                         case_detail_tmp["entry"] = tcase.find(
                             'description/test_script_entry').text
+                        if tcase.find('description/test_script_entry').get('timeout'):
+                            case_detail_tmp["timeout"] = tcase.find(
+                                'description/test_script_entry').get('timeout')
 
                     for this_step in tcase.getiterator("step"):
                         step_detail_tmp = {}
