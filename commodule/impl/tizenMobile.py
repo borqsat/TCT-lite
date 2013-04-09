@@ -48,7 +48,7 @@ def http_request(url, rtype="POST", data=None):
     elif rtype == "GET":
         try:        
             ret = requests.get(url, params=data)
-            if ret: 
+            if ret:
                 result = ret.json()
         except Exception, e:
             pass
@@ -143,10 +143,78 @@ class StubExecThread(threading.Thread):
         os.remove(BUFFILE1)
         os.remove(BUFFILE2)
 
-class TestSetExecThread(threading.Thread):
+class CoreTestExecThread(threading.Thread):
+    """sdb communication for serve_forever app in async mode"""
+    def __init__(self, device_id, test_set_name, test_cases):
+        super(CoreTestExecThread, self).__init__()
+        self.test_set_name = test_set_name
+        self.cases_queue = test_cases
+        self.device_id = device_id
+        global test_server_result
+        lockobj.acquire()
+        test_server_result = {"cases":[]}
+        lockobj.release()
+
+    def set_result(self, result_data):
+        """set case result to the result buffer"""
+        if not result_data is None:
+            global test_server_result
+            lockobj.acquire()
+            test_server_result["cases"].append(result_data)
+            lockobj.release()
+
+    def run(self):
+        """run core tests"""
+        from autoexec import shell_exec
+        if self.cases_queue is None:
+            return
+        total_count = len(self.cases_queue)
+        current_idx = 0
+        for tc in self.cases_queue:
+            current_idx += 1
+            lockobj.acquire()
+            test_server_status = {"finished": 0}
+            lockobj.release()
+            print "[ core test case (%d/%d): %s]" % (current_idx, total_count, tc["case_id"])
+            expected_result = "0"
+            core_cmd = ""
+            time_out = None
+            if "entry" in tc:
+                core_cmd = "sdb -s %s shell %s" % (self.device_id, tc["entry"])
+            else:
+                continue
+            if "expected_result" in tc:
+                expected_result = tc["expected_result"]
+            if "timeout" in tc:
+                time_out = tc["timeout"]
+            return_code, stdout, stderr = shell_exec(core_cmd, time_out, False)
+            if return_code is not None:
+                actual_result = str(return_code)
+                if actual_result == "timeout":
+                    tc["result"] = "BLOCK"
+                    tc["stdout"] = "none"
+                    tc["stderr"] = "none"
+                else:
+                    if actual_result == expected_result:
+                        tc["result"] = "pass"
+                    else:
+                        tc["result"] = "fail"
+                    tc["stdout"] = stdout
+                    tc["stderr"] = stderr
+            else:
+                tc["result"] = "BLOCK"
+                tc["stdout"] = "none"
+                tc["stderr"] = "none"
+            self.set_result(tc)
+
+        lockobj.acquire()
+        test_server_status = {"finished": 1}
+        lockobj.release()
+
+class WebTestExecThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
     def __init__(self, server_url, test_set_name, test_data_queue):
-        super(TestSetExecThread, self).__init__()
+        super(WebTestExecThread, self).__init__()
         self.server_url = server_url
         self.test_set_name = test_set_name
         self.data_queue = test_data_queue
@@ -164,9 +232,9 @@ class TestSetExecThread(threading.Thread):
             lockobj.release()
 
     def run(self):
+        """run web tests"""
         if self.data_queue is None:
             return
-
         global test_server_status
         set_finished = False
         cur_block = 0
@@ -174,15 +242,15 @@ class TestSetExecThread(threading.Thread):
         total_block = len(self.data_queue)
         for test_block in self.data_queue:
             cur_block += 1
-            ret = http_request(get_url(self.server_url, "/init_test"), \
-                               "POST", test_block)
-            if ret is None or ret is {}:
+            ret = http_request(get_url(self.server_url, "/init_test"), "POST", test_block)
+            if ret is None or "error_code" in ret:
                 break
 
             while True:
                 ret = http_request(get_url(self.server_url, "/check_server_status"), \
                                    "GET", {})
-                if ret is None or ret is {}:
+
+                if ret is None or "error_code" in ret:
                     err_cnt += 1
                     if err_cnt >= 10:
                         lockobj.acquire()
@@ -221,7 +289,9 @@ class TizenMobile:
         self.__forward_server_url = "http://127.0.0.1:9000"
         self.__test_async_shell = None
         self.__test_async_http = None
+        self.__test_async_core = None
         self.__test_set_block = 100
+        self.__device_id = None
         self.__test_type = None
 
     def get_device_ids(self):
@@ -314,6 +384,7 @@ class TizenMobile:
         stub_name = ""
         stub_server_port = "8000"
         testsuite_name = ""
+        testsuite_id = ""
         client_command = ""       
         stub_name = params["stub-name"]
         capability_opt = None
@@ -343,7 +414,7 @@ class TizenMobile:
             print "[ test suite \"%s\" not found in device! ]" % testsuite_name
             return result
         else:
-            testsuite_name = ret[0].strip('\r\n')
+            testsuite_id = ret[0].strip('\r\n')
 
         ###kill the stub process###
         cmd = "sdb shell killall %s " % stub_name
@@ -359,7 +430,7 @@ class TizenMobile:
         session_id = str(uuid.uuid1())
         print "[ launch the stub app ]"
         stub_entry = "%s --testsuite:%s --client-command:%s" % \
-                     (stub_name, testsuite_name, client_command)
+                     (stub_name, testsuite_id, client_command)
         cmdline = "sdb -s %s shell %s" % (deviceid, stub_entry)
         self.__test_async_shell = StubExecThread(cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
@@ -387,6 +458,7 @@ class TizenMobile:
 
     def init_test(self, deviceid, params):
         """init the test envrionment"""
+        self.__device_id = deviceid
         if params is not None and "stub-name" in params:
             self.__test_type = "webapi"
             return self.__init_test_stub(deviceid, params)
@@ -398,6 +470,8 @@ class TizenMobile:
         """
             process the execution for core api test
         """
+        self.__test_async_core = CoreTestExecThread(self.__device_id, test_set_name, cases)
+        self.__test_async_core.start()
         return True
 
     def __run_web_test(self, test_set_name, exetype, ctype, cases):
@@ -420,7 +494,7 @@ class TizenMobile:
             block_data["type"] = ctype
             block_data["totalBlk"] = str(blknum)
             block_data["currentBlk"] = str(idx)
-            block_data["casecount"] = case_count
+            block_data["casecount"] = str(case_count)
             start = (idx - 1) * self.__test_set_block
             if idx == blknum:
                 end = case_count
@@ -429,67 +503,26 @@ class TizenMobile:
             block_data["cases"] = cases[start:end]
             test_set_blocks.append(block_data)
             idx += 1
-        self.__test_async_http = TestSetExecThread(self.__forward_server_url, test_set_name, test_set_blocks)
+        self.__test_async_http = WebTestExecThread(self.__forward_server_url, test_set_name, test_set_blocks)
         self.__test_async_http.start()
         return True
-
-    # def run_test(self, sessionid, test_set):
-    #     """
-    #         process the execution for a test set
-    #     """
-    #     if sessionid is None:
-    #         return False
-    #     if not "cases" in test_set:
-    #         return False
-    #     test_set_name = os.path.split(test_set["current_set_name"])[1]
-    #     cases = test_set["cases"]
-    #     exetype = test_set["exetype"]
-    #     ctype = test_set["type"]
-
-    #     if self.__test_type == "webapi":
-    #         return self.__run_web_test(test_set_name, exetype, ctype, cases)
-    #     else:
-    #         return self.__run_core_test(test_set_name, exetype, ctype, cases)
 
     def run_test(self, sessionid, test_set):
         """
             process the execution for a test set
-            may be split to serveral blocks, which decided by the block_size
         """
-        if sessionid is None: 
+        if sessionid is None:
             return False
-        if not "casecount" in test_set : 
+        if not "cases" in test_set:
             return False
         test_set_name = os.path.split(test_set["current_set_name"])[1]
-        case_count = int(test_set["casecount"])
         cases = test_set["cases"]
-
-        if case_count % self.__test_set_block == 0:
-            blknum = case_count / self.__test_set_block
+        exetype = test_set["exetype"]
+        ctype = test_set["type"]
+        if self.__test_type == "webapi":
+            return self.__run_web_test(test_set_name, exetype, ctype, cases)
         else:
-            blknum = case_count / self.__test_set_block + 1
-
-        idx = 1
-        test_set_blocks = []
-        while idx <= blknum:
-            block_data = {}
-            block_data["totalBlk"] = str(blknum)
-            block_data["currentBlk"] = str(idx)
-            block_data["casecount"] = test_set["casecount"]
-            block_data["exetype"] = test_set["exetype"]
-            block_data["type"] = test_set["type"]
-            start = (idx - 1) * self.__test_set_block
-            if idx == blknum: 
-                end = case_count
-            else: 
-                end = idx * self.__test_set_block
-            block_data["cases"] = cases[start:end]
-            test_set_blocks.append(block_data)
-            idx += 1
-
-        self.__test_async_http = TestSetExecThread(self.__forward_server_url, test_set_name, test_set_blocks)
-        self.__test_async_http.start()
-        return True
+            return self.__run_core_test(test_set_name, exetype, ctype, cases)
 
     def get_test_status(self, sessionid):
         """poll the test task status"""

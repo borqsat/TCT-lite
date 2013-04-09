@@ -30,7 +30,7 @@ from multiprocessing import Value
 from killall import killall
 from str2 import *
 
-def shell_exec(cmd,  timeout=None, boutput=False):
+def shell_exec(cmd,  timeout=None,  boutput=False):
     """shell executor, return [exitcode, stdout/stderr]
        timeout: None means unlimited timeout
        boutput: specify whether print output during the command running
