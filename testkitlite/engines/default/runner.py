@@ -790,19 +790,13 @@ class TRunner:
                 out.append(measure)
         return out
 
-    def __init_com_module(self, testxml=None):
+    def __init_com_module(self, testxml):
         """
             send init test to com_module
             if webapi test,com_module will start httpserver
             else com_module send the test case to devices
         """
-        if testxml is not None:
-            starup_prms = self.__prepare_starup_parameters(testxml)
-            if starup_prms['client-command'] is None:
-                starup_prms = []
-        else:
-            starup_prms = []
-
+        starup_prms = self.__prepare_starup_parameters(testxml)
         # init stub and get the session_id
         session_id = self.connector.init_test(self.deviceid, starup_prms)
         if session_id == None:
@@ -823,6 +817,7 @@ class TRunner:
             starup_parameters['client-command'] = tsuite.get("launcher")
             starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['stub-name'] = self.stub_name
+            starup_parameters['external-test'] = self.external_test
             if len(self.capabilities) > 0:
                 starup_parameters['capability'] = self.capabilities
         except IOError, error:
