@@ -66,34 +66,6 @@ def shell_command(cmdline):
     result = ret1 or ret2
     return result
 
-def get_forward_connect(device_id, remote_port=None):
-    """forward request a host port to a device-side port"""
-    if remote_port is None:
-        return None
-
-    HOST = "127.0.0.1"
-    inner_port = 9000
-    TIME_OUT = 2
-    bflag = False
-    while True:
-        sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sk.settimeout(TIME_OUT)
-        try:
-            sk.bind((HOST, inner_port))
-            sk.close()
-            bflag = False
-        except socket.error, e:
-            if e.errno == 98 or e.errno == 13:
-                bflag = True
-        if bflag: inner_port += 1
-        else: break
-    host_port = str(inner_port)
-    cmd = "sdb -s %s forward tcp:%s tcp:%s" % \
-          (device_id, host_port, remote_port)
-    result = shell_command(cmd)
-    url_forward = "http://%s:%s" % (HOST, host_port)
-    return url_forward
-
 lockobj = threading.Lock()
 test_server_result = []
 test_server_status = {}
@@ -180,7 +152,7 @@ class CoreTestExecThread(threading.Thread):
             core_cmd = ""
             time_out = None
             if "entry" in tc:
-                core_cmd = "sdb -s %s shell %s" % (self.device_id, tc["entry"])
+                core_cmd = "  %s" % (self.device_id, tc["entry"])
             else:
                 continue
             if "expected_result" in tc:
@@ -282,11 +254,11 @@ class WebTestExecThread(threading.Thread):
             if set_finished:
                 break
 
-class TizenMobile:
+class HostCon:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
 
     def __init__(self):
-        self.__forward_server_url = "http://127.0.0.1:9000"
+        self.__server_url = "http://127.0.0.1:8000"
         self.__test_async_shell = None
         self.__test_async_http = None
         self.__test_async_core = None
@@ -296,12 +268,7 @@ class TizenMobile:
 
     def get_device_ids(self):
         """get tizen deivce list of ids"""
-        result = []
-        ret = shell_command("sdb devices")
-        for line in ret:
-            if str.find(line, "\tdevice\t") != -1: 
-                result.append(line.split("\t")[0])
-        return result
+        return ['localhost']
 
     def get_device_info(self, deviceid=None):
         """get tizen deivce inforamtion"""
@@ -313,7 +280,7 @@ class TizenMobile:
         os_version_str = ""
 
         # get resolution and screen size
-        ret = shell_command("sdb -s %s shell xrandr" % deviceid)
+        ret = shell_command("xrandr")
         pattern = re.compile("connected (\d+)x(\d+).* (\d+mm) x (\d+mm)")
         for line in ret:
             match = pattern.search(line)
@@ -321,15 +288,15 @@ class TizenMobile:
                 resolution_str = "%s x %s" % (match.group(1), match.group(2))
                 screen_size_str = "%s x %s" % (match.group(3), match.group(4))
         # get architecture
-        ret = shell_command("sdb -s %s shell uname -m" % deviceid)
+        ret = shell_command("uname -m")
         if len(ret) > 0:
             device_model_str = ret[0]
         # get hostname
-        ret = shell_command("sdb -s %s shell uname -n" % deviceid)
+        ret = shell_command("uname -n")
         if len(ret) > 0:
             device_name_str = ret[0]
         # get os version
-        ret = shell_command("sdb -s %s shell cat /etc/issue" % deviceid)
+        ret = shell_command("cat /etc/issue")
         for line in ret:
             if len(line) > 1:
                 os_version_str = "%s %s" % (os_version_str, line)
@@ -341,42 +308,7 @@ class TizenMobile:
         device_info["os_version"] = os_version_str
         return device_info
 
-    def install_package(self, deviceid, pkgpath):
-        """install a package on tizen device: push package and install with shell command"""
-        filename = os.path.split(pkgpath)[1]
-        devpath = "/tmp/%s" % filename
-        cmd = "sdb -s %s push %s %s" % (deviceid, pkgpath, devpath)
-        ret =  shell_command(cmd)
-        cmd = "sdb shell rpm -ivh %s" % devpath
-        ret =  shell_command(cmd)
-        return ret
-
-    def get_installed_package(self, deviceid):
-        """get list of installed package from device"""
-        cmd = "sdb -s %s shell rpm -qa | grep tct" % (deviceid)
-        ret =  shell_command(cmd)
-        return ret
-
-    def download_file(self, deviceid, remote_path, local_path):
-        """get list of installed package from device"""
-        cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
-        ret =  shell_command(cmd)
-        if not ret is None:
-            for l in ret:
-                if l.find("does not exist") != -1 or l.find("error:") != -1: 
-                    print "[ file \"%s\" not found in device! ]" % remote_path
-                    return False
-            return True
-        else:
-            return False
-
-    def upload_file(self, deviceid, remote_path, local_path):
-        """get list of installed package from device"""
-        cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
-        ret =  shell_command(cmd)
-        return ret
-
-    def __init_test_stub(self, deviceid, params):
+    def __init_test_stub(self, deviceid,  params):
         """init the test runtime, mainly process the star up of test stub"""
         result = None
         if params is None:
@@ -407,31 +339,18 @@ class TizenMobile:
         else:
             client_command = params["client-command"]
 
-        cmd = "sdb -s %s shell wrt-launcher -l | grep %s | awk '{print $NF}'" % \
-              (deviceid, testsuite_name)
-        ret = shell_command(cmd)
-        if len(ret) == 0:
-            print "[ test suite \"%s\" not found in device! ]" % testsuite_name
-            return result
-        else:
-            testsuite_id = ret[0].strip('\r\n')
-
         ###kill the stub process###
-        cmd = "sdb shell killall %s " % stub_name
+        cmd = "  killall %s " % stub_name
         ret =  shell_command(cmd)
         print "[ waiting for kill http server ]"
         time.sleep(3)
-
-        ###set forward between host and device###        
-        self.__forward_server_url = get_forward_connect(deviceid, stub_server_port)
-        print "[ forward server %s ]" % self.__forward_server_url
 
         ###launch an new stub process###
         session_id = str(uuid.uuid1())
         print "[ launch the stub app ]"
         stub_entry = "%s --testsuite:%s --client-command:%s" % \
                      (stub_name, testsuite_id, client_command)
-        cmdline = "sdb -s %s shell %s" % (deviceid, stub_entry)
+        cmdline = "  %s" % ( stub_entry)
         self.__test_async_shell = StubExecThread(cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
         time.sleep(2)
@@ -439,7 +358,7 @@ class TizenMobile:
         ###check if http server is ready for data transfer### 
         timecnt = 0
         while timecnt < 10:
-            ret = http_request(get_url(self.__forward_server_url, "/check_server_status"), "GET", {})
+            ret = http_request(get_url(self.__server_url, "/check_server_status"), "GET", {})
             if ret is None:
                 print "[ check server status, not ready yet! ]"
                 time.sleep(1)
@@ -452,16 +371,16 @@ class TizenMobile:
                     result = session_id
                     print "[ check server status, get ready! ]"
                     if capability_opt is not None:
-                        ret = http_request(get_url(self.__forward_server_url, "/set_capability"), "POST", capability_opt)
+                        ret = http_request(get_url(self.__server_url, "/set_capability"), "POST", capability_opt)
                 break
         return result
 
-    def init_test(self, deviceid, params):
+    def init_test(self, deviceid,  params):
         """init the test envrionment"""
         self.__device_id = deviceid
         if params is not None and "stub-name" in params:
             self.__test_type = "webapi"
-            return self.__init_test_stub(deviceid, params)
+            return self.__init_test_stub(deviceid,  params)
         else:
             self.__test_type = "coreapi"
             return str(uuid.uuid1())
@@ -503,7 +422,7 @@ class TizenMobile:
             block_data["cases"] = cases[start:end]
             test_set_blocks.append(block_data)
             idx += 1
-        self.__test_async_http = WebTestExecThread(self.__forward_server_url, test_set_name, test_set_blocks)
+        self.__test_async_http = WebTestExecThread(self.__server_url, test_set_name, test_set_blocks)
         self.__test_async_http.start()
         return True
 
@@ -562,7 +481,7 @@ class TizenMobile:
             return False
 
         if self.__test_type == "webapi":
-            ret = http_request(get_url(self.__forward_server_url, "/shut_down_server"), "GET", {})
+            ret = http_request(get_url(self.__server_url, "/shut_down_server"), "GET", {})
         return True
 
-testremote = TizenMobile()
+testremote = HostCon()
