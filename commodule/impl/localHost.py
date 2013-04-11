@@ -254,7 +254,7 @@ class WebTestExecThread(threading.Thread):
             if set_finished:
                 break
 
-class HostConn:
+class HostCon:
     """ Implementation for transfer data between Host and Tizen Mobile Device"""
 
     def __init__(self):
@@ -484,4 +484,4 @@ class HostConn:
             ret = http_request(get_url(self.__server_url, "/shut_down_server"), "GET", {})
         return True
 
-testremote = HostConn()
+testremote = HostCon()
