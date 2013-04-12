@@ -284,7 +284,7 @@ class TRunner:
                 time.sleep(3)
                 print "\n[ testing xml: %s.xml ]" % temp_test_xml
                 self.current_test_xml = temp_test_xml
-            self.execute(core_auto_file, core_auto_file)
+            self.__run_with_commodule(core_auto_file)
 
     def __run_core_manual(self):
         """ core manual cases run """
@@ -301,7 +301,8 @@ class TRunner:
                 self.current_test_xml = temp_test_xml
             if self.non_active:
                 self.skip_all_manual = True
-            self.execute(core_manual_file, core_manual_file)
+            else:
+                self.__run_with_commodule(core_manual_file)
 
     def __run_webapi_test(self, latest_dir):
         """ run webAPI test"""
@@ -330,37 +331,43 @@ class TRunner:
                     print "\n[ testing xml: %s.xml ]\n" \
                         % JOIN(latest_dir, webapi_total_file)
                     self.current_test_xml = JOIN(latest_dir, webapi_total_file)
-                try:
-                    # prepare test set list
-                    test_xml_set_list = self.__split_xml_to_set(webapi_file)
-                    # create temporary parameter
-                    for test_xml_set in test_xml_set_list:
-                        print "\n[ run set: %s ]" % test_xml_set
-                        # init test here
-                        init_status = self.__init_com_module(test_xml_set)
-                        if not init_status:
-                            continue
-                        # prepare the test JSON
-                        self.__prepare_external_test_json(test_xml_set)
-                        # send set JSON Data to com_module
-                        self.connector.run_test(
-                            self.session_id, self.set_parameters)
-                        while True:
-                            time.sleep(1)
-                            # check the test status ,if the set finished,get
-                            # the set_result,and finalize_test
-                            if self.__check_test_status():
-                                set_result = self.connector.get_test_result(
-                                    self.session_id)
-                                # write_result to set_xml
-                                self.__write_set_result(
-                                    test_xml_set, set_result)
-                                # shut down server
-                                self.__shut_down_server(self.session_id)
-                                break
-                except IOError, error:
-                    print "[ Error: fail to run webapi test xml, \
-                    error: %s ]" % error
+
+                self.__run_with_commodule(webapi_file)
+
+    def __run_with_commodule(self, webapi_file):
+        """run_with_commodule,Initialization,check status,get result"""
+        try:
+            # prepare test set list
+            test_xml_set_list = self.__split_xml_to_set(webapi_file)
+            # create temporary parameter
+            for test_xml_set in test_xml_set_list:
+                print "\n[ run set: %s ]" % test_xml_set
+                # prepare the test JSON
+                self.__prepare_external_test_json(test_xml_set)
+
+                # init test here
+                init_status = self.__init_com_module(test_xml_set)
+                if not init_status:
+                    continue
+                # send set JSON Data to com_module
+                self.connector.run_test(
+                    self.session_id, self.set_parameters)
+                while True:
+                    time.sleep(1)
+                    # check the test status ,if the set finished,get
+                    # the set_result,and finalize_test
+                    if self.__check_test_status():
+                        set_result = self.connector.get_test_result(
+                            self.session_id)
+                        # write_result to set_xml
+                        self.__write_set_result(
+                            test_xml_set, set_result)
+                        # shut down server
+                        self.__shut_down_server(self.session_id)
+                        break
+        except IOError, error:
+            print "[ Error: fail to run webapi test xml, \
+            error: %s ]" % error
 
     def __split_xml_to_set(self, webapi_file):
         """split xml by <set>"""
@@ -426,19 +433,10 @@ class TRunner:
         root = etree.Element('test_definition')
         root.tail = "\n"
         totals = set()
-        # create core and webapi set
-        resultfiles_core = set()
-        for auto_file in self.core_auto_files:
-            resultfiles_core.add(auto_file)
-        for manual_file in self.core_manual_files:
-            resultfiles_core.add(manual_file)
-        resultfiles_webapi = self.resultfiles
-        for resultfile_core in resultfiles_core:
-            resultfiles_webapi.discard(resultfile_core)
-        # merge core result files
-        totals = self.__merge_result(resultfiles_core, totals)
-        # merge webapi result files
-        totals = self.__merge_result(resultfiles_webapi, totals)
+
+        # merge result files
+        resultfiles = self.resultfiles
+        totals = self.__merge_result(resultfiles, totals)
 
         for total in totals:
             result_xml = etree.parse(total)
@@ -536,13 +534,13 @@ class TRunner:
             resinfo_elm.append(stderr_elm)
             result_case.append(resinfo_elm)
             res_elm.text = 'N/A'
-        if result_case.get('result') == "PASS":
+        if result_case.get('result').upper() == "PASS":
             self.testresult_dict["pass"] += 1
-        if result_case.get('result') == "FAIL":
+        if result_case.get('result').upper() == "FAIL":
             self.testresult_dict["fail"] += 1
-        if result_case.get('result') == "BLOCK":
+        if result_case.get('result').upper() == "BLOCK":
             self.testresult_dict["block"] += 1
-        if result_case.get('result') == "N/A":
+        if result_case.get('result').upper() == "N/A":
             self.testresult_dict["not_run"] += 1
 
     def __get_environment(self):
@@ -634,7 +632,9 @@ class TRunner:
                         if tcase.find('description/test_script_entry').get('timeout'):
                             case_detail_tmp["timeout"] = tcase.find(
                                 'description/test_script_entry').get('timeout')
-
+                        if tcase.find('description/test_script_entry').get('test_script_expected_result'):
+                            case_detail_tmp["expected_result"] = tcase.find(
+                                'description/test_script_entry').get('test_script_expected_result')
                     for this_step in tcase.getiterator("step"):
                         step_detail_tmp = {}
                         step_detail_tmp.setdefault("order", "1")
@@ -671,6 +671,8 @@ class TRunner:
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
+            if self.bdryrun:
+                parameters.setdefault("dryrun", True)
             self.set_parameters = parameters
 
         except IOError, error:
@@ -746,132 +748,6 @@ class TRunner:
                     return False
         return True
 
-    def execute(self, testxmlfile, resultfile):
-        """core test cases execute"""
-        def exec_testcase(case, total_number, current_number, current_set_name):
-            """ run core test cases """
-            case_result = "BLOCK"
-            stderr = "none"
-            stdout = "none"
-            start_time = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
-
-            if case.get('execution_type') == 'manual'and self.skip_all_manual:
-                case.set('result', 'N/A')
-            else:
-                # prepare JSON
-                parameters = prepare_json_for_core(case, current_number)
-                parameters["current_set_name"] = current_set_name
-                self.set_parameters = parameters
-                print '---------', parameters
-                case_json = parameters["cases"][0]
-                # print case info
-                if case_json['entry'] is not None:
-                    print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s\nExpected Result: %s\nTotal: %s, Current: %s" % (case_json['case_id'], case_json['entry'], case_json['expected_result'], total_number, current_number)
-                    if self.bdryrun:
-                        case_result, stderr, stdout = "none", "Dryrun error info", "Dryrun output"
-                    else:
-                        print "[ execute test script, this might take some time, please wait ]"
-                        try:
-                            # init test here
-                            self.__init_com_module()
-                            # send set JSON Data to com_module
-                            self.connector.run_test(
-                                self.session_id, self.set_parameters)
-                            while True:
-                                time.sleep(1)
-                                # check the test status ,if the set finished,get
-                                # the set_result,and finalize_test
-                                if self.__check_test_status():
-                                    set_result = self.connector.get_test_result(
-                                        self.session_id)
-                                    if set_result["cases"] is not None:
-                                        core_result = set_result["cases"][0]
-                                        stderr = core_result["stderr"]
-                                        stdout = core_result["stdout"]
-                                        case_result = core_result["result"]
-                                    # shut down server
-                                    self.__shut_down_server(self.session_id)
-                                    break
-                        except Exception, error:
-                            print "[ Error: fail to execute test script, \
-                            error: %s ]\n" % error
-                else:
-                    print "[ Warnning: test script is empty, please check your test xml file ]"
-
-            # Construct result info node
-            resinfo_elm = etree.Element('result_info')
-            res_elm = etree.Element('actual_result')
-            start_elm = etree.Element('start')
-            end_elm = etree.Element('end')
-            stdout_elm = etree.Element('stdout')
-            stderr_elm = etree.Element('stderr')
-            resinfo_elm.append(res_elm)
-            resinfo_elm.append(start_elm)
-            resinfo_elm.append(end_elm)
-            resinfo_elm.append(stdout_elm)
-            resinfo_elm.append(stderr_elm)
-            case.append(resinfo_elm)
-
-            start_elm.text = start_time
-            res_elm.text = case_result
-            stdout_elm.text = stdout
-            stderr_elm.text = stderr
-
-            # sdx@kooltux.org: add notes to xml result
-            insert_notes(case, stdout)
-            self.__insert_measures(case, stdout)
-
-            case.set('result', case_result)
-            print "Case Result: %s" % case_result
-
-            # Check performance test
-            measures = case.getiterator('measurement')
-            for measure in measures:
-                ind = measure.get('name')
-                fname = measure.get('file')
-
-                value = self.connector.get_measure(fname)
-                if value:
-                    measure.set('value', val)
-                else:
-                    print "[ Error: fail to get performance value ]"
-
-                # if fname and EXISTS(fname):
-                #     try:
-                #         config = ConfigParser.ConfigParser()
-                #         config.read(fname)
-                #         val = config.get(ind, 'value')
-                #         measure.set('value', val)
-                #     except Exception, error:
-                #         print "[ Error: fail to parse performance value, \
-                #         error: %s ]\n" % error
-            # record end time
-            end_elm.text = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
-
-        # execute cases
-        try:
-            parse_tree = etree.parse(testxmlfile)
-            root_em = parse_tree.getroot()
-            total_number = 0
-            current_number = 0
-            for tsuite in root_em.getiterator('suite'):
-                for tset in tsuite.getiterator('set'):
-                    for tcase in tset.getiterator('testcase'):
-                        total_number += 1
-            for tsuite in root_em.getiterator('suite'):
-                for tset in tsuite.getiterator('set'):
-                    current_set_name = tset.get('name')
-                    for tcase in tset.getiterator('testcase'):
-                        current_number += 1
-                        exec_testcase(
-                            tcase, total_number, current_number, current_set_name)
-            parse_tree.write(resultfile)
-            return True
-        except IOError, error:
-            print "[ Error: fail to run core test case, error: %s ]\n" % error
-            traceback.print_exc()
-            return False
-
     # sdx@kooltux.org: parse measures returned by test script
     # and insert in XML result
     # see xsd/test_definition.xsd: measurementType
@@ -914,17 +790,13 @@ class TRunner:
                 out.append(measure)
         return out
 
-    def __init_com_module(self, testxml=None):
+    def __init_com_module(self, testxml):
         """
             send init test to com_module
             if webapi test,com_module will start httpserver
             else com_module send the test case to devices
         """
-        if testxml is not None:
-            starup_prms = self.__prepare_starup_parameters(testxml)
-        else:
-            starup_prms = []
-
+        starup_prms = self.__prepare_starup_parameters(testxml)
         # init stub and get the session_id
         session_id = self.connector.init_test(self.deviceid, starup_prms)
         if session_id == None:
@@ -945,6 +817,7 @@ class TRunner:
             starup_parameters['client-command'] = tsuite.get("launcher")
             starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['stub-name'] = self.stub_name
+            starup_parameters['external-test'] = self.external_test
             if len(self.capabilities) > 0:
                 starup_parameters['capability'] = self.capabilities
         except IOError, error:
@@ -1137,67 +1010,3 @@ def insert_notes(case, buf, pattern="###[NOTE]###"):
         notes_elm.text = extract_notes(buf, pattern)
     else:
         notes_elm.text += "\n" + extract_notes(buf, pattern)
-
-
-def prepare_json_for_core(tcase, case_order):
-    """ prepare_json_for_core test"""
-    parameters = {}
-    case_detail_tmp = {}
-    case_tmp = []
-    step_tmp = []
-    parameters.setdefault("casecount", "1")
-    parameters.setdefault("exetype", tcase.get('execution_type'))
-    parameters.setdefault("type", tcase.get('type'))
-    case_detail_tmp.setdefault("case_id", tcase.get('id'))
-    case_detail_tmp.setdefault("purpose", tcase.get('purpose'))
-    case_detail_tmp.setdefault("order", str(case_order))
-    case_detail_tmp.setdefault("onload_delay", "3")
-    if tcase.find('description/test_script_entry') is not None:
-        case_detail_tmp["entry"] = tcase.find(
-            'description/test_script_entry').text
-        if tcase.find('description/test_script_entry').get('timeout'):
-            case_detail_tmp["timeout"] = tcase.find(
-                'description/test_script_entry').get('timeout')
-        else:
-            case_detail_tmp["timeout"] = "90"
-        expected_result = tcase.find(
-            'description/test_script_entry').get('test_script_expected_result', "0")
-        case_detail_tmp["expected_result"] = expected_result
-
-    for this_step in tcase.getiterator("step"):
-        step_detail_tmp = {}
-        step_detail_tmp.setdefault("order", "1")
-        step_detail_tmp["order"] = str(this_step.get('order'))
-
-        if this_step.find("step_desc") is not None:
-            text = this_step.find("step_desc").text
-            if text is not None:
-                step_detail_tmp["step_desc"] = text
-
-        if this_step.find("expected") is not None:
-            text = this_step.find("expected").text
-            if text is not None:
-                step_detail_tmp["expected"] = text
-
-        step_tmp.append(step_detail_tmp)
-
-    case_detail_tmp['steps'] = step_tmp
-
-    if tcase.find('description/pre_condition') is not None:
-        text = tcase.find('description/pre_condition').text
-        if text is not None:
-            case_detail_tmp["pre_condition"] = text
-
-    if tcase.find('description/post_condition') is not None:
-        text = tcase.find('description/post_condition').text
-        if text is not None:
-            case_detail_tmp['post_condition'] = text
-
-    if tcase.get('onload_delay') is not None:
-        case_detail_tmp[
-            'onload_delay'] = tcase.get('onload_delay')
-
-    case_tmp.append(case_detail_tmp)
-
-    parameters.setdefault("cases", case_tmp)
-    return parameters
