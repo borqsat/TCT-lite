@@ -145,9 +145,10 @@ class StubExecThread(threading.Thread):
 
 class CoreTestExecThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
-    def __init__(self, device_id, test_set_name, test_cases):
+    def __init__(self, device_id, test_set_name, exe_type, test_cases):
         super(CoreTestExecThread, self).__init__()
         self.test_set_name = test_set_name
+        self.exe_type = exe_type
         self.cases_queue = test_cases
         self.device_id = device_id
         global test_server_result
@@ -178,35 +179,76 @@ class CoreTestExecThread(threading.Thread):
             lockobj.release()
             print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s\nExpected Result: %s\nTotal: %s, Current: %s" % (tc['case_id'], tc['entry'], tc['expected_result'], total_count, current_idx)
             print "[ execute test script, this might take some time, please wait ]"
+            print tc
             expected_result = "0"
             core_cmd = ""
             time_out = None
             if "entry" in tc:
                 core_cmd = "sdb -s %s shell %s" % (self.device_id, tc["entry"])
             else:
+                print "[ Warnning: test script is empty, please check your test xml file ]"
                 continue
             if "expected_result" in tc:
                 expected_result = tc["expected_result"]
             if "timeout" in tc:
                 time_out = tc["timeout"]
-            return_code, stdout, stderr = shell_exec(core_cmd, time_out, False)
-            if return_code is not None:
-                actual_result = str(return_code)
-                if actual_result == "timeout":
+            if self.exetype == 'auto':
+                return_code, stdout, stderr = shell_exec(
+                    core_cmd, time_out, False)
+                if return_code is not None:
+                    actual_result = str(return_code)
+                    if actual_result == "timeout":
+                        tc["result"] = "BLOCK"
+                        tc["stdout"] = "none"
+                        tc["stderr"] = "none"
+                    else:
+                        if actual_result == expected_result:
+                            tc["result"] = "pass"
+                        else:
+                            tc["result"] = "fail"
+                        tc["stdout"] = stdout
+                        tc["stderr"] = stderr
+                else:
                     tc["result"] = "BLOCK"
                     tc["stdout"] = "none"
                     tc["stderr"] = "none"
-                else:
-                    if actual_result == expected_result:
-                        tc["result"] = "pass"
-                    else:
-                        tc["result"] = "fail"
-                    tc["stdout"] = stdout
-                    tc["stderr"] = stderr
-            else:
-                tc["result"] = "BLOCK"
-                tc["stdout"] = "none"
-                tc["stderr"] = "none"
+            elif self.exetype == 'manual':
+                # handle manual core cases
+                try:
+                    # print pre-condition info
+                    if "pre_condition" in tc:
+                        print "\n****\nPre-condition: %s\n ****\n" % tc['pre_condition']
+                    # print step info
+                    if "steps" in tc:
+                        for step in tc['steps']:
+                            print "********************\nStep Order: %s" % step['order']
+                            print "Step Desc: %s" % step['step_desc']
+                            print "Expected: %s\n********************\n" % step['expected']
+                    while True:
+                        test_result = raw_input(
+                            '[ please input case result ] (p^PASS, f^FAIL, b^BLOCK, n^Next, d^Done):')
+                        if test_result.lower() == 'p':
+                            tc["result"] = "PASS"
+                            break
+                        elif test_result.lower() == 'f':
+                            tc["result"] = "FAIL"
+                            break
+                        elif test_result.lower() == 'b':
+                            tc["result"] = "BLOCK"
+                            break
+                        elif test_result.lower() == 'n':
+                            tc["result"] = "N/A"
+                            break
+                        elif test_result.lower() == 'd':
+                            tc["result"] = "N/A"
+                            break
+                        else:
+                            print "[ Warnning: you input: '%s' is invalid, \
+                            please try again ]" % test_result
+                except Exception, error:
+                    print "[ Error: fail to get core manual test step, \
+                    error: %s ]\n" % error
+            print "Case Result: %s" % tc["result"]
             self.set_result(tc)
 
         lockobj.acquire()
@@ -474,7 +516,7 @@ class TizenMobile:
         """
             process the execution for core api test
         """
-        self.__test_async_core = CoreTestExecThread(self.__device_id, test_set_name, cases)
+        self.__test_async_core = CoreTestExecThread(self.__device_id, test_set_name, exetype, cases)
         self.__test_async_core.start()
         return True
 
