@@ -145,12 +145,12 @@ class StubExecThread(threading.Thread):
 
 class CoreTestExecThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
-    def __init__(self, device_id, test_set_name, exe_type, test_cases):
+    def __init__(self, device_id, test_set_name, exetype, test_cases):
         super(CoreTestExecThread, self).__init__()
         self.test_set_name = test_set_name
-        self.exe_type = exe_type
         self.cases_queue = test_cases
         self.device_id = device_id
+        self.exetype = exetype
         global test_server_result
         lockobj.acquire()
         test_server_result = {"cases":[]}
