@@ -31,6 +31,12 @@ import ConfigParser
 import xml.etree.ElementTree as etree
 from optparse import OptionParser, make_option
 from datetime import datetime
+try:
+    from testkitlite.common.killall import kill_testkit_lite
+except ImportError, e:
+    print "[ Error: loading module killall failed, error: %s ]\n" % e
+    print "try to run command 'export PYTHONPATH=/usr/lib/python2.7/site-packages' to resolve this issue"
+    sys.exit(1)
 
 
 JOIN = os.path.join
@@ -59,6 +65,10 @@ COMMON_FILTERS = {
     "component": []}
 
 # start testkit-lite in Singleton mode
+try:
+    kill_testkit_lite(PID_FILE)
+except Exception, e:
+    print "[ Error: fail to kill existing testkit-lite, error: %s ]\n" % e
 
 if not platform.system() == "Linux":
     try:
@@ -189,7 +199,9 @@ try:
         make_option("--comm", dest="commodule", action="store",
                     help="set commodule type"),
         make_option("--capability", dest="capability", action="store",
-                    help="get capability file")
+                    help="get capability file"),
+        make_option("--quit", dest="quit", action="store_true",
+                    help="quit testkit-lite")
 
     ]
 
@@ -234,6 +246,14 @@ Note: \n\
     PARSERS = OptionParser(option_list=option_list, usage=USAGE)
 
     (options, args) = PARSERS.parse_args()
+    # detect quit action
+    if options.quit:
+        try:
+            print "[ Quit testkit-lite now ]"
+            kill_testkit_lite(PID_FILE)
+        except Exception, e:
+            print "[ Error: fail to kill existing testkit-lite, error: %s ]\n" % e
+        sys.exit(1)
 
     # detect conflict
     if options.bautoonly and options.bmanualonly:
