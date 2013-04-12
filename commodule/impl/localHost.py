@@ -138,6 +138,7 @@ class CoreTestExecThread(threading.Thread):
     def run(self):
         """run core tests"""
         from autoexec import shell_exec
+        global test_server_status
         if self.cases_queue is None:
             return
         total_count = len(self.cases_queue)
@@ -152,7 +153,7 @@ class CoreTestExecThread(threading.Thread):
             core_cmd = ""
             time_out = None
             if "entry" in tc:
-                core_cmd = "  %s" % (self.device_id, tc["entry"])
+                core_cmd = tc["entry"]
             else:
                 continue
             if "expected_result" in tc:
