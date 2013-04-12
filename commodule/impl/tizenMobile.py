@@ -46,7 +46,7 @@ def http_request(url, rtype="POST", data=None):
         except Exception, e:
             pass
     elif rtype == "GET":
-        try:        
+        try:
             ret = requests.get(url, params=data)
             if ret:
                 result = ret.json()
@@ -166,6 +166,7 @@ class CoreTestExecThread(threading.Thread):
     def run(self):
         """run core tests"""
         from autoexec import shell_exec
+        global test_server_status
         if self.cases_queue is None:
             return
         total_count = len(self.cases_queue)
@@ -175,7 +176,8 @@ class CoreTestExecThread(threading.Thread):
             lockobj.acquire()
             test_server_status = {"finished": 0}
             lockobj.release()
-            print "[ core test case (%d/%d): %s]" % (current_idx, total_count, tc["case_id"])
+            print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s\nExpected Result: %s\nTotal: %s, Current: %s" % (tc['case_id'], tc['entry'], tc['expected_result'], total_count, current_idx)
+            print "[ execute test script, this might take some time, please wait ]"
             expected_result = "0"
             core_cmd = ""
             time_out = None
