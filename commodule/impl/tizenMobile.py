@@ -385,7 +385,7 @@ class TizenMobile:
         stub_server_port = "8000"
         testsuite_name = ""
         testsuite_id = ""
-        client_command = ""       
+        external_command = ""       
         stub_name = params["stub-name"]
         capability_opt = None
 
@@ -401,11 +401,13 @@ class TizenMobile:
         else:
             testsuite_name = params["testsuite-name"]
 
-        if not "client-command" in params:
-            print "\"client-command\" is required for web tests!"
+        if not "external-test" in params:
+            print "\"external-test\" is required for web tests!"
             return result
         else:
-            client_command = params["client-command"]
+            external_command = params["external-test"]
+            if external_command.find("WRTLauncher") != -1:
+                external_command = "wrt-launcher"
 
         cmd = "sdb -s %s shell wrt-launcher -l | grep %s | awk '{print $NF}'" % \
               (deviceid, testsuite_name)
@@ -429,8 +431,8 @@ class TizenMobile:
         ###launch an new stub process###
         session_id = str(uuid.uuid1())
         print "[ launch the stub app ]"
-        stub_entry = "%s --testsuite:%s --client-command:%s" % \
-                     (stub_name, testsuite_id, client_command)
+        stub_entry = "%s --testsuite:%s --external-test:%s" % \
+                     (stub_name, testsuite_id, external_command)
         cmdline = "sdb -s %s shell %s" % (deviceid, stub_entry)
         self.__test_async_shell = StubExecThread(cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
@@ -459,7 +461,7 @@ class TizenMobile:
     def init_test(self, deviceid, params):
         """init the test envrionment"""
         self.__device_id = deviceid
-        if params is not None and "stub-name" in params:
+        if "client-command" in params and params['client-command'] is not None:
             self.__test_type = "webapi"
             return self.__init_test_stub(deviceid, params)
         else:
