@@ -351,9 +351,8 @@ class HostCon:
         ###launch an new stub process###
         session_id = str(uuid.uuid1())
         print "[ launch the stub app ]"
-        stub_entry = "%s --testsuite:%s --external-test:%s" % \
-                     (stub_name, testsuite_id, external_command)
-        cmdline = "  %s" % ( stub_entry)
+        cmdline = "%s --testsuite:%s --external-test:\"%s\"" % \
+                  (stub_name, testsuite_id, external_command)
         self.__test_async_shell = StubExecThread(cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
         time.sleep(2)
