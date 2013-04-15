@@ -179,7 +179,6 @@ class CoreTestExecThread(threading.Thread):
             lockobj.release()
             print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s\nExpected Result: %s\nTotal: %s, Current: %s" % (tc['case_id'], tc['entry'], tc['expected_result'], total_count, current_idx)
             print "[ execute test script, this might take some time, please wait ]"
-            print tc
             expected_result = "0"
             core_cmd = ""
             time_out = None
