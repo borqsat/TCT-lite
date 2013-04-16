@@ -35,7 +35,7 @@ try:
     from testkitlite.common.killall import kill_testkit_lite
 except ImportError, e:
     print "[ Error: loading module killall failed, error: %s ]\n" % e
-    print "try to run command 'export PYTHONPATH=/usr/lib/python2.7/site-packages' to resolve this issue"
+    print "try to run command 'export PYTHONPATH=/usr/lib/python2.7/dist-packages' to resolve this issue"
     sys.exit(1)
 
 
@@ -261,7 +261,7 @@ Note: \n\
     if options.commodule:
         COMMODULE_TYPE = options.commodule
     else:
-        COMMODULE_TYPE = "tizenMobile"
+        COMMODULE_TYPE = "tizenmobile"
 
     CONNECTOR = Connector({"testremote": COMMODULE_TYPE}).get_connector()
     if CONNECTOR == None:
