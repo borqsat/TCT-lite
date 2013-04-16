@@ -342,6 +342,14 @@ class HostCon:
             if external_command.find("WRTLauncher") != -1:
                 external_command = "wrt-launcher"
 
+        cmd = "wrt-launcher -l | grep %s | awk '{print $NF}'" %  testsuite_name
+        ret = shell_command(cmd)
+        if len(ret) == 0:
+            print "[ test suite \"%s\" not found in device! ]" % testsuite_name
+            return result
+        else:
+            testsuite_id = ret[0].strip('\r\n')
+
         ###kill the stub process###
         cmd = " killall %s " % stub_name
         ret =  shell_command(cmd)
