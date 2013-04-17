@@ -22,7 +22,7 @@
 # Authors:
 #              Zhang, Huihui <huihuix.zhang@intel.com>
 #              Wendong,Sui  <weidongx.sun@intel.com>
-#              Yuanyuan,Zou  <yuanyuan.zou@borqs.com>
+#              Yuanyuan,Zou  <zouyuanx@intel.com>
 """ prepare run , split xml ,run case , merge result """
 
 import os
@@ -667,7 +667,16 @@ class TRunner:
                     if tcase.get('onload_delay') is not None:
                         case_detail_tmp[
                             'onload_delay'] = tcase.get('onload_delay')
-
+                    # Check performance test
+                    if tcase.find('measurement') is not None:
+                        measures = case.getiterator('measurement')
+                        measures_array = []
+                        for m in measures:
+                            measure_json = {}
+                            measure_json['mname'] = m.get('name')
+                            measure_json['file'] = m.get('file')
+                            measures_array.append(measure_json)
+                        case_detail_tmp['measures'] = measures_array
                     case_tmp.append(case_detail_tmp)
                     case_order += 1
             parameters.setdefault("cases", case_tmp)
