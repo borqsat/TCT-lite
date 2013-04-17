@@ -669,7 +669,7 @@ class TRunner:
                             'onload_delay'] = tcase.get('onload_delay')
                     # Check performance test
                     if tcase.find('measurement') is not None:
-                        measures = case.getiterator('measurement')
+                        measures = tcase.getiterator('measurement')
                         measures_array = []
                         for m in measures:
                             measure_json = {}
