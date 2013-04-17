@@ -20,7 +20,7 @@
 # Authors:
 #              Zhang, Huihui <huihuix.zhang@intel.com>
 #              Wendong,Sui  <weidongx.sun@intel.com>
-#              Yuanyuan,Zou  <yuanyuan.zou@borqs.com>
+#              Yuanyuan,Zou  <zouyuanx@intel.com>
 """ testkit lite tools"""
 
 import os
@@ -89,7 +89,7 @@ except IOError, e:
 
 try:
     os.chmod(PID_FILE, 0666)
-except IOError, e:
+except OSError, e:
     pass
 
 try:
