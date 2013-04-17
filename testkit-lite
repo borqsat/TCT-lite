@@ -31,6 +31,12 @@ import ConfigParser
 import xml.etree.ElementTree as etree
 from optparse import OptionParser, make_option
 from datetime import datetime
+try:
+    from testkitlite.common.killall import kill_testkit_lite
+except ImportError, e:
+    print "[ Error: loading module killall failed, error: %s ]\n" % e
+    print "try to run command 'export PYTHONPATH=/usr/lib/python2.7/site-packages' to resolve this issue"
+    sys.exit(1)
 
 
 JOIN = os.path.join
@@ -47,6 +53,7 @@ if not platform.system() == "Linux":
 
 LOG_DIR = TESTKIT_DIR
 PID_FILE = JOIN(LOG_DIR, "pid.log")
+TEST_PACKAGES_DIR = JOIN(TESTKIT_DIR, "test_packages")
 COMMON_FILTERS = {
     "suite": [],
     "set": [],
@@ -58,6 +65,10 @@ COMMON_FILTERS = {
     "component": []}
 
 # start testkit-lite in Singleton mode
+try:
+    kill_testkit_lite(PID_FILE)
+except Exception, e:
+    print "[ Error: fail to kill existing testkit-lite, error: %s ]\n" % e
 
 if not platform.system() == "Linux":
     try:
@@ -80,6 +91,14 @@ try:
     os.chmod(PID_FILE, 0666)
 except IOError, e:
     pass
+
+try:
+    if not EXISTS(TEST_PACKAGES_DIR):
+        os.makedirs(TEST_PACKAGES_DIR)
+except IOError, e:
+    print "[ Error: can't create test package directory: %s, \
+    error: %s ]\n" % (TEST_PACKAGES_DIR, e)
+    sys.exit(1)
 
 # detect version option
 if "--version" in sys.argv:
@@ -111,24 +130,13 @@ if "--internal-version" in sys.argv:
         print "[ Error: fail to parse version info, error: %s ]\n" % e
     sys.exit(1)
 
-# get test engine, now we only got default engine
-if "-E" in sys.argv:
-    INDEX = sys.argv.index("-E")
-    try:
-        ENGINE = sys.argv[INDEX + 1]
-        ENGINE = str(ENGINE.strip()).lower()
-    except IndexError:
-        ENGINE = "default"
-else:
-    ENGINE = "default"
 
 # init test engine here
 try:
-    exec "from testkitlite.engines.%s.runner import TRunner" % ENGINE
-    exec "from commodule.connector import Connector"
-    print "[ loading %s test engine ]" % ENGINE
+    from testkitlite.engines.default.runner import TRunner
+    from commodule.connector import Connector
 except ImportError, e:
-    print "[ Error: loading test engine: %s failed, error: %s ]\n" % (ENGINE, e)
+    print "[ Error: loading test engine failed, error: %s ]\n" % e
     print "try to run command \
     'export PYTHONPATH=/usr/lib/python2.7/dist-packages' to resolve this issue"
     sys.exit(1)
@@ -191,7 +199,9 @@ try:
         make_option("--comm", dest="commodule", action="store",
                     help="set commodule type"),
         make_option("--capability", dest="capability", action="store",
-                    help="get capability file")
+                    help="get capability file"),
+        make_option("--quit", dest="quit", action="store_true",
+                    help="quit testkit-lite")
 
     ]
 
@@ -236,6 +246,14 @@ Note: \n\
     PARSERS = OptionParser(option_list=option_list, usage=USAGE)
 
     (options, args) = PARSERS.parse_args()
+    # detect quit action
+    if options.quit:
+        try:
+            print "[ Quit testkit-lite now ]"
+            kill_testkit_lite(PID_FILE)
+        except Exception, e:
+            print "[ Error: fail to kill existing testkit-lite, error: %s ]\n" % e
+        sys.exit(1)
 
     # detect conflict
     if options.bautoonly and options.bmanualonly:
@@ -261,22 +279,34 @@ Note: \n\
     if options.capability:
         get_capability_status = runner.get_capability(options.capability)
         if not get_capability_status:
-            sys.exit(1)  
+            sys.exit(1)
 
     if "device:" in options.testxml[0]:
-        print 'device remote file'
+        print 'remote file'
         remote_testlits = options.testxml[0]
         remote_testlits = remote_testlits.split(':')[1]
-        testlistarrary = remote_testlits.split(' ')
+        testlistarrary = remote_testlits.split()
+        localarry = []
+
         for remote_file in testlistarrary:
-            runner.connector.download_file(
-                runner.deviceid, remote_file, remote_file)
-        options.testxml = testlistarrary
+            tmp_remote_file = os.path.split(remote_file)
+            tmp_remote_folder = os.path.basename(tmp_remote_file[0])
+            tmp_remote_test_xml = os.path.join(
+                tmp_remote_folder, tmp_remote_file[1])
+            local_test_package = os.path.join(
+                TEST_PACKAGES_DIR, tmp_remote_test_xml)
+            down_status = runner.connector.download_file(
+                runner.deviceid, remote_file, local_test_package)
+            if not down_status:
+                print 'remote file can not find,pls check the install test packages:%s' % remote_file
+                sys.exit(1)
+            localarry.append(local_test_package)
+        options.testxml = localarry
     else:
-        print 'device local file'
-        if len(options.testxml) == 1:            
+        print 'local file'
+        if len(options.testxml) == 1:
             local_testlists = options.testxml[0]
-            testlistarrary = local_testlists.split(' ')        
+            testlistarrary = local_testlists.split(' ')
             options.testxml = testlistarrary
             print options.testxml
 
