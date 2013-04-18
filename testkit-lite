@@ -20,7 +20,7 @@
 # Authors:
 #              Zhang, Huihui <huihuix.zhang@intel.com>
 #              Wendong,Sui  <weidongx.sun@intel.com>
-#              Yuanyuan,Zou  <yuanyuan.zou@borqs.com>
+#              Yuanyuan,Zou  <zouyuanx@intel.com>
 """ testkit lite tools"""
 
 import os
@@ -74,7 +74,7 @@ if not platform.system() == "Linux":
     try:
         if not os.path.exists(LOG_DIR):
             os.makedirs(LOG_DIR)
-    except IOError, e:
+    except OSError, e:
         print "[ Error: create results directory: %s failed, \
         error: %s ]\n" % (LOG_DIR, e)
 
@@ -82,20 +82,20 @@ try:
     with open(PID_FILE, "w") as fd:
         PID = str(os.getpid())
         fd.writelines(PID + '\n')
-except IOError, e:
+except OSError, e:
     print "[ Error: can't create pid log file: %s, \
     error: %s ]\n" % (PID_FILE, e)
     sys.exit(1)
 
 try:
     os.chmod(PID_FILE, 0666)
-except IOError, e:
+except OSError, e:
     pass
 
 try:
     if not EXISTS(TEST_PACKAGES_DIR):
         os.makedirs(TEST_PACKAGES_DIR)
-except IOError, e:
+except OSError, e:
     print "[ Error: can't create test package directory: %s, \
     error: %s ]\n" % (TEST_PACKAGES_DIR, e)
     sys.exit(1)
