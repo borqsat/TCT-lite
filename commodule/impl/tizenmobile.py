@@ -190,7 +190,7 @@ class CoreTestExecThread(threading.Thread):
             if "expected_result" in tc:
                 expected_result = tc["expected_result"]
             if "timeout" in tc:
-                time_out = tc["timeout"]
+                time_out = int(tc["timeout"])
             if self.exetype == 'auto':
                 return_code, stdout, stderr = shell_exec(
                     core_cmd, time_out, False)
@@ -428,7 +428,7 @@ class TizenMobile:
         stub_server_port = "8000"
         testsuite_name = ""
         testsuite_id = ""
-        external_command = ""       
+        external_command = ""
         stub_name = params["stub-name"]
         capability_opt = None
 
