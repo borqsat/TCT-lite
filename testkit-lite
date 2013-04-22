@@ -32,7 +32,7 @@ import xml.etree.ElementTree as etree
 from optparse import OptionParser, make_option
 from datetime import datetime
 try:
-    from testkitlite.common.killall import kill_testkit_lite
+    from testkitlite.common.process_killall import kill_testkit_lite
 except ImportError, e:
     print "[ Error: loading module killall failed, error: %s ]\n" % e
     print "try to run command 'export PYTHONPATH=/usr/lib/python2.7/dist-packages' to resolve this issue"
