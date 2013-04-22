@@ -155,7 +155,7 @@ class CoreTestExecThread(threading.Thread):
             core_cmd = ""
             time_out = None
             if "entry" in tc:
-                core_cmd = "sdb -s %s shell %s" % (self.device_id, tc["entry"])
+                core_cmd = tc["entry"]
             else:
                 print "[ Warnning: test script is empty, please check your test xml file ]"
                 continue
