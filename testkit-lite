@@ -32,7 +32,7 @@ import xml.etree.ElementTree as etree
 from optparse import OptionParser, make_option
 from datetime import datetime
 try:
-    from testkitlite.common.killall import kill_testkit_lite
+    from testkitlite.common.process_killall import kill_testkit_lite
 except ImportError, e:
     print "[ Error: loading module killall failed, error: %s ]\n" % e
     print "try to run command 'export PYTHONPATH=/usr/lib/python2.7/dist-packages' to resolve this issue"
@@ -227,6 +227,8 @@ examples: %%prog  -f device:\"<somewhere>/test.xml\"\n\
           %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml --priority P0 --status ready ...\n\
     run both core and webapi packages: \n\
           %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml /usr/share/tts-bluez-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml ...\n\
+    run in single mode: \n\
+          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' --comm localhost \n\
 \n\
 Note: \n\
           1) Proxy settings should be disabled when execute webapi packages\n\
@@ -330,6 +332,8 @@ Note: \n\
     LATEST_DIR = JOIN(LOG_DIR, "latest")
     try:
         if EXISTS(LATEST_DIR):
+            os.remove(LATEST_DIR)
+        if os.path.islink(LATEST_DIR):
             os.remove(LATEST_DIR)
         os.makedirs(CURRENT_LOG_DIR)
         if os.name == "posix":
