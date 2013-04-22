@@ -10,7 +10,7 @@ setup(
     author_email = "cathy.shen@intel.com",
     version = "2.3.4",
     include_package_data = True,
-    data_files = [('/opt/testkit-lite/', ('VERSION',))],
+    data_files = [('/opt/testkit/lite/', ('VERSION',))],
     scripts = ('testkit-lite',),
     packages = find_packages(),
 )
