@@ -333,6 +333,8 @@ Note: \n\
     try:
         if EXISTS(LATEST_DIR):
             os.remove(LATEST_DIR)
+        if os.path.islink(LATEST_DIR):
+            os.remove(LATEST_DIR)
         os.makedirs(CURRENT_LOG_DIR)
         if os.name == "posix":
             os.symlink(CURRENT_LOG_DIR, LATEST_DIR)
