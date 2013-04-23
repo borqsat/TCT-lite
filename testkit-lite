@@ -197,7 +197,7 @@ try:
         make_option("--deviceid", dest="device_serial", action="store",
                     help="set sdb device serial information"),
         make_option("--comm", dest="commodule", action="store",
-                    help="set commodule type"),
+                    help="set commodule type: \"tizenmobile\" by default, \"localhost\" for single mode"),
         make_option("--capability", dest="capability", action="store",
                     help="get capability file"),
         make_option("--quit", dest="quit", action="store_true",
