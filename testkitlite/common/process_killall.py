@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright (C) 2012 Intel Corporation
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -26,6 +26,7 @@ import signal
 import re
 import ctypes
 
+
 def killall(ppid):
     """Kill all children process by parent process ID"""
     OS = platform.system()
@@ -33,18 +34,18 @@ def killall(ppid):
         if OS == "Linux":
             ppid = str(ppid)
             pidgrp = []
-            
+
             def getchildpids(ppid):
                 """Return a list of children process"""
                 command = "ps -ef | awk '{if ($3 == %s) print $2;}'" % str(ppid)
                 pids = os.popen(command).read()
                 pids = pids.split()
                 return pids
-                
+
             pidgrp.extend(getchildpids(ppid))
             for pid in pidgrp:
                 pidgrp.extend(getchildpids(pid))
-            #Insert self process ID to PID group list
+            # Insert self process ID to PID group list
             pidgrp.insert(0, ppid)
             while len(pidgrp) > 0:
                 pid = pidgrp.pop()
@@ -65,4 +66,19 @@ def killall(ppid):
         match = pattern.search(str(e))
         if not match:
             print "[ Error: fail to kill pid: %s, error: %s ]\n" % (int(ppid), e)
+    return None
+
+
+def kill_testkit_lite(PID_FILE):
+    """ kill testkit lite"""
+    try:
+        with open(PID_FILE, "r") as fd:
+            pid = fd.readline().rstrip("\n")
+            if pid:
+                killall(pid)
+    except Exception, e:
+        pattern = re.compile('No such file or directory|No such process')
+        match = pattern.search(str(e))
+        if not match:
+            print "[ Error: fail to kill existing testkit-lite, error: %s ]\n" % e
     return None
