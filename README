@@ -4,7 +4,7 @@
     Before installation, please make sure basic packages of python have been installed;
     
         Build RPM from source code: 
-            ./pack.sh
+            sudo ./pack.sh
             
         Install testkit-lite RPM:
             rpm -ivh testkit-lite-x.x.x-x.noarch.rpm
@@ -22,34 +22,37 @@
     
     And then,
     
-        1) You can select on parser engine to simply conduct one or more tests.xml:
-            testkit-lite -f <somewhere>/tests.xml
+        1) You can select on parser engine to simply conduct one or more tests.xml on target:
+            testkit-lite -f device:"<somewhere>/tests.xml"
+ 
+        2) If you want to execute both auto and manual tests:
+            testkit-lite -f device:"tests.xml"
             
-        2) If you just want to get the statistic (such as the testcase number or the structure), dryrun could help:
-            testkit-lite -f tests.xml -D
+        3) If you just want to execute manual tests:
+            testkit-lite -f device:"tests.xml" -M
             
-        3) If you want to execute both auto and manual tests:
-            testkit-lite -f tests.xml
+        4) If you just want to execute auto tests:
+            testkit-lite -f device:"tests.xml: -A
             
-        4) If you just want to execute manual tests:
-            testkit-lite -f tests.xml -M
+        5) If you want to save test result to another file, by default it'll be under /opt/testkit/lite/latest:
+            testkit-lite -f device:"tests.xml" -o <somewhere>
             
-        5) If you just want to execute auto tests:
-            testkit-lite -f tests.xml -A
-            
-        6) If you want to save test result to another file, by default it'll be under /opt/testkit/lite/latest:
-            testkit-lite -f tests.xml -o <somewhere>
-            
-        7) If you want to choose some filters:
-            testkit-lite -f tests.xml --status level1 --type type1 ...
+        6) If you want to choose some filters:
+            testkit-lite -f device:"tests.xml" --status level1 --type type1 ...
+
+        7) If you want to run test according capability:
+            testkit-lite -f device:"tests.xml" --capability capability.xml
             
         8) If you want to run Web API test:
-            testkit-lite -f /usr/share/webapi-webkit-tests/tests.xml -e "WRTLauncher webapi-webkit-tests" -o /tmp/wekit-tests-result.xml
+            testkit-lite -f device:"/usr/share/webapi-webkit-tests/tests.xml" -e "WRTLauncher webapi-webkit-tests" -o /tmp/wekit-tests-result.xml
             
         9) If you want to run Web API test in full screen mode:
-            testkit-lite -f /usr/share/webapi-webkit-tests/tests.xml -e "WRTLauncher webapi-webkit-tests" -o /tmp/wekit-tests-result.xml --fullscreen
+            testkit-lite -f device:"/usr/share/webapi-webkit-tests/tests.xml" -e "WRTLauncher webapi-webkit-tests" -o /tmp/wekit-tests-result.xml --fullscreen
+
+        10) If you want to run in single mode ,testkit lite run testkit lite on target:
+            testkit-lite -f device:"/usr/share/webapi-webkit-tests/tests.xml" -e "WRTLauncher webapi-webkit-tests" --comm localhost
             
-        10) At last, you can freely compose the above parameters together:
+        11) At last, you can freely compose the above parameters together:
              testkit-lite -f <somewhere1>/tests.xml <somewhere2>/tests.xml -A --priority P1 --type type1 ...
 
     Get Results:
@@ -78,36 +81,43 @@
     1) Proxy settings should be disabled when execute webapi packages
     2) testkit-lite's TestLog is stored to /opt/testkit/lite/latest
     3) testkit-lite enables both automatic and manual tests by default
-    4) Obviously -A and -M are conflict options
-    5) -e option does not support -D mode
-    6) The test cases' order in the result files might be arbitrary, when running same tests.xml with same options. This is caused by python's API 'getiterator' from module 'xml.etree.ElementTree'
-    7) run command 'testkit-lite', it might not be able to locate module 'testkitlite.engines.default.runner', run command 'export PYTHONPATH=/usr/lib/python2.7/site-packages' to resolve this issue
+    4) testkit-lite set commodule as 'tizenmobile' by default,if you want run in single mode, pls use --comm locahost
+    5) Obviously -A and -M are conflict options
+    6) -e option does not support -D mode
+    7) The test cases' order in the result files might be arbitrary, when running same tests.xml with same options. This is caused by python's API 'getiterator' from module 'xml.etree.ElementTree'
+    8) run command 'testkit-lite', it might not be able to locate module 'testkitlite.engines.default.runner', run command 'export PYTHONPATH=/usr/lib/python2.7/dist-packages' to resolve this issue
 
     Known Issues:
     =================
     
-    1) testkit-lite might crash when running test package which contains more than 1000 test cases on portable devices(launch box, PR3)
-     workaround for 1): Split the test package's xml into smaller xml files, which contain less than 1000 test cases. And run them one by one
 
     Detail Options:
     =================
     Options:
 
       Common options:
-        -f, --testxml             Specify the test.xml. If run more the one testxml, just list them all and separate with a whitespace
-        -D, --dryrun              Dry-run the selected test cases
-        -A, --auto-only           Enable only auto tests
-        -M, --manual-only         Enable only manual tests
-        -E  <engine name>         Specify a test engine
+        -f, --testxml         Specify the test.xml.If run more the one testxml,
+                              just list them all and separate  with a whitespace.If the test file on device,pls add 'devcie:"testxml1 testxml2"'
+        -D, --dryrun          Dry-run the selected test cases
+        -M, --manual-only     Enable only manual tests
+        -A, --auto-only       Enable only auto tests
         -o RESULTFILE, --output=RESULTFILE
-                                  Specify output file for result xml. If more than one testxml provided, results will be merged together to this output file
-        -e                        Launch external test with an executable file
-        --fullscreen              Run Web API test in full screen mode
-        --non-active              Disable the ability to set the result of core manual cases from the console
+                              Specify output file for result xml.If more than one testxml provided,
+                              results will be merged together to this output file
+        -e EXTTEST            Launch external test with an executable file
+        --fullscreen          Run web API test in full screen mode
+        --non-active          Disable the ability to set the result of core manual cases from the console
         --enable-memory-collection
-                                  Enable the ability to release memory when the free memory is less than 100M
-        --version                 Show version information
-        -h, --help                Show this help message and exit
+                              Enable the ability to release memory when the free memory is less than 100M
+        --version             Show version information
+        --deviceid=DEVICE_SERIAL
+                              set sdb device serial information
+        --comm=COMMODULE      set commodule type: "tizenmobile" by default,"localhost" for single mode
+        --capability=CAPABILITY
+                              get capability file
+        --quit                quit testkit-lite
+        --debug               run in debug mode,more log information print out
+        -h, --help            Show this help message and exit
 
       Filters options:
         All filters options are multiple-valued and optional
@@ -124,6 +134,8 @@
     =================
     
     run a webapi package:
-      1) testkit-lite -f /usr/share/webapi-webkit-tests/tests.xml -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml --priority P0 --status ready
+      1) testkit-lite -f device:"/usr/share/webapi-webkit-tests/tests.xml" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml --priority P0 --status ready
     run both core and webapi packages:
-      2) testkit-lite -f /usr/share/webapi-webkit-tests/tests.xml /usr/share/tts-bluez-tests/tests.xml -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml
+      2) testkit-lite -f device:"/usr/share/webapi-webkit-tests/tests.xml /usr/share/tts-bluez-tests/tests.xml" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml
+    run in single mode:
+      3) testkit-lite -f /usr/share/webapi-webkit-tests/tests.xml /usr/share/tts-bluez-tests/tests.xml -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml --comm localhost
