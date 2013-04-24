@@ -173,7 +173,6 @@ try:
                     help="Specify output file for result xml. \
                     If more than one testxml provided, \
                     results will be merged together to this output file"),
-        make_option("-E", dest="engine", help="Specific test engine"),
         make_option("-e", dest="exttest", action="store",
                     help="Launch external test with an executable file"),
         make_option("--fullscreen", dest="fullscreen",
