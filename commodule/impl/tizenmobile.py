@@ -431,12 +431,18 @@ class TizenMobile:
         external_command = ""
         stub_name = params["stub-name"]
         capability_opt = None
+        debug_opt = ""
 
         if "capability" in params:
             capability_opt = params["capability"]
 
         if "stub-port" in params:
             stub_server_port = params["stub-port"]
+
+        if "debug" in params:
+            bvalue = params["debug"]
+            if bvalue:
+                debug_opt = "--debug"
 
         if not "testsuite-name" in params:
             print "\"testsuite-name\" is required for web tests!"
@@ -474,8 +480,8 @@ class TizenMobile:
         ###launch an new stub process###
         session_id = str(uuid.uuid1())
         print "[ launch the stub app ]"
-        stub_entry = "%s --testsuite:%s --external-test:%s" % \
-                     (stub_name, testsuite_id, external_command)
+        stub_entry = "%s --testsuite:%s --external-test:%s %s" % \
+                     (stub_name, testsuite_id, external_command, debug_opt)
         cmdline = "sdb -s %s shell %s" % (deviceid, stub_entry)
         self.__test_async_shell = StubExecThread(cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
