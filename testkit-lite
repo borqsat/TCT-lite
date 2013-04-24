@@ -159,9 +159,7 @@ try:
     option_list = [
         make_option("-f", "--testxml", dest="testxml",
                     action="callback", callback=varnarg,
-                    help="Specify the test.xml. \
-                    If run more the one testxml, \
-                    just list them all and separate with a whitespace"),
+                    help="Specify the test.xml.If run more the one testxml,just list them all and separate with a whitespace"),
         make_option("-D", "--dryrun", dest="bdryrun",
                     action="store_true",
                     help="Dry-run the selected test cases"),
@@ -201,7 +199,9 @@ try:
         make_option("--capability", dest="capability", action="store",
                     help="get capability file"),
         make_option("--quit", dest="quit", action="store_true",
-                    help="quit testkit-lite")
+                    help="quit testkit-lite"),
+        make_option("--debug", dest="debug", action="store_true",
+                    help="run in debug mode,more log information print out")
 
     ]
 
