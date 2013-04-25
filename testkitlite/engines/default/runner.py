@@ -857,7 +857,15 @@ class TRunner:
                     for case_result in case_results:
                         if tcase.get("id") == case_result['case_id']:
                             tcase.set('result', case_result['result'])
-
+                            # Check performance test
+                            if tcase.find('measurement') is not None:
+                                for m in tcase.getiterator('measurement'):
+                                    if 'measures' in case_result:
+                                        m_results = case_result['measures']
+                                        for m_result in m_results:
+                                            if m.get('name') == m_result['mname']:
+                                                m.set('value', m_result[
+                                                      'value'])
                             if tcase.find("./result_info") is not None:
                                 tcase.remove(tcase.find("./result_info"))
                             result_info = etree.SubElement(tcase, "result_info")
