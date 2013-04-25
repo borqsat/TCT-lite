@@ -69,6 +69,7 @@ class TRunner:
         # filter rules
         self.filter_rules = None
         self.fullscreen = False
+        self.debug = False
         self.resultfiles = set()
         self.core_auto_files = []
         self.core_manual_files = []
@@ -117,6 +118,8 @@ class TRunner:
         # set the external test WRTLauncher
         if options.exttest:
             self.external_test = options.exttest
+        if options.debug:
+            self.debug = options.debug
 
     def set_pid_log(self, pid_log):
         """ get pid_log file """
@@ -827,6 +830,7 @@ class TRunner:
             starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['stub-name'] = self.stub_name
             starup_parameters['external-test'] = self.external_test
+            starup_parameters['debug'] = self.debug
             if len(self.capabilities) > 0:
                 starup_parameters['capability'] = self.capabilities
         except IOError, error:

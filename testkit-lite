@@ -32,7 +32,7 @@ import xml.etree.ElementTree as etree
 from optparse import OptionParser, make_option
 from datetime import datetime
 try:
-    from testkitlite.common.killall import kill_testkit_lite
+    from testkitlite.common.process_killall import kill_testkit_lite
 except ImportError, e:
     print "[ Error: loading module killall failed, error: %s ]\n" % e
     print "try to run command 'export PYTHONPATH=/usr/lib/python2.7/dist-packages' to resolve this issue"
@@ -159,9 +159,7 @@ try:
     option_list = [
         make_option("-f", "--testxml", dest="testxml",
                     action="callback", callback=varnarg,
-                    help="Specify the test.xml. \
-                    If run more the one testxml, \
-                    just list them all and separate with a whitespace"),
+                    help="Specify the test.xml.If run more the one testxml,just list them all and separate with a whitespace"),
         make_option("-D", "--dryrun", dest="bdryrun",
                     action="store_true",
                     help="Dry-run the selected test cases"),
@@ -175,7 +173,6 @@ try:
                     help="Specify output file for result xml. \
                     If more than one testxml provided, \
                     results will be merged together to this output file"),
-        make_option("-E", dest="engine", help="Specific test engine"),
         make_option("-e", dest="exttest", action="store",
                     help="Launch external test with an executable file"),
         make_option("--fullscreen", dest="fullscreen",
@@ -197,11 +194,13 @@ try:
         make_option("--deviceid", dest="device_serial", action="store",
                     help="set sdb device serial information"),
         make_option("--comm", dest="commodule", action="store",
-                    help="set commodule type"),
+                    help="set commodule type: \"tizenmobile\" by default, \"localhost\" for single mode"),
         make_option("--capability", dest="capability", action="store",
                     help="get capability file"),
         make_option("--quit", dest="quit", action="store_true",
-                    help="quit testkit-lite")
+                    help="quit testkit-lite"),
+        make_option("--debug", dest="debug", action="store_true",
+                    help="run in debug mode,more log information print out")
 
     ]
 
@@ -227,6 +226,8 @@ examples: %%prog  -f device:\"<somewhere>/test.xml\"\n\
           %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml --priority P0 --status ready ...\n\
     run both core and webapi packages: \n\
           %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml /usr/share/tts-bluez-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml ...\n\
+    run in single mode: \n\
+          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' --comm localhost \n\
 \n\
 Note: \n\
           1) Proxy settings should be disabled when execute webapi packages\n\
@@ -330,6 +331,8 @@ Note: \n\
     LATEST_DIR = JOIN(LOG_DIR, "latest")
     try:
         if EXISTS(LATEST_DIR):
+            os.remove(LATEST_DIR)
+        if os.path.islink(LATEST_DIR):
             os.remove(LATEST_DIR)
         os.makedirs(CURRENT_LOG_DIR)
         if os.name == "posix":
