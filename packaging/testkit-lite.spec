@@ -4,7 +4,11 @@ Version: 2.3.4
 Release: 1
 License: GPLv2
 Group: Applications/System
+Source: %{name}_%{version}.tar.gz
 
+BuildRequires: python-distribute
+
+%{!?python_sitelib: %define python_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 %description
 testkit-lite is a test runner with command-line interface.It has the following functions 
@@ -13,29 +17,27 @@ testkit-lite is a test runner with command-line interface.It has the following f
 3. provide multiple options to meet various test requirements. 
 
 %prep
+%setup -q
 
 %build
 
-
 %install
-sudo cp ${RPM_BUILD_ROOT}/usr/bin/testkit-lite /usr/bin/
-sudo mkdir -p /opt/testkit/lite
-sudo cp  ${RPM_BUILD_ROOT}/opt/testkit/lite/VERSION /opt/testkit/lite
-sudo mkdir -p /usr/lib/python2.7/dist-packages/commodule
-sudo mkdir -p /usr/lib/python2.7/dist-packages/testkitlite
-sudo cp -r ${RPM_BUILD_ROOT}/usr/lib/python2.7/dist-packages/testkitlite/* /usr/lib/python2.7/dist-packages/testkitlite
-sudo cp -r ${RPM_BUILD_ROOT}/usr/lib/python2.7/dist-packages/commodule/* /usr/lib/python2.7/dist-packages/commodule
+python setup.py install --prefix=%{_prefix} --root=%{buildroot}
+# remove tests
+rm -rf %{buildroot}/%{python_sitelib}/tests
 
 %clean
+rm -rf %{buildroot}
 
 %files
-/usr/lib/python2.7/dist-packages/testkitlite/*
-/usr/lib/python2.7/dist-packages/commodule/*
+%{python_sitelib}/testkitlite/*
+%{python_sitelib}/commodule/*
+%{python_sitelib}/testkit_lite-*.egg-info/*
 /opt/testkit/lite/VERSION
-/usr/bin/testkit-lite
+%{_bindir}/testkit-lite
 %defattr(-,root,root)
 
 %doc
-/opt/testkit/lite/testkit_lite_user_guide.pdf
+/opt/testkit/lite/Testkit-Lite_User_Guide.pdf
 
 %changelog
