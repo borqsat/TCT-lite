@@ -29,6 +29,10 @@ rm -rf %{buildroot}/%{python_sitelib}/tests
 %clean
 rm -rf %{buildroot}
 
+%post
+# Set permissions
+chmod ugo+rwx /opt/testkit/lite
+
 %files
 %{python_sitelib}/testkitlite/*
 %{python_sitelib}/commodule/*
