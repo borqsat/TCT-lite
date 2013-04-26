@@ -154,6 +154,8 @@ class CoreTestExecThread(threading.Thread):
             expected_result = "0"
             core_cmd = ""
             time_out = None
+            measures = []
+            retmeasures = []
             if "entry" in tc:
                 core_cmd = tc["entry"]
             else:
@@ -163,6 +165,9 @@ class CoreTestExecThread(threading.Thread):
                 expected_result = tc["expected_result"]
             if "timeout" in tc:
                 time_out = int(tc["timeout"])
+            if "measures" in tc:
+                measures = tc["measures"]
+
             if self.exetype == 'auto':
                 return_code, stdout, stderr = shell_exec(
                     core_cmd, time_out, False)
@@ -179,6 +184,19 @@ class CoreTestExecThread(threading.Thread):
                             tc["result"] = "fail"
                         tc["stdout"] = stdout
                         tc["stderr"] = stderr
+
+                        for m in measures:
+                            ind = m['name']
+                            fname = m['file']
+                            if fname and os.path.exists(fname):
+                                try:
+                                    config = ConfigParser.ConfigParser()
+                                    config.read(fname)
+                                    m['value'] = config.get(ind, 'value')
+                                    retmeasures.append(m)
+                                except Exception, e:
+                                    print "[ Error: fail to parse performance value, error: %s ]\n" % e                        
+                        tc["measures"] = retmeasures
                 else:
                     tc["result"] = "BLOCK"
                     tc["stdout"] = "none"
