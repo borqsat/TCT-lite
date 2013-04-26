@@ -475,6 +475,8 @@ class TRunner:
         # copy result to -o option
         try:
             if self.resultfile:
+                if not os.path.exists(self.resultfile):
+                    os.makedirs(os.path.dirname(self.resultfile))
                 print "[ copy result xml to output file: %s ]" % self.resultfile
                 copyfile(mergefile, self.resultfile)
         except IOError, error:
@@ -487,7 +489,6 @@ class TRunner:
         resultfiles = setresultfiles
         for resultfile in resultfiles:
             totalfile = os.path.splitext(resultfile)[0]
-            totalfile = os.path.splitext(totalfile)[0]
             totalfile = os.path.splitext(totalfile)[0]
             totalfile = "%s.total" % totalfile
             totalfile = "%s.xml" % totalfile
