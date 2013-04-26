@@ -537,13 +537,13 @@ class TRunner:
             resinfo_elm.append(stderr_elm)
             result_case.append(resinfo_elm)
             res_elm.text = 'N/A'
-        if result_case.get('result').upper() == "PASS":
+        if result_case.get('result') == "PASS":
             self.testresult_dict["pass"] += 1
-        if result_case.get('result').upper() == "FAIL":
+        if result_case.get('result') == "FAIL":
             self.testresult_dict["fail"] += 1
-        if result_case.get('result').upper() == "BLOCK":
+        if result_case.get('result') == "BLOCK":
             self.testresult_dict["block"] += 1
-        if result_case.get('result').upper() == "N/A":
+        if result_case.get('result') == "N/A":
             self.testresult_dict["not_run"] += 1
 
     def __get_environment(self):
@@ -676,7 +676,7 @@ class TRunner:
                         measures_array = []
                         for m in measures:
                             measure_json = {}
-                            measure_json['mname'] = m.get('name')
+                            measure_json['name'] = m.get('name')
                             measure_json['file'] = m.get('file')
                             measures_array.append(measure_json)
                         case_detail_tmp['measures'] = measures_array
@@ -856,14 +856,22 @@ class TRunner:
                 for tcase in tset.getiterator('testcase'):
                     for case_result in case_results:
                         if tcase.get("id") == case_result['case_id']:
-                            tcase.set('result', case_result['result'])
-
+                            tcase.set('result', case_result['result'].upper())
+                            # Check performance test
+                            if tcase.find('measurement') is not None:
+                                for m in tcase.getiterator('measurement'):
+                                    if 'measures' in case_result:
+                                        m_results = case_result['measures']
+                                        for m_result in m_results:
+                                            if m.get('name') == m_result['name']:
+                                                m.set('value', m_result[
+                                                      'value'])
                             if tcase.find("./result_info") is not None:
                                 tcase.remove(tcase.find("./result_info"))
                             result_info = etree.SubElement(tcase, "result_info")
                             actual_result = etree.SubElement(
                                 result_info, "actual_result")
-                            actual_result.text = case_result['result']
+                            actual_result.text = case_result['result'].upper()
 
                             start = etree.SubElement(result_info, "start")
                             end = etree.SubElement(result_info, "end")
