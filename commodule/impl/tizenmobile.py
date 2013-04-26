@@ -95,6 +95,26 @@ def get_forward_connect(device_id, remote_port=None):
     url_forward = "http://%s:%s" % (HOST, host_port)
     return url_forward
 
+
+def _download_file(deviceid, remote_path, local_path):
+    """download file from device"""
+    cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
+    ret =  shell_command(cmd)
+    if not ret is None:
+        for l in ret:
+            if l.find("does not exist") != -1 or l.find("error:") != -1: 
+                print "[ file \"%s\" not found in device! ]" % remote_path
+                return False
+        return True
+    else:
+        return False
+
+def _upload_file(deviceid, remote_path, local_path):
+    """upload file to device"""
+    cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
+    ret =  shell_command(cmd)
+    return ret
+
 lockobj = threading.Lock()
 test_server_result = []
 test_server_status = {}
@@ -217,12 +237,16 @@ class CoreTestExecThread(threading.Thread):
                         for m in measures:
                             ind = m['name']
                             fname = m['file']
-                            if fname and _e(fname):
+                            if fname is None: 
+                                continue
+                            tmpname = os.path.expanduser("~") + os.sep + "measure_tmp"
+                            if _download_file(self.device_id, fname, tmpname):
                                 try:
                                     config = ConfigParser.ConfigParser()
-                                    config.read(fname)
+                                    config.read(tmpname)
                                     m['value'] = config.get(ind, 'value')
                                     retmeasures.append(m)
+                                    os.remove(tmpname)
                                 except Exception, e:
                                     print "[ Error: fail to parse performance value, error: %s ]\n" % e
                         tc["measures"] = retmeasures
@@ -420,23 +444,12 @@ class TizenMobile:
         return ret
 
     def download_file(self, deviceid, remote_path, local_path):
-        """get list of installed package from device"""
-        cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
-        ret =  shell_command(cmd)
-        if not ret is None:
-            for l in ret:
-                if l.find("does not exist") != -1 or l.find("error:") != -1: 
-                    print "[ file \"%s\" not found in device! ]" % remote_path
-                    return False
-            return True
-        else:
-            return False
+        """download file from device"""
+        return _download_file(deviceid, remote_path, local_path)
 
     def upload_file(self, deviceid, remote_path, local_path):
-        """get list of installed package from device"""
-        cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
-        ret =  shell_command(cmd)
-        return ret
+        """upload file to device"""
+        return _upload_file(deviceid, remote_path, local_path)
 
     def __init_test_stub(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""

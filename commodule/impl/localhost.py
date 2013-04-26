@@ -184,11 +184,11 @@ class CoreTestExecThread(threading.Thread):
                             tc["result"] = "fail"
                         tc["stdout"] = stdout
                         tc["stderr"] = stderr
- 
+
                         for m in measures:
                             ind = m['name']
                             fname = m['file']
-                            if fname and _e(fname):
+                            if fname and os.path.exists(fname):
                                 try:
                                     config = ConfigParser.ConfigParser()
                                     config.read(fname)
