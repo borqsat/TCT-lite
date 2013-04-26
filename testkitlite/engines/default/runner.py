@@ -676,7 +676,7 @@ class TRunner:
                         measures_array = []
                         for m in measures:
                             measure_json = {}
-                            measure_json['mname'] = m.get('name')
+                            measure_json['name'] = m.get('name')
                             measure_json['file'] = m.get('file')
                             measures_array.append(measure_json)
                         case_detail_tmp['measures'] = measures_array
@@ -863,7 +863,7 @@ class TRunner:
                                     if 'measures' in case_result:
                                         m_results = case_result['measures']
                                         for m_result in m_results:
-                                            if m.get('name') == m_result['mname']:
+                                            if m.get('name') == m_result['name']:
                                                 m.set('value', m_result[
                                                       'value'])
                             if tcase.find("./result_info") is not None:
