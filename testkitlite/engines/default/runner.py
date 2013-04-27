@@ -180,11 +180,8 @@ class TRunner:
         if casefind:
             test_file_name = "%s" % BASENAME(resultfile)
             test_file_name = os.path.splitext(test_file_name)[0]
-            if self.external_test:
-                self.__splite_external_test(
-                    resultfile, test_file_name, resultdir)
-            else:
-                self.__splite_core_test(resultfile)
+            self.__splite_external_test(
+                resultfile, test_file_name, resultdir)
 
     def __splite_core_test(self, resultfile):
         """select core test"""
@@ -489,6 +486,7 @@ class TRunner:
         resultfiles = setresultfiles
         for resultfile in resultfiles:
             totalfile = os.path.splitext(resultfile)[0]
+            totalfile = os.path.splitext(totalfile)[0]
             totalfile = os.path.splitext(totalfile)[0]
             totalfile = "%s.total" % totalfile
             totalfile = "%s.xml" % totalfile
