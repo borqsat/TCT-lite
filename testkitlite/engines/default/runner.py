@@ -472,7 +472,7 @@ class TRunner:
         # copy result to -o option
         try:
             if self.resultfile:
-                if not os.path.exists(self.resultfile):
+                if not os.path.exists(os.path.dirname(self.resultfile)):
                     os.makedirs(os.path.dirname(self.resultfile))
                 print "[ copy result xml to output file: %s ]" % self.resultfile
                 copyfile(mergefile, self.resultfile)
