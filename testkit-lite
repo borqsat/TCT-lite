@@ -31,6 +31,12 @@ import ConfigParser
 import xml.etree.ElementTree as etree
 from optparse import OptionParser, make_option
 from datetime import datetime
+
+# check if '/usr/lib/python2.7/dist-packages' in sys path
+if '/usr/lib/python2.7/dist-packages' not in sys.path:
+    sys.path.append('/usr/lib/python2.7/dist-packages/')
+if '/usr/share/pyshared' not in sys.path:
+    sys.path.append('/usr/share/pyshared/')
 try:
     from testkitlite.common.process_killall import kill_testkit_lite
 except ImportError, e:
