@@ -472,10 +472,13 @@ class TRunner:
         # copy result to -o option
         try:
             if self.resultfile:
-                if not os.path.exists(os.path.dirname(self.resultfile)):
-                    os.makedirs(os.path.dirname(self.resultfile))
-                print "[ copy result xml to output file: %s ]" % self.resultfile
-                copyfile(mergefile, self.resultfile)
+                if os.path.splitext(self.resultfile)[-1] == '.xml':
+                    if not os.path.exists(os.path.dirname(self.resultfile)):
+                        os.makedirs(os.path.dirname(self.resultfile))
+                    print "[ copy result xml to output file: %s ]" % self.resultfile
+                    copyfile(mergefile, self.resultfile)
+                else:
+                    print "[ Please specify and xml file for result output, not:%s ]" % self.resultfile
         except IOError, error:
             print "[ Error: fail to copy the result file to: %s, \
             please check if you have created its parent directory, \
