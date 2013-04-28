@@ -95,6 +95,11 @@ def shell_exec(cmd,  timeout=None,  boutput=False):
     # only leave readable characters
     stdout_log = str2str(stdout_log)
     stderr_log = str2str(stderr_log)
+    retruncode = 0
+    if 'returncode=' in stdout_log:
+        index = stdout_log.find('returncode=')+11
+        retruncode = str(int(stdout_log[index:]))
+        exit_code = retruncode
     stdout_log = '<![CDATA[' + stdout_log + ']]>'
     stderr_log = '<![CDATA[' + stderr_log + ']]>'
     # close file
