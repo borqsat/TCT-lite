@@ -206,7 +206,8 @@ class CoreTestExecThread(threading.Thread):
             measures = []
             retmeasures = []
             if "entry" in tc:
-                core_cmd = "sdb -s %s shell %s" % (self.device_id, tc["entry"])
+                core_cmd = "sdb -s %s shell '%s ;  echo returncode=$?'" % (
+                    self.device_id, tc["entry"])
             else:
                 print "[ Warnning: test script is empty, please check your test xml file ]"
                 continue
@@ -515,8 +516,15 @@ class TizenMobile:
         stub_entry = "%s --testsuite:%s --external-test:%s %s" % \
                      (stub_name, testsuite_id, external_command, debug_opt)
         cmdline = "sdb -s %s shell %s" % (deviceid, stub_entry)
+        
         self.__test_async_shell = StubExecThread(cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
+
+        print "[ launch the tiny web app ]"
+        tinycmd = 'sdb -s %s shell tinyweb -listening_ports 80,8080 -document_root /&' % deviceid
+        self.__test_async_tiny = StubExecThread(cmd=tinycmd, sessionid=str(session_id+'_tiny'))
+        self.__test_async_tiny.start()
+
         time.sleep(2)
 
         ###check if http server is ready for data transfer### 

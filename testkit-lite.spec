@@ -7,12 +7,8 @@ Group: Applications/System
 Source: %name-%version.tar.gz
 BuildRoot: %_tmppath/%name-%version-buildroot
 
-Requires(pre): python >= 2.7
-Requires(pre): python-requests
-
-
 %description
-Testkit-LIte is a test runner with command-line interface.It has the following functions 
+Testkit-lite is a test runner with command-line interface.It has the following functions 
 1. Accepts .xml test case descriptor files as input. 
 2. drives automatic test execution. 
 3. provide multiple options to meet various test requirements. 
