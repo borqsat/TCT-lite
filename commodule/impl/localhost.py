@@ -144,6 +144,7 @@ class CoreTestExecThread(threading.Thread):
             return
         total_count = len(self.cases_queue)
         current_idx = 0
+        manual_skip_all = False
         for tc in self.cases_queue:
             current_idx += 1
             lockobj.acquire()
@@ -213,27 +214,31 @@ class CoreTestExecThread(threading.Thread):
                             print "********************\nStep Order: %s" % step['order']
                             print "Step Desc: %s" % step['step_desc']
                             print "Expected: %s\n********************\n" % step['expected']
-                    while True:
-                        test_result = raw_input(
-                            '[ please input case result ] (p^PASS, f^FAIL, b^BLOCK, n^Next, d^Done):')
-                        if test_result.lower() == 'p':
-                            tc["result"] = "PASS"
-                            break
-                        elif test_result.lower() == 'f':
-                            tc["result"] = "FAIL"
-                            break
-                        elif test_result.lower() == 'b':
-                            tc["result"] = "BLOCK"
-                            break
-                        elif test_result.lower() == 'n':
-                            tc["result"] = "N/A"
-                            break
-                        elif test_result.lower() == 'd':
-                            tc["result"] = "N/A"
-                            break
-                        else:
-                            print "[ Warnning: you input: '%s' is invalid, \
-                            please try again ]" % test_result
+                    if manual_skip_all:
+                        tc["result"] = "N/A"
+                    else:
+                        while True:
+                            test_result = raw_input(
+                                '[ please input case result ] (p^PASS, f^FAIL, b^BLOCK, n^Next, d^Done):')
+                            if test_result.lower() == 'p':
+                                tc["result"] = "PASS"
+                                break
+                            elif test_result.lower() == 'f':
+                                tc["result"] = "FAIL"
+                                break
+                            elif test_result.lower() == 'b':
+                                tc["result"] = "BLOCK"
+                                break
+                            elif test_result.lower() == 'n':
+                                tc["result"] = "N/A"
+                                break
+                            elif test_result.lower() == 'd':
+                                manual_skip_all = True
+                                tc["result"] = "N/A"
+                                break
+                            else:
+                                print "[ Warnning: you input: '%s' is invalid, \
+                                please try again ]" % test_result
                 except Exception, error:
                     print "[ Error: fail to get core manual test step, \
                     error: %s ]\n" % error
