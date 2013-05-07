@@ -37,6 +37,7 @@ def get_url(baseurl, api):
 
 def http_request(url, rtype="POST", data=None):
     """http request to the device http server"""
+    print "[ send http request: %s] " % url
     result = None
     if rtype == "POST":
         headers = {'content-type': 'application/json'}
@@ -45,6 +46,7 @@ def http_request(url, rtype="POST", data=None):
             if ret:
                 result = ret.json()
         except Exception, e:
+            print "http response exception ", e
             pass
     elif rtype == "GET":
         try:
@@ -52,6 +54,7 @@ def http_request(url, rtype="POST", data=None):
             if ret:
                 result = ret.json()
         except Exception, e:
+            print "http response exception ", e
             pass
 
     return result
