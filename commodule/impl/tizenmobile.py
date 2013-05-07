@@ -37,7 +37,6 @@ def get_url(baseurl, api):
 
 def http_request(url, rtype="POST", data=None):
     """http request to the device http server"""
-    print "[ send http request: %s] " % url
     result = None
     if rtype == "POST":
         headers = {'content-type': 'application/json'}
@@ -45,8 +44,10 @@ def http_request(url, rtype="POST", data=None):
             ret = requests.post(url, data=json.dumps(data), headers=headers)
             if ret:
                 result = ret.json()
+            else:
+                print "http status code: ", ret.status_code
         except Exception, e:
-            print "http response exception ", e
+            print "http response exception: ", e
             pass
     elif rtype == "GET":
         try:
@@ -54,9 +55,8 @@ def http_request(url, rtype="POST", data=None):
             if ret:
                 result = ret.json()
         except Exception, e:
-            print "http response exception ", e
+            print "http response exception: ", e
             pass
-
     return result
 
 def shell_command(cmdline):
@@ -289,6 +289,7 @@ class CoreTestExecThread(threading.Thread):
                                 tc["result"] = "N/A"
                                 break
                             elif test_result.lower() == 'd':
+                                manual_skip_all = True
                                 tc["result"] = "N/A"
                                 break
                             else:

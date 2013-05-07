@@ -29,6 +29,7 @@ import requests
 import json
 import re
 import uuid
+import ConfigParser
 
 def get_url(baseurl, api):
     """get full url string"""
@@ -43,16 +44,19 @@ def http_request(url, rtype="POST", data=None):
             ret = requests.post(url, data=json.dumps(data), headers=headers)
             if ret:
                 result = ret.json()
+            else:
+                print "http status code: ", ret.status_code
         except Exception, e:
+            print "http response exception: ", e
             pass
     elif rtype == "GET":
-        try:        
+        try:
             ret = requests.get(url, params=data)
             if ret:
                 result = ret.json()
         except Exception, e:
+            print "http response exception: ", e
             pass
-
     return result
 
 def shell_command(cmdline):
