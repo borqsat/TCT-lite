@@ -705,6 +705,19 @@ table#results td {\
 		return sessionIdNode.innerHTML;
 	}
 
+	function close_window(){
+		//for webapi-nonw3c-webgl-tests run by tizen-tool emulator html,window.parent.close() no function,must call window.close, why?
+		if(window.parent != window.self){
+			window.open('','_self','');
+			window.close();
+			window.parent.onbeforeunload = null;
+			window.parent.close();
+		}
+		else{
+			window.open('','_self','');
+			window.close();
+		}
+	}
 	function start_test() {
 		try {
 			var task = ask_test_task();
@@ -718,12 +731,14 @@ table#results td {\
 			} else if (task == -1) {
 				print_error_log("restart client process activated",
 						"this window will be closed in 2sec");
-				setTimeout("window.open('','_self','');window.close()", 2000);
+				close_window();
+				//setTimeout("window.open('','_self','');window.close()", 2000);
 			} else if (task == null) {
 				print_error_log(
 						"get auto case failed, client will be restarted later",
 						"this window will be closed in 2sec");
-				setTimeout("window.open('','_self','');window.close()", 2000);
+				close_window();
+				//setTimeout("window.open('','_self','');window.close()", 2000);
 			} else if (task != 0) {
 				var progress = check_execution_progress();
 				execute_test_task(task, progress);
@@ -745,7 +760,8 @@ table#results td {\
 				print_error_log("ask_generate_xml", e);
 			}
 		});
-		setTimeout("window.open('','_self','');window.close()", 2000);
+		close_window();
+		//setTimeout("window.open('','_self','');window.close()", winCloseTimeout);
 	}
 
 	function extract_all_manual() {
@@ -1025,7 +1041,8 @@ table#results td {\
 		} else {
 			print_error_log("memory collection process activated",
 					"this window will be closed in 2sec");
-			setTimeout("window.open('','_self','');window.close()", 2000);
+			close_window();
+			//setTimeout("window.open('','_self','');window.close()", 2000);
 		}
 	}
 
@@ -1051,29 +1068,30 @@ table#results td {\
 		tasks = extract_all_manual();
 		if (tasks != null){
 			for ( var i = 0; i < tasks.length; i++) {
-			parent.document.getElementById("statusframe").height = 385 + "px";
-			manualcaseslist[i] = new manual_cases();
-			manualcaseslist[i].casesid = tasks[i].case_id;
-			manualcaseslist[i].index = i;
-			manualcaseslist[i].entry = tasks[i].entry;
-			manualcaseslist[i].pre_con = tasks[i].pre_condition;
-			manualcaseslist[i].post_con = tasks[i].post_condition;
-			manualcaseslist[i].purpose = tasks[i].purpose;
+				if (parent.document.getElementById("statusframe"))
+					parent.document.getElementById("statusframe").height = 385 + "px";
+				manualcaseslist[i] = new manual_cases();
+				manualcaseslist[i].casesid = tasks[i].case_id;
+				manualcaseslist[i].index = i;
+				manualcaseslist[i].entry = tasks[i].entry;
+				manualcaseslist[i].pre_con = tasks[i].pre_condition;
+				manualcaseslist[i].post_con = tasks[i].post_condition;
+				manualcaseslist[i].purpose = tasks[i].purpose;
 
-			if (tasks[i].steps != undefined) {
-				for ( var j = 0; j < tasks[i].steps.length; j++) {
-					this_manual_step = new manual_test_step();
-					this_manual_step.order = parseInt(tasks[i].steps[j].order);
-					this_manual_step.desc = tasks[i].steps[j].step_desc;
-					this_manual_step.expected = tasks[i].steps[j].expected;
-					manualcaseslist[i].steps[this_manual_step.order - 1] = this_manual_step;
+				if (tasks[i].steps != undefined) {
+					for ( var j = 0; j < tasks[i].steps.length; j++) {
+						this_manual_step = new manual_test_step();
+						this_manual_step.order = parseInt(tasks[i].steps[j].order);
+						this_manual_step.desc = tasks[i].steps[j].step_desc;
+						this_manual_step.expected = tasks[i].steps[j].expected;
+						manualcaseslist[i].steps[this_manual_step.order - 1] = this_manual_step;
+					}
 				}
-			}
 			}
 			if (tasks.length > 0) {
 				statusFrame.src = "./manual_harness.html";
 				$($($('#main')).get(0)).attr('rows', "100,*");
-			} 
+			}
 		}
 		else {
 			// No manual cases, generate the result.
