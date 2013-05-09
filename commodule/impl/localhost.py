@@ -45,10 +45,7 @@ def http_request(url, rtype="POST", data=None):
             ret = requests.post(url, data=json.dumps(data), headers=headers)
             if ret:
                 result = ret.json()
-            else:
-                print "http status code: ", ret.status_code
         except Exception, e:
-            print "http response exception: ", e
             pass
     elif rtype == "GET":
         try:
@@ -56,7 +53,6 @@ def http_request(url, rtype="POST", data=None):
             if ret:
                 result = ret.json()
         except Exception, e:
-            print "http response exception: ", e
             pass
     return result
 
@@ -302,7 +298,7 @@ class WebTestExecThread(threading.Thread):
 
                 if ret is None or "error_code" in ret:
                     err_cnt += 1
-                    if err_cnt >= 10:
+                    if err_cnt >= 3:
                         lockobj.acquire()
                         test_server_status = {"finished": 1}
                         lockobj.release()

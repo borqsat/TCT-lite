@@ -37,7 +37,9 @@ def get_url(baseurl, api):
     return "%s%s" % (baseurl, api)
 
 def http_request(url, rtype="POST", data=None):
-    """http request to the device http server"""
+    """
+    http request to the device http server
+    """
     result = None
     if rtype == "POST":
         headers = {'content-type': 'application/json'}
@@ -45,10 +47,7 @@ def http_request(url, rtype="POST", data=None):
             ret = requests.post(url, data=json.dumps(data), headers=headers)
             if ret:
                 result = ret.json()
-            else:
-                print "http status code: ", ret.status_code
         except Exception, e:
-            print "http response exception: ", e
             pass
     elif rtype == "GET":
         try:
@@ -56,7 +55,6 @@ def http_request(url, rtype="POST", data=None):
             if ret:
                 result = ret.json()
         except Exception, e:
-            print "http response exception: ", e
             pass
     return result
 
@@ -76,6 +74,7 @@ def get_forward_connect(device_id, remote_port=None):
     if remote_port is None:
         return None
 
+    os.environ['no_proxy'] = '127.0.0.1'
     HOST = "127.0.0.1"
     inner_port = 9000
     TIME_OUT = 2
@@ -355,7 +354,7 @@ class WebTestExecThread(threading.Thread):
 
                 if ret is None or "error_code" in ret:
                     err_cnt += 1
-                    if err_cnt >= 10:
+                    if err_cnt >= 3:
                         lockobj.acquire()
                         test_server_status = {"finished": 1}
                         lockobj.release()
@@ -535,12 +534,6 @@ class TizenMobile:
         
         self.__test_async_shell = StubExecThread(cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
-
-        print "[ launch the tiny web app ]"
-        tinycmd = 'sdb -s %s shell tinyweb -listening_ports 80,8080 -document_root /&' % deviceid
-        self.__test_async_tiny = StubExecThread(cmd=tinycmd, sessionid=str(session_id+'_tiny'))
-        self.__test_async_tiny.start()
-
         time.sleep(2)
 
         ###check if http server is ready for data transfer### 
