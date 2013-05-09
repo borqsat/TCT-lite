@@ -974,9 +974,9 @@ table#results td {\
 						if (i.toString() != value) {
 							continue;
 						}
-						var rest = results[i].childNodes[0].innerText;
-						var desc = results[i].childNodes[1].innerText;
-						case_msg = results[i].childNodes[2].innerText;
+						var rest = results[i].childNodes[0].textContent;
+						var desc = results[i].childNodes[1].textContent;
+						case_msg = results[i].childNodes[2].textContent;
 
 						if (rest && rest.toUpperCase() == "PASS") {
 							result = "PASS";
