@@ -851,7 +851,6 @@ class TRunner:
         # covert JOSN to python dict string
         set_result = set_result_json
         case_results = set_result["cases"]
-        print case_results
         try:
             parse_tree = etree.parse(set_result_xml)
             root_em = parse_tree.getroot()
