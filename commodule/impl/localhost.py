@@ -177,7 +177,7 @@ class CoreTestExecThread(threading.Thread):
             print "[ execute test script, this might take some time, please wait ]"
             strtime = datetime.now().strftime(DATE_FORMAT_STR)
             print "start time: %s" % strtime
-            tc["starttime"] = strtime
+            tc["start_time"] = strtime
             if self.exetype == 'auto':
                 return_code, stdout, stderr = shell_exec(
                     core_cmd, time_out, False)
@@ -253,7 +253,7 @@ class CoreTestExecThread(threading.Thread):
                     error: %s ]\n" % error
             strtime = datetime.now().strftime(DATE_FORMAT_STR)
             print "end time: %s" % strtime
-            tc["endtime"] = strtime
+            tc["end_time"] = strtime
             print "Case Result: %s" % tc["result"]
             self.set_result(tc)
 
