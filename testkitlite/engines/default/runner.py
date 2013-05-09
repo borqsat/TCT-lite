@@ -879,10 +879,10 @@ class TRunner:
                             end = etree.SubElement(result_info, "end")
                             stdout = etree.SubElement(result_info, "stdout")
                             stderr = etree.SubElement(result_info, "stderr")
-                            if 'start_time' in case_result:
-                                start.text = case_result['start_time']
-                            if 'end_time' in case_result:
-                                end.text = case_result['end_time']
+                            if 'start_at' in case_result:
+                                start.text = case_result['start_at']
+                            if 'end_at' in case_result:
+                                end.text = case_result['end_at']
                             if 'stdout' in case_result:
                                 stdout.text = case_result['stdout']
                             if 'stderr' in case_result:
