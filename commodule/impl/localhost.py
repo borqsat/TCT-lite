@@ -30,6 +30,7 @@ import json
 import re
 import uuid
 import ConfigParser
+from datetime import datetime
 
 def get_url(baseurl, api):
     """get full url string"""
@@ -119,6 +120,7 @@ class StubExecThread(threading.Thread):
         os.remove(BUFFILE1)
         os.remove(BUFFILE2)
 
+DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 class CoreTestExecThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
     def __init__(self, device_id, test_set_name, exetype, test_cases):
@@ -173,6 +175,9 @@ class CoreTestExecThread(threading.Thread):
 
             print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s\nExpected Result: %s\nTotal: %s, Current: %s" % (tc['case_id'], tc['entry'], expected_result, total_count, current_idx)
             print "[ execute test script, this might take some time, please wait ]"
+            strtime = datetime.now().strftime(DATE_FORMAT_STR)
+            print "start time: %s" % strtime
+            tc["starttime"] = strtime
             if self.exetype == 'auto':
                 return_code, stdout, stderr = shell_exec(
                     core_cmd, time_out, False)
@@ -246,6 +251,9 @@ class CoreTestExecThread(threading.Thread):
                 except Exception, error:
                     print "[ Error: fail to get core manual test step, \
                     error: %s ]\n" % error
+            strtime = datetime.now().strftime(DATE_FORMAT_STR)
+            print "end time: %s" % strtime
+            tc["endtime"] = strtime
             print "Case Result: %s" % tc["result"]
             self.set_result(tc)
 
