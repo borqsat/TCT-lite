@@ -226,7 +226,7 @@ class CoreTestExecThread(threading.Thread):
 
             strtime = datetime.now().strftime(DATE_FORMAT_STR)
             print "start time: %s" % strtime
-            tc["start_time"] = strtime
+            tc["start_at"] = strtime
             if self.exetype == 'auto':
                 return_code, stdout, stderr = shell_exec(
                     core_cmd, time_out, False)
@@ -306,7 +306,7 @@ class CoreTestExecThread(threading.Thread):
                     error: %s ]\n" % error
             strtime = datetime.now().strftime(DATE_FORMAT_STR)
             print "end time: %s" % strtime
-            tc["end_time"] = strtime
+            tc["end_at"] = strtime
             print "Case Result: %s" % tc["result"]
             self.set_result(tc)
 
