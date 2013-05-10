@@ -30,6 +30,7 @@ import json
 import re
 import uuid
 import ConfigParser
+from datetime import datetime
 
 def get_url(baseurl, api):
     """get full url string"""
@@ -44,10 +45,7 @@ def http_request(url, rtype="POST", data=None):
             ret = requests.post(url, data=json.dumps(data), headers=headers)
             if ret:
                 result = ret.json()
-            else:
-                print "http status code: ", ret.status_code
         except Exception, e:
-            print "http response exception: ", e
             pass
     elif rtype == "GET":
         try:
@@ -55,7 +53,6 @@ def http_request(url, rtype="POST", data=None):
             if ret:
                 result = ret.json()
         except Exception, e:
-            print "http response exception: ", e
             pass
     return result
 
@@ -119,6 +116,7 @@ class StubExecThread(threading.Thread):
         os.remove(BUFFILE1)
         os.remove(BUFFILE2)
 
+DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 class CoreTestExecThread(threading.Thread):
     """sdb communication for serve_forever app in async mode"""
     def __init__(self, device_id, test_set_name, exetype, test_cases):
@@ -173,6 +171,9 @@ class CoreTestExecThread(threading.Thread):
 
             print "\n[case] execute case:\nTestCase: %s\nTestEntry: %s\nExpected Result: %s\nTotal: %s, Current: %s" % (tc['case_id'], tc['entry'], expected_result, total_count, current_idx)
             print "[ execute test script, this might take some time, please wait ]"
+            strtime = datetime.now().strftime(DATE_FORMAT_STR)
+            print "start time: %s" % strtime
+            tc["start_at"] = strtime
             if self.exetype == 'auto':
                 return_code, stdout, stderr = shell_exec(
                     core_cmd, time_out, False)
@@ -246,6 +247,9 @@ class CoreTestExecThread(threading.Thread):
                 except Exception, error:
                     print "[ Error: fail to get core manual test step, \
                     error: %s ]\n" % error
+            strtime = datetime.now().strftime(DATE_FORMAT_STR)
+            print "end time: %s" % strtime
+            tc["end_at"] = strtime
             print "Case Result: %s" % tc["result"]
             self.set_result(tc)
 
@@ -294,7 +298,7 @@ class WebTestExecThread(threading.Thread):
 
                 if ret is None or "error_code" in ret:
                     err_cnt += 1
-                    if err_cnt >= 10:
+                    if err_cnt >= 3:
                         lockobj.acquire()
                         test_server_status = {"finished": 1}
                         lockobj.release()
