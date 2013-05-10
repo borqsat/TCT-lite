@@ -1,22 +1,22 @@
 # Dependency:
-=================
+
 python2.7 python-pip requests
 
 	$ sudo apt-get install python-pip
 	$ sudo pip install requests
 
 # How to build:
-=================
+
     Build from source code: 
         $ sudo python setup.py build
 
 # How to install:
-=================
+
     Install testkit lite  from source code: 
         sudo python setup.py install
 
 # How to use:
-=================
+
     At first, install a test package or prepare one tests.xml file aligned with schema files: /opt/testkit/lite/xsd/testdefinition-syntax.xsd.
 
     And then,
@@ -57,20 +57,18 @@ python2.7 python-pip requests
             $ testkit-lite -f <somewhere1>/tests.xml <somewhere2>/tests.xml -A --priority P1 --type type1 ...
 
 # Get Results:
-=================
 
     Test report will be generated as tests.result.xml   
-	The result will be under /opt/testkit/lite/latest after execution, you can also check the history results in /opt/testkit/lite/yyyy-mm-dd-HH:MM:SS.NNNNNN.
+    The result will be under /opt/testkit/lite/latest after execution, you can also check the history results in /opt/testkit/lite/yyyy-mm-dd-HH:MM:SS.NNNNNN.
 
 # View Results:
-=================
 
-Test report can be viewed in HTML format, so the data in the xml result file looks more human friendly.
+    Test report can be viewed in HTML format, so the data in the xml result file looks more human friendly.
 
-Please follow the following steps to view test report:
-    1) copy files: application.js back_top.png jquery.min.js testresult.xsl tests.css under directory /opt/testkit/lite/xsd/
-    2) put the files from step 1) under the same directory as the xml result file
-    3) open xml result file with a web browser(IE, Chrome or Firefox)
+    Please follow the following steps to view test report:
+        1) copy files: application.js back_top.png jquery.min.js testresult.xsl tests.css under directory /opt/testkit/lite/xsd/
+        2) put the files from step 1) under the same directory as the xml result file
+        3) open xml result file with a web browser(IE, Chrome or Firefox)
 
 # Known Issues:
 =================
