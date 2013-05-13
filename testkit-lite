@@ -372,8 +372,12 @@ Note: \n\
             filename = "%s.total" % BASENAME(filename)
             resultfile = "%s.xml" % filename
             resultfile = JOIN(CURRENT_LOG_DIR, resultfile)
-            ep = etree.parse(t)
-            suiteparent = ep.getroot()
+            try:
+                ep = etree.parse(t)
+                suiteparent = ep.getroot()
+            except etree.ParseError, e:
+                print "[ Error: no case found in testxml, pls check the test package ]\n"
+                sys.exit(1)
             no_test_definition = 1
             for tf in ep.getiterator('test_definition'):
                 no_test_definition = 0
@@ -461,8 +465,12 @@ Note: \n\
         filename = "%s.total" % BASENAME(filename)
         resultfile = "%s.xml" % filename
         resultfile = JOIN(CURRENT_LOG_DIR, resultfile)
-        ep = etree.parse(testxml)
-        suiteparent = ep.getroot()
+        try:
+            ep = etree.parse(testxml)
+            suiteparent = ep.getroot()
+        except etree.ParseError, e:
+            print "[ Error: no case found in testxml, pls check the test package ]\n"
+            sys.exit(1)
         no_test_definition = 1
         for tf in ep.getiterator('test_definition'):
             no_test_definition = 0
