@@ -831,7 +831,8 @@ class TRunner:
             starup_parameters['client-command'] = tsuite.get("launcher")
             starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['stub-name'] = self.stub_name
-            starup_parameters['external-test'] = self.external_test
+            if self.external_test is not None:
+                starup_parameters['external-test'] = self.external_test
             starup_parameters['debug'] = self.debug
             if len(self.capabilities) > 0:
                 starup_parameters['capability'] = self.capabilities

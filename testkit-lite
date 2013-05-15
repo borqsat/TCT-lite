@@ -233,7 +233,7 @@ examples: %%prog  -f device:\"<somewhere>/test.xml\"\n\
     run both core and webapi packages: \n\
           %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml /usr/share/tts-bluez-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml ...\n\
     run in single mode: \n\
-          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' --comm localhost \n\
+          %%prog -f \"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' --comm localhost \n\
 \n\
 Note: \n\
           1) Proxy settings should be disabled when execute webapi packages\n\
@@ -266,6 +266,9 @@ Note: \n\
     if options.bautoonly and options.bmanualonly:
         raise ValueError("-A and -M are conflict")
     if options.commodule:
+        if options.commodule == 'localhost' and "device:" in options.testxml[0]:
+            raise ValueError("For single mode, pls set local file to test ")
+            sys.exit(1)
         COMMODULE_TYPE = options.commodule
     else:
         COMMODULE_TYPE = "tizenmobile"
@@ -372,8 +375,12 @@ Note: \n\
             filename = "%s.total" % BASENAME(filename)
             resultfile = "%s.xml" % filename
             resultfile = JOIN(CURRENT_LOG_DIR, resultfile)
-            ep = etree.parse(t)
-            suiteparent = ep.getroot()
+            try:
+                ep = etree.parse(t)
+                suiteparent = ep.getroot()
+            except etree.ParseError, e:
+                print "[ Error: no case found in testxml, pls check the test package ]\n"
+                sys.exit(1)
             no_test_definition = 1
             for tf in ep.getiterator('test_definition'):
                 no_test_definition = 0
@@ -461,8 +468,12 @@ Note: \n\
         filename = "%s.total" % BASENAME(filename)
         resultfile = "%s.xml" % filename
         resultfile = JOIN(CURRENT_LOG_DIR, resultfile)
-        ep = etree.parse(testxml)
-        suiteparent = ep.getroot()
+        try:
+            ep = etree.parse(testxml)
+            suiteparent = ep.getroot()
+        except etree.ParseError, e:
+            print "[ Error: no case found in testxml, pls check the test package ]\n"
+            sys.exit(1)
         no_test_definition = 1
         for tf in ep.getiterator('test_definition'):
             no_test_definition = 0
