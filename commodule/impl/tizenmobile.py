@@ -459,8 +459,10 @@ class TizenMobile:
         if "stub-port" in params:
             stub_server_port = params["stub-port"]
 
-        if "debug" in params and not params["debug"] is None:
-            debug_opt = "--debug"
+        if "debug" in params:
+            bvalue = params["debug"]
+            if bvalue:
+                debug_opt = "--debug"
 
         if not "testsuite-name" in params:
             LOGGER.info("\"testsuite-name\" is required for web tests!")
