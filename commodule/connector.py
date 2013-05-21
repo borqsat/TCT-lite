@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright (C) 2013 Intel Corporation
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -18,28 +18,25 @@
 #
 # Authors:
 #              Liu,chengtao <liux.chengtao@intel.com>
+"""Test connector for test instance and target instance"""
 
-import sys
-import time
+from .log import LOGGER
+
 
 class Connector:
-    """Communication module for automatic test"""
+
+    """Communication module for test host and test remote"""
     def __init__(self, config):
         self.__handler = None
         if "testremote" in config:
             try:
-                exec "from impl.%s import testremote" % config["testremote"]
-                self.__handler = testremote
-            except Exception, e:
-                print e
+                exec "from impl.%s import get_target_conn" % config[
+                    "testremote"]
+                self.__handler = get_target_conn()
+            except Exception, error:
+                LOGGER.error("[Error: Failed to initilize connector,"
+                             " exception: % s]\n" % error)
 
     def get_connector(self):
         """list the handler instance"""
         return self.__handler
-
-def main(argvs):
-    """commanline entry"""
-    pass
-
-if __name__ == '__main__':
-    main(sys.argv)
