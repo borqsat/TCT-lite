@@ -309,7 +309,7 @@ class HostCon:
         """get tizen deivce list of ids"""
         return ['localhost']
 
-    def get_device_info(self):
+    def get_device_info(self, deviceid=None):
         """get tizen deivce inforamtion"""
         device_info = {}
         resolution_str = "Empty resolution"
@@ -366,6 +366,7 @@ class HostCon:
             bvalue = params["debug"]
             if bvalue:
                 debug_opt = "--debug"
+
         if not "testsuite-name" in params:
             LOGGER.info("\"testsuite-name\" is required for web tests!")
             return result
