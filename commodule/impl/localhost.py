@@ -244,7 +244,7 @@ class WebTestExecThread(threading.Thread):
         for test_block in self.data_queue:
             cur_block += 1
             ret = http_request(get_url(
-                self.server_url, "/init_test"), "POST", test_block)
+                self.server_url, "/set_testcase"), "POST", test_block)
             if ret is None or "error_code" in ret:
                 break
 
@@ -347,7 +347,7 @@ class HostCon:
         device_info["os_version"] = os_version_str
         return device_info
 
-    def __init_test_stub(self, params):
+    def __init_webtest_opt(self, params):
         """init the test runtime, mainly process the star up of test stub"""
         result = None
         if params is None:
@@ -387,7 +387,7 @@ class HostCon:
                 "[ test suite \"%s\" not found in device! ]" % testsuite_name)
             return result
         else:
-            testsuite_id = ret[0].strip('\r\n')
+            test_opt["testsuite"] = ret[0].strip('\r\n')
 
         cmd = " killall %s " % stub_name
         ret = shell_command(cmd)
@@ -403,11 +403,11 @@ class HostCon:
         self.__test_async_shell.start()
         time.sleep(2)
 
-        # check if http server is ready for data transfer###
         timecnt = 0
+        bready = False
         while timecnt < 10:
             ret = http_request(get_url(
-                self.__server_url, "/check_server_status"), "GET", {})
+                self.__stub_server_url, "/check_server_status"), "GET", {})
             if ret is None:
                 LOGGER.info("[ check server status, not ready yet! ]")
                 time.sleep(1)
@@ -415,17 +415,24 @@ class HostCon:
             else:
                 if "error_code" in ret:
                     LOGGER.info("[ check server status, "
-                                "get error code %d ! ]" % ret[
-                                "error_code"])
-                    result = None
+                                "get error code %d ! ]" % ret["error_code"])
                 else:
-                    result = session_id
                     LOGGER.info("[ check server status, get ready! ]")
-                    if capability_opt is not None:
-                        ret = http_request(
-                            get_url(self.__server_url, "/set_capability"),
-                            "POST", capability_opt)
+                    bready = True
                 break
+
+        if bready:
+            LOGGER.info("[ init test parameters !]")
+            ret = http_request(get_url(self.__stub_server_url,
+                                       "/init_test"),
+                               "POST", test_opt)
+
+            if capability_opt is not None:
+                ret = http_request(get_url(self.__stub_server_url,
+                                           "/set_capability"),
+                                   "POST", capability_opt)
+            result = session_id
+
         return result
 
     def init_test(self, deviceid, params):
@@ -433,7 +440,7 @@ class HostCon:
         self.__device_id = deviceid
         if "client-command" in params and params['client-command'] is not None:
             self.__test_type = "webapi"
-            return self.__init_test_stub(params)
+            return self.__init_webtest_opt(params)
         else:
             self.__test_type = "coreapi"
             return str(uuid.uuid1())
