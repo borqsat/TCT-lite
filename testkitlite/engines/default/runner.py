@@ -422,9 +422,9 @@ class TRunner:
         mergefile = JOIN(latest_dir, mergefile)
         end_time = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
         LOGGER.info("\n[ test complete at time: %s ]" % end_time)
-        LOGGER.info("[ start merging test result xml files, "\
-            "this might take some time, please wait ]")
-        LOGGER.info("[ merge result files into %s ]" % mergefile)
+        #LOGGER.info("[ start merging test result xml files, "\
+        #    "this might take some time, please wait ]")
+        #LOGGER.info("[ merge result files into %s ]" % mergefile)
         root = etree.Element('test_definition')
         root.tail = "\n"
         totals = set()
@@ -494,7 +494,7 @@ class TRunner:
             totalfile = "%s.xml" % totalfile
             total_xml = etree.parse(totalfile)
 
-            LOGGER.info("|--[ merge webapi result file: %s ]" % resultfile)
+            #LOGGER.info("|--[ merge webapi result file: %s ]" % resultfile)
             result_xml = etree.parse(resultfile)
             for total_suite in total_xml.getiterator('suite'):
                 for total_set in total_suite.getiterator('set'):
@@ -518,9 +518,9 @@ class TRunner:
             result_case_iterator = result_set.getiterator(
                 'testcase')
             if result_case_iterator:
-                LOGGER.info("----[ suite: %s, set: %s, time: %s ]"
-                % (result_suite.get('name'), result_set.get('name'), 
-                    datetime.today().strftime("%Y-%m-%d_%H_%M_%S")))
+                #LOGGER.info("----[ suite: %s, set: %s, time: %s ]"
+                #% (result_suite.get('name'), result_set.get('name'), 
+                #    datetime.today().strftime("%Y-%m-%d_%H_%M_%S")))
                 for result_case in result_case_iterator:
                     try:
                         self.__count_result(result_case)

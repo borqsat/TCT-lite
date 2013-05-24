@@ -469,11 +469,16 @@ Note: \n\
 
     try:
         RUNNER.run_case(CURRENT_LOG_DIR)
+    except Exception, e:
+        traceback.print_exc() 
+        LOGGER.error("[ Error: run_test_case failed ,error: %s ]\n" % e)  
+    try:
         RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
         LOGGER.info("[ all tasks for testkit lite are accomplished, goodbye ]")
     except Exception, e:
-        LOGGER.error("[ Error: run_and_merge_resultfile "\
-            "from testkit-lite failed,error: %s ]\n" % e)
+        traceback.print_exc()
+        LOGGER.error("[ Error: merge_resultfile "\
+            "failed,error: %s ]\n" % e)
 
 except KeyboardInterrupt, e:
     LOGGER.info("\n[ exiting testkit-lite on user cancel ]\n")
