@@ -326,12 +326,6 @@ class WebTestExecThread(threading.Thread):
                     TEST_SERVER_STATUS = ret
                     LOCK_OBJ.release()
                     err_cnt = 0
-                    LOGGER.info("[ test suite: %s, block: %d/%d ,"
-                                " finished: %s ]" % (self.test_set_name,
-                                                     cur_block,
-                                                     total_block,
-                                                     ret["finished"])
-                                )
                     # check if current test set is finished
                     if ret["finished"] == 1:
                         set_finished = True
@@ -441,17 +435,39 @@ class TizenMobile:
         """upload file to device"""
         return _upload_file(deviceid, remote_path, local_path)
 
+    def __get_test_options(self, deviceid, test_launcher, test_suite):
+        test_opt = {}
+        if test_launcher.find('WRTLauncher') != -1:
+            test_opt["launcher"] = "wrt-launcher"
+            cmd = "sdb -s %s shell wrt-launcher -l " \
+                " | grep %s | awk '{print $NF}'" % (
+                    deviceid, test_suite)
+            ret = shell_command(cmd)
+            if len(ret) == 0:
+                LOGGER.info("[ test suite \"%s\" not found in target ]"
+                            % testsuite_name)
+                return None
+            else:
+                test_opt["suite_id"] = ret[0].strip('\r\n')
+        else:
+            test_opt["launcher"] = test_launcher
+
+        test_opt["suite_name"] = test_suite
+        return test_opt
+
     def __init_webtest_opt(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
         result = None
         if params is None:
             return result
 
-        stub_app = params["stub-name"]
         debug_opt = ""
-        testsuite_name = ""
-        test_opt = {}
+        test_opt = None
         capability_opt = None
+        stub_app = params["stub-name"]
+        stub_port = "8000"
+        test_launcher = params["external-test"]
+        testsuite_name = params["testsuite-name"]
 
         if "debug" in params and params["debug"]:
             debug_opt = "--debug"
@@ -459,63 +475,30 @@ class TizenMobile:
         if "capability" in params:
             capability_opt = params["capability"]
 
-        if "debug" in params and params["debug"]:
-            debug_opt = "--debug"
-
-        if "debug" in params:
-            bvalue = params["debug"]
-            if bvalue:
-                debug_opt = "--debug"
-
-        if not "testsuite-name" in params:
-            LOGGER.info("\"testsuite-name\" must indentified for web tests!")
+        test_opt = self.__get_test_options(
+            deviceid, test_launcher, testsuite_name)
+        if test_opt is None:
             return result
-        else:
-            testsuite_name = params["testsuite-name"]
 
-        if not "external-test" in params:
-            LOGGER.info("\"external-test\" is required for web tests!")
-            return result
-        else:
-            test_opt["launcher"] = params["external-test"]
-            if test_opt["launcher"].find("WRTLauncher") != -1:
-                test_opt["launcher"] = "wrt-launcher"
-
-        cmd = "sdb -s %s shell wrt-launcher -l | grep %s | " \
-              " awk '{print $NF}'" \
-              % (deviceid, testsuite_name)
-        ret = shell_command(cmd)
-        if len(ret) == 0:
-            LOGGER.info("[ test suite \"%s\" not found in device ]"
-                        % testsuite_name)
-            return result
-        else:
-            test_opt["testsuite"] = ret[0].strip('\r\n')
-
+        LOGGER.info("[ launch the stub httpserver ]")
         cmd = "sdb shell killall %s " % stub_app
         ret = shell_command(cmd)
-        LOGGER.info("[ waiting for kill http server ]")
-        time.sleep(3)
-
         session_id = str(uuid.uuid1())
-        self.__stub_server_url = _get_forward_connect(deviceid, "8000")
-        LOGGER.info("[ forward server %s ]" % self.__stub_server_url)
-        LOGGER.info("[ launch the stub app ]")
-        cmdline = "sdb -s %s shell %s --port:8000 %s" \
-            % (deviceid, stub_app, debug_opt)
+        cmdline = "sdb -s %s shell %s --port:%s %s" \
+            % (deviceid, stub_app, stub_port, debug_opt)
         self.__test_async_shell = StubExecThread(cmd=cmdline,
                                                  sessionid=session_id)
         self.__test_async_shell.start()
-        time.sleep(2)
+        self.__stub_server_url = _get_forward_connect(deviceid, stub_port)
 
         timecnt = 0
         bready = False
         while timecnt < 10:
+            time.sleep(1)
             ret = http_request(get_url(
                 self.__stub_server_url, "/check_server_status"), "GET", {})
             if ret is None:
                 LOGGER.info("[ check server status, not ready yet! ]")
-                time.sleep(1)
                 timecnt += 1
             else:
                 if "error_code" in ret:
@@ -523,23 +506,24 @@ class TizenMobile:
                                 "get error code %d ! ]" % ret["error_code"])
                     return result
                 else:
-                    LOGGER.info("[ check server status, get ready! ]")
                     bready = True
                 break
 
         if bready:
-            LOGGER.info("[ init test parameters !]")
             ret = http_request(get_url(self.__stub_server_url,
                                        "/init_test"),
                                "POST", test_opt)
+            if "error_code" in ret:
+                return None
 
             if capability_opt is not None:
                 ret = http_request(get_url(self.__stub_server_url,
                                            "/set_capability"),
                                    "POST", capability_opt)
-            result = str(uuid.uuid1())
-
-        return result
+            return session_id
+        else:
+            LOGGER.info("[ connect to server timeout! ]")
+            return result
 
     def init_test(self, deviceid, params):
         """init the test envrionment"""

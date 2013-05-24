@@ -19,7 +19,7 @@
 #
 # Authors:
 #              Liu ChengTao <liux.chengtao@intel.com>
-""" The implementation for single test mode"""
+""" The implementation for local mode"""
 
 import os
 import time
@@ -34,6 +34,8 @@ from .autoexec import shell_command, shell_command_ext
 
 
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
+HOST_NS = "127.0.0.1"
+os.environ["no_proxy"] = HOST_NS
 
 
 class StubExecThread(threading.Thread):
@@ -265,12 +267,6 @@ class WebTestExecThread(threading.Thread):
                     TEST_SERVER_STATUS = ret
                     LOCK_OBJ.release()
                     err_cnt = 0
-                    LOGGER.info("[ test suite: %s, block: %d/%d ,"
-                                " finished: %s ]" % (self.test_set_name,
-                                                     cur_block,
-                                                     total_block,
-                                                     ret["finished"])
-                                )
                     # check if current test set is finished
                     if ret["finished"] == 1:
                         set_finished = True
@@ -297,13 +293,13 @@ class HostCon:
     """ Implementation for transfer data to Test Target in Local Host"""
 
     def __init__(self):
-        self.__server_url = "http://127.0.0.1:8000"
         self.__test_async_shell = None
         self.__test_async_http = None
         self.__test_async_core = None
         self.__test_set_block = 100
         self.__device_id = None
         self.__test_type = None
+        self.__server_url = None
 
     def get_device_ids(self):
         """get tizen deivce list of ids"""
@@ -347,93 +343,92 @@ class HostCon:
         device_info["os_version"] = os_version_str
         return device_info
 
+    def __get_test_options(self, test_launcher, test_suite):
+        test_opt = {}
+        if test_launcher.find('WRTLauncher') != -1:
+            test_opt["launcher"] = "wrt-launcher"
+            cmd = "wrt-launcher -l | grep %s | awk '{print $NF}'" % test_suite
+            ret = shell_command(cmd)
+            if len(ret) == 0:
+                LOGGER.info("[ test suite \"%s\" not found in target ]"
+                            % testsuite_name)
+                return None
+            else:
+                test_opt["suite_id"] = ret[0].strip('\r\n')
+        else:
+            test_opt["launcher"] = test_launcher
+
+        test_opt["suite_name"] = test_suite
+        return test_opt
+
     def __init_webtest_opt(self, params):
         """init the test runtime, mainly process the star up of test stub"""
         result = None
         if params is None:
             return result
 
-        testsuite_name = ""
-        testsuite_id = ""
-        external_command = ""
-        stub_name = params["stub-name"]
-        capability_opt = None
         debug_opt = ""
+        test_opt = None
+        capability_opt = None
+        stub_app = params["stub-name"]
+        stub_port = "8000"
+        test_launcher = params["external-test"]
+        testsuite_name = params["testsuite-name"]
+
+        if "debug" in params and params["debug"]:
+            debug_opt = "--debug"
+
         if "capability" in params:
             capability_opt = params["capability"]
 
-        if "debug" in params:
-            bvalue = params["debug"]
-            if bvalue:
-                debug_opt = "--debug"
-
-        if not "testsuite-name" in params:
-            LOGGER.info("\"testsuite-name\" is required for web tests!")
+        test_opt = self.__get_test_options(test_launcher, testsuite_name)
+        if test_opt is None:
             return result
-        else:
-            testsuite_name = params["testsuite-name"]
-        if not "external-test" in params:
-            LOGGER.info("\"external-test\" is required for web tests!")
-            return result
-        else:
-            external_command = params["external-test"]
-            if external_command.find("WRTLauncher") != -1:
-                external_command = "wrt-launcher"
 
-        cmd = "wrt-launcher -l | grep %s | awk '{print $NF}'" % testsuite_name
+        LOGGER.info("[ launch the stub httpserver ]")
+        cmd = " killall %s " % stub_app
         ret = shell_command(cmd)
-        if len(ret) == 0:
-            LOGGER.info(
-                "[ test suite \"%s\" not found in device! ]" % testsuite_name)
-            return result
-        else:
-            test_opt["testsuite"] = ret[0].strip('\r\n')
-
-        cmd = " killall %s " % stub_name
-        ret = shell_command(cmd)
-        LOGGER.info("[ waiting for kill http server ]")
-        time.sleep(3)
-
         session_id = str(uuid.uuid1())
-        LOGGER.info("[ launch the stub app ]")
-        cmdline = "%s --testsuite:%s --external-test:\"%s\" %s" % \
-                  (stub_name, testsuite_id, external_command, debug_opt)
-        self.__test_async_shell = StubExecThread(
-            cmd=cmdline, sessionid=session_id)
+        cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
+        self.__test_async_shell = StubExecThread(cmd=cmdline,
+                                                 sessionid=session_id)
         self.__test_async_shell.start()
-        time.sleep(2)
 
+        self.__server_url = "http://%s:%s" % (HOST_NS, stub_port)
         timecnt = 0
         bready = False
         while timecnt < 10:
-            ret = http_request(get_url(
-                self.__stub_server_url, "/check_server_status"), "GET", {})
+            time.sleep(1)
+            ret = http_request(get_url(self.__server_url,
+                                       "/check_server_status"), "GET", {})
             if ret is None:
                 LOGGER.info("[ check server status, not ready yet! ]")
-                time.sleep(1)
                 timecnt += 1
             else:
                 if "error_code" in ret:
                     LOGGER.info("[ check server status, "
                                 "get error code %d ! ]" % ret["error_code"])
+                    return result
                 else:
                     LOGGER.info("[ check server status, get ready! ]")
                     bready = True
                 break
 
         if bready:
-            LOGGER.info("[ init test parameters !]")
-            ret = http_request(get_url(self.__stub_server_url,
+            ret = http_request(get_url(self.__server_url,
                                        "/init_test"),
                                "POST", test_opt)
+            if "error_code" in ret:
+                return None
 
             if capability_opt is not None:
-                ret = http_request(get_url(self.__stub_server_url,
+                ret = http_request(get_url(self.__server_url,
                                            "/set_capability"),
                                    "POST", capability_opt)
-            result = session_id
-
-        return result
+            return session_id
+        else:
+            LOGGER.info("[ connect to server timeout! ]")
+            return result
 
     def init_test(self, deviceid, params):
         """init the test envrionment"""
