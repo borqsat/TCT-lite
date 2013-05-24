@@ -124,7 +124,7 @@ def shell_command_ext(cmd="",
         stderr_log = '<![CDATA[' + stderr_log + ']]>'
         if 'returncode=' in stdout_log:
             index = stdout_log.find('returncode=') + 11
-            retruncode = str(int(stdout_log[index:]))
+            retruncode = str(stdout_log[index:])
             exit_code = retruncode
 
     wbuffile1.close()
