@@ -68,7 +68,7 @@ def _set_result(result_data):
     global TEST_SERVER_RESULT
     if not result_data is None:
         LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT["cases"].extend(result_data["cases"])
+        TEST_SERVER_RESULT["cases"].extend(result_data)
         LOCK_OBJ.release()
 
 
@@ -216,7 +216,7 @@ class CoreTestExecThread(threading.Thread):
             LOGGER.info("Case Result: %s" % test_case["result"])
             result_list.append(test_case)
 
-        _set_result({'cases': result_list})
+        _set_result(result_list)
         LOCK_OBJ.acquire()
         TEST_SERVER_STATUS = {"finished": 1}
         LOCK_OBJ.release()
@@ -273,14 +273,14 @@ class WebTestExecThread(threading.Thread):
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        _set_result(ret)
+                        _set_result(ret["cases"])
                         break
                     # check if current block is finished
                     elif ret["block_finished"] == 1:
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        _set_result(ret)
+                        _set_result(ret["cases"])
                         break
                 time.sleep(2)
 
