@@ -351,7 +351,7 @@ class HostCon:
             ret = shell_command(cmd)
             if len(ret) == 0:
                 LOGGER.info("[ test suite \"%s\" not found in target ]"
-                            % testsuite_name)
+                            % test_suite)
                 return None
             else:
                 test_opt["suite_id"] = ret[0].strip('\r\n')
