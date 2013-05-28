@@ -63,12 +63,32 @@ TEST_SERVER_RESULT = []
 TEST_SERVER_STATUS = {}
 
 
+def _get_test_options(test_launcher, test_suite):
+    """get test option dict """
+    test_opt = {}
+    if test_launcher.find('WRTLauncher') != -1:
+        test_opt["launcher"] = "wrt-launcher"
+        cmd = "wrt-launcher -l | grep %s | awk '{print $NF}'" % test_suite
+        ret = shell_command(cmd)
+        if len(ret) == 0:
+            LOGGER.info("[ test suite \"%s\" not found in target ]"
+                        % test_suite)
+            return None
+        else:
+            test_opt["suite_id"] = ret[0].strip('\r\n')
+    else:
+        test_opt["launcher"] = test_launcher
+
+    test_opt["suite_name"] = test_suite
+    return test_opt
+
+
 def _set_result(result_data):
     """set cases result to the global result buffer"""
     global TEST_SERVER_RESULT
     if not result_data is None:
         LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT["cases"].extend(result_data["cases"])
+        TEST_SERVER_RESULT["cases"].extend(result_data)
         LOCK_OBJ.release()
 
 
@@ -152,7 +172,7 @@ class CoreTestExecThread(threading.Thread):
                                     config.read(fname)
                                     item['value'] = config.get(ind, 'value')
                                     retmeasures.append(item)
-                                except Exception, error:
+                                except IOError, error:
                                     LOGGER.error(
                                         "[ Error: failed to parse value,"
                                         " error: %s ]\n" % error)
@@ -206,7 +226,7 @@ class CoreTestExecThread(threading.Thread):
                                 LOGGER.info(
                                     "[ Warning: you input: '%s' is invalid,"
                                     " please try again ]" % test_result)
-                except Exception, error:
+                except IOError, error:
                     LOGGER.error(
                         "[ Error: fail to get core manual test step,"
                         " error: %s ]\n" % error)
@@ -216,7 +236,7 @@ class CoreTestExecThread(threading.Thread):
             LOGGER.info("Case Result: %s" % test_case["result"])
             result_list.append(test_case)
 
-        _set_result({'cases': result_list})
+        _set_result(result_list)
         LOCK_OBJ.acquire()
         TEST_SERVER_STATUS = {"finished": 1}
         LOCK_OBJ.release()
@@ -236,15 +256,12 @@ class WebTestExecThread(threading.Thread):
         if self.data_queue is None:
             return
         set_finished = False
-        cur_block = 0
         err_cnt = 0
-        total_block = len(self.data_queue)
         global TEST_SERVER_STATUS, TEST_SERVER_RESULT
         LOCK_OBJ.acquire()
         TEST_SERVER_RESULT = {"cases": []}
         LOCK_OBJ.release()
         for test_block in self.data_queue:
-            cur_block += 1
             ret = http_request(get_url(
                 self.server_url, "/set_testcase"), "POST", test_block)
             if ret is None or "error_code" in ret:
@@ -273,14 +290,14 @@ class WebTestExecThread(threading.Thread):
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        _set_result(ret)
+                        _set_result(ret["cases"])
                         break
                     # check if current block is finished
                     elif ret["block_finished"] == 1:
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        _set_result(ret)
+                        _set_result(ret["cases"])
                         break
                 time.sleep(2)
 
@@ -293,13 +310,15 @@ class HostCon:
     """ Implementation for transfer data to Test Target in Local Host"""
 
     def __init__(self):
+        self.__test_set_block = 100
+        self.__device_id = None
+        self.__server_url = None
+        self.__test_sessions = {}
+
         self.__test_async_shell = None
         self.__test_async_http = None
         self.__test_async_core = None
-        self.__test_set_block = 100
-        self.__device_id = None
         self.__test_type = None
-        self.__server_url = None
 
     def get_device_ids(self):
         """get tizen deivce list of ids"""
@@ -343,30 +362,13 @@ class HostCon:
         device_info["os_version"] = os_version_str
         return device_info
 
-    def __get_test_options(self, test_launcher, test_suite):
-        test_opt = {}
-        if test_launcher.find('WRTLauncher') != -1:
-            test_opt["launcher"] = "wrt-launcher"
-            cmd = "wrt-launcher -l | grep %s | awk '{print $NF}'" % test_suite
-            ret = shell_command(cmd)
-            if len(ret) == 0:
-                LOGGER.info("[ test suite \"%s\" not found in target ]"
-                            % testsuite_name)
-                return None
-            else:
-                test_opt["suite_id"] = ret[0].strip('\r\n')
-        else:
-            test_opt["launcher"] = test_launcher
-
-        test_opt["suite_name"] = test_suite
-        return test_opt
-
     def __init_webtest_opt(self, params):
         """init the test runtime, mainly process the star up of test stub"""
         result = None
         if params is None:
             return result
 
+        session_id = str(uuid.uuid1())
         debug_opt = ""
         test_opt = None
         capability_opt = None
@@ -381,20 +383,20 @@ class HostCon:
         if "capability" in params:
             capability_opt = params["capability"]
 
-        test_opt = self.__get_test_options(test_launcher, testsuite_name)
+        test_opt = _get_test_options(test_launcher, testsuite_name)
         if test_opt is None:
             return result
 
         LOGGER.info("[ launch the stub httpserver ]")
-        cmd = " killall %s " % stub_app
-        ret = shell_command(cmd)
-        session_id = str(uuid.uuid1())
+        cmdline = " killall %s " % stub_app
+        ret = shell_command(cmdline)
         cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
-        self.__test_async_shell = StubExecThread(cmd=cmdline,
-                                                 sessionid=session_id)
-        self.__test_async_shell.start()
+        proc_stub = StubExecThread(cmd=cmdline, sessionid=session_id)
+        proc_stub.start()
+        self.__test_sessions[session_id]["stub_proc"] = proc_stub
+        self.__test_sessions[session_id]["stub_url"] = "http://%s:%s" \
+                                                       % (HOST_NS, stub_port)
 
-        self.__server_url = "http://%s:%s" % (HOST_NS, stub_port)
         timecnt = 0
         bready = False
         while timecnt < 10:
@@ -527,7 +529,7 @@ class HostCon:
             LOCK_OBJ.acquire()
             result = TEST_SERVER_RESULT
             LOCK_OBJ.release()
-        except Exception, error:
+        except OSError, error:
             LOGGER.error(
                 "[ Error: failed to get test result, error: %s ]\n" % error)
 
