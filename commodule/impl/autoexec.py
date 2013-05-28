@@ -120,12 +120,12 @@ def shell_command_ext(cmd="",
         stderr_log = rbuffile2.read()
         stdout_log = str2str(stdout_log)
         stderr_log = str2str(stderr_log)
-        stdout_log = '<![CDATA[' + stdout_log + ']]>'
-        stderr_log = '<![CDATA[' + stderr_log + ']]>'
         if 'returncode=' in stdout_log:
             index = stdout_log.find('returncode=') + 11
             retruncode = str(stdout_log[index:])
-            exit_code = retruncode
+            exit_code = retruncode.strip('\r\n')
+        stdout_log = '<![CDATA[' + stdout_log + ']]>'
+        stderr_log = '<![CDATA[' + stderr_log + ']]>'
 
     wbuffile1.close()
     wbuffile2.close()
