@@ -92,28 +92,6 @@ def _upload_file(deviceid, remote_path, local_path):
     return ret
 
 
-def __get_test_options(deviceid, test_launcher, test_suite):
-    """get test option dict """
-    test_opt = {}
-    if test_launcher.find('WRTLauncher') != -1:
-        test_opt["launcher"] = "wrt-launcher"
-        cmd = "sdb -s %s shell wrt-launcher -l " \
-            " | grep %s | awk '{print $NF}'" % (
-                deviceid, test_suite)
-        ret = shell_command(cmd)
-        if len(ret) == 0:
-            LOGGER.info("[ test suite \"%s\" not found in target ]"
-                        % test_suite)
-            return None
-        else:
-            test_opt["suite_id"] = ret[0].strip('\r\n')
-    else:
-        test_opt["launcher"] = test_launcher
-
-    test_opt["suite_name"] = test_suite
-    return test_opt
-
-
 class StubExecThread(threading.Thread):
 
     """stub instance serve_forever in async mode"""
@@ -380,6 +358,8 @@ class TizenMobile:
         self.__test_set_block = 100
         self.__device_id = None
         self.__test_type = None
+        self.__test_auto_iu = False
+        self.__test_wgt = None
 
     def get_device_ids(self):
         """get tizen deivce list of ids"""
@@ -454,12 +434,42 @@ class TizenMobile:
         """upload file to device"""
         return _upload_file(deviceid, remote_path, local_path)
 
+    def __get_test_options(self, deviceid, test_launcher, test_suite):
+        """get test option dict """
+        test_opt = {}
+        test_opt["suite_name"] = test_suite
+        if test_launcher.find('WRTLauncher') != -1:
+            test_opt["launcher"] = "wrt-launcher"
+            if self.__test_auto_iu:
+                cmd = "sdb -s %s shell wrt-installer -i  /opt/%s/%s.wgt " % (
+                    deviceid, test_suite, self.__test_wgt)
+                ret = shell_command(cmd)
+                test_wgt = self.__test_wgt
+            else:
+                test_wgt = test_suite
+
+            cmd = "sdb -s %s shell wrt-launcher -l " \
+                  " | grep %s | awk '{print $NF}'" % (deviceid, test_wgt)
+            ret = shell_command(cmd)
+            if len(ret) == 0:
+                LOGGER.info("[ test widget \"%s\" not installed in target ]"
+                            % test_wgt)
+                return None
+            else:
+                test_opt["suite_id"] = ret[0].strip('\r\n')
+                self.__test_wgt = test_opt["suite_id"]
+        else:
+            test_opt["launcher"] = test_launcher
+
+        return test_opt
+
     def __init_webtest_opt(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
         result = None
         if params is None:
             return result
 
+        session_id = str(uuid.uuid1())
         debug_opt = ""
         test_opt = None
         capability_opt = None
@@ -474,7 +484,13 @@ class TizenMobile:
         if "capability" in params:
             capability_opt = params["capability"]
 
-        test_opt = __get_test_options(
+        if params['client-command'].find('--iu') != -1:
+            self.__test_auto_iu = True
+            self.__test_wgt = params["testset-name"]
+        else:
+            self.__test_auto_iu = False
+
+        test_opt = self.__get_test_options(
             deviceid, test_launcher, testsuite_name)
         if test_opt is None:
             return result
@@ -482,7 +498,6 @@ class TizenMobile:
         LOGGER.info("[ launch the stub httpserver ]")
         cmdline = "sdb shell killall %s " % stub_app
         ret = shell_command(cmdline)
-        session_id = str(uuid.uuid1())
         cmdline = "sdb -s %s shell %s --port:%s %s" \
             % (deviceid, stub_app, stub_port, debug_opt)
         self.__test_async_shell = StubExecThread(cmd=cmdline,
@@ -631,7 +646,13 @@ class TizenMobile:
         """clear the test stub and related resources"""
         if sessionid is None:
             return False
+
         if self.__test_type == "webapi":
+            if self.__test_auto_iu:
+                cmd = "sdb -s %s shell wrt-installer -un %s" \
+                    % (self.__device_id, self.__test_wgt)
+                ret = shell_command(cmd)
+
             ret = http_request(get_url(
                 self.__stub_server_url, "/shut_down_server"), "GET", {})
             if ret:

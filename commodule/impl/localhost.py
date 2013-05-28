@@ -63,7 +63,7 @@ TEST_SERVER_RESULT = []
 TEST_SERVER_STATUS = {}
 
 
-def __get_test_options(test_launcher, test_suite):
+def _get_test_options(test_launcher, test_suite):
     """get test option dict """
     test_opt = {}
     if test_launcher.find('WRTLauncher') != -1:
@@ -310,13 +310,15 @@ class HostCon:
     """ Implementation for transfer data to Test Target in Local Host"""
 
     def __init__(self):
+        self.__test_set_block = 100
+        self.__device_id = None
+        self.__server_url = None
+        self.__test_sessions = {}
+
         self.__test_async_shell = None
         self.__test_async_http = None
         self.__test_async_core = None
-        self.__test_set_block = 100
-        self.__device_id = None
         self.__test_type = None
-        self.__server_url = None
 
     def get_device_ids(self):
         """get tizen deivce list of ids"""
@@ -366,6 +368,7 @@ class HostCon:
         if params is None:
             return result
 
+        session_id = str(uuid.uuid1())
         debug_opt = ""
         test_opt = None
         capability_opt = None
@@ -380,20 +383,20 @@ class HostCon:
         if "capability" in params:
             capability_opt = params["capability"]
 
-        test_opt = __get_test_options(test_launcher, testsuite_name)
+        test_opt = _get_test_options(test_launcher, testsuite_name)
         if test_opt is None:
             return result
 
         LOGGER.info("[ launch the stub httpserver ]")
         cmdline = " killall %s " % stub_app
         ret = shell_command(cmdline)
-        session_id = str(uuid.uuid1())
         cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
-        self.__test_async_shell = StubExecThread(cmd=cmdline,
-                                                 sessionid=session_id)
-        self.__test_async_shell.start()
+        proc_stub = StubExecThread(cmd=cmdline, sessionid=session_id)
+        proc_stub.start()
+        self.__test_sessions[session_id]["stub_proc"] = proc_stub
+        self.__test_sessions[session_id]["stub_url"] = "http://%s:%s" \
+                                                       % (HOST_NS, stub_port)
 
-        self.__server_url = "http://%s:%s" % (HOST_NS, stub_port)
         timecnt = 0
         bready = False
         while timecnt < 10:
