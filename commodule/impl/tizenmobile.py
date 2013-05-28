@@ -92,6 +92,28 @@ def _upload_file(deviceid, remote_path, local_path):
     return ret
 
 
+def __get_test_options(deviceid, test_launcher, test_suite):
+    """get test option dict """
+    test_opt = {}
+    if test_launcher.find('WRTLauncher') != -1:
+        test_opt["launcher"] = "wrt-launcher"
+        cmd = "sdb -s %s shell wrt-launcher -l " \
+            " | grep %s | awk '{print $NF}'" % (
+                deviceid, test_suite)
+        ret = shell_command(cmd)
+        if len(ret) == 0:
+            LOGGER.info("[ test suite \"%s\" not found in target ]"
+                        % test_suite)
+            return None
+        else:
+            test_opt["suite_id"] = ret[0].strip('\r\n')
+    else:
+        test_opt["launcher"] = test_launcher
+
+    test_opt["suite_name"] = test_suite
+    return test_opt
+
+
 class StubExecThread(threading.Thread):
 
     """stub instance serve_forever in async mode"""
@@ -212,7 +234,7 @@ class CoreTestExecThread(threading.Thread):
                                     item['value'] = config.get(ind, 'value')
                                     retmeasures.append(item)
                                     os.remove(tmpname)
-                                except Exception, error:
+                                except IOError, error:
                                     LOGGER.error(
                                         "[ Error: fail to parse value,"
                                         " error:%s ]\n" % error)
@@ -265,7 +287,7 @@ class CoreTestExecThread(threading.Thread):
                                 LOGGER.info(
                                     "[ Warnning: you input: '%s' is invalid,"
                                     " please try again ]" % test_result)
-                except Exception, error:
+                except IOError, error:
                     LOGGER.info(
                         "[ Error: fail to get core manual test step,"
                         " error: %s ]\n" % error)
@@ -296,15 +318,12 @@ class WebTestExecThread(threading.Thread):
             return
 
         set_finished = False
-        cur_block = 0
         err_cnt = 0
-        total_block = len(self.data_queue)
         global TEST_SERVER_RESULT, TEST_SERVER_STATUS
         LOCK_OBJ.acquire()
         TEST_SERVER_RESULT = {"cases": []}
         LOCK_OBJ.release()
         for test_block in self.data_queue:
-            cur_block += 1
             ret = http_request(get_url(
                 self.server_url, "/set_testcase"), "POST", test_block)
             if ret is None or "error_code" in ret:
@@ -435,26 +454,6 @@ class TizenMobile:
         """upload file to device"""
         return _upload_file(deviceid, remote_path, local_path)
 
-    def __get_test_options(self, deviceid, test_launcher, test_suite):
-        test_opt = {}
-        if test_launcher.find('WRTLauncher') != -1:
-            test_opt["launcher"] = "wrt-launcher"
-            cmd = "sdb -s %s shell wrt-launcher -l " \
-                " | grep %s | awk '{print $NF}'" % (
-                    deviceid, test_suite)
-            ret = shell_command(cmd)
-            if len(ret) == 0:
-                LOGGER.info("[ test suite \"%s\" not found in target ]"
-                            % test_suite)
-                return None
-            else:
-                test_opt["suite_id"] = ret[0].strip('\r\n')
-        else:
-            test_opt["launcher"] = test_launcher
-
-        test_opt["suite_name"] = test_suite
-        return test_opt
-
     def __init_webtest_opt(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
         result = None
@@ -475,14 +474,14 @@ class TizenMobile:
         if "capability" in params:
             capability_opt = params["capability"]
 
-        test_opt = self.__get_test_options(
+        test_opt = __get_test_options(
             deviceid, test_launcher, testsuite_name)
         if test_opt is None:
             return result
 
         LOGGER.info("[ launch the stub httpserver ]")
-        cmd = "sdb shell killall %s " % stub_app
-        ret = shell_command(cmd)
+        cmdline = "sdb shell killall %s " % stub_app
+        ret = shell_command(cmdline)
         session_id = str(uuid.uuid1())
         cmdline = "sdb -s %s shell %s --port:%s %s" \
             % (deviceid, stub_app, stub_port, debug_opt)
@@ -623,7 +622,7 @@ class TizenMobile:
             LOCK_OBJ.acquire()
             result = TEST_SERVER_RESULT
             LOCK_OBJ.release()
-        except Exception, error:
+        except OSError, error:
             LOGGER.error(
                 "[ Error: failed to get test result, error:%s ]\n" % error)
         return result
