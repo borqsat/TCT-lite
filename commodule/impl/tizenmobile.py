@@ -484,7 +484,7 @@ class TizenMobile:
         if "capability" in params:
             capability_opt = params["capability"]
 
-        if params['client-command'].find('--iu') != -1:
+        if params['client-command'].find('-iu') != -1:
             self.__test_auto_iu = True
             self.__test_wgt = params["testset-name"]
         else:
