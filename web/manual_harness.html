@@ -169,7 +169,7 @@ function submitTest(){
           async: false,
           url: server_url,
           type: "POST",
-          data: {"purpose": window.parent.manualcaseslist[iTestsManual].purpose, "result": iResult},
+          data: {"case_id": window.parent.manualcaseslist[iTestsManual].casesid,"purpose": window.parent.manualcaseslist[iTestsManual].purpose, "result": iResult},
           dataType: "json",
           beforeSend: function(x) {
             if (x && x.overrideMimeType) {
