@@ -886,6 +886,7 @@ table#results td {\
 					+ "</div><br/>Last Test Result:<div id=\"test_result_div\">"
 					+ json_progress.last_test_result + "</div>";
 			current_page_uri = json_task.entry;
+			case_id_str = json_task.case_id;
 			var index = current_page_uri.indexOf("?");
 			var test_page = "";
 			if (index >= 0)
@@ -1113,6 +1114,7 @@ table#results td {\
 			url : server_url,
 			type : "POST",
 			data : {
+				"case_id" : case_id_str,
 				"purpose" : purpose_str,
 				"result" : result,
 				"msg" : "[Message]" + msg,
