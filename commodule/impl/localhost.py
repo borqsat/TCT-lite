@@ -313,8 +313,6 @@ class HostCon:
         self.__test_set_block = 100
         self.__device_id = None
         self.__server_url = None
-        self.__test_sessions = {}
-
         self.__test_async_shell = None
         self.__test_async_http = None
         self.__test_async_core = None
@@ -391,11 +389,10 @@ class HostCon:
         cmdline = " killall %s " % stub_app
         ret = shell_command(cmdline)
         cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
-        proc_stub = StubExecThread(cmd=cmdline, sessionid=session_id)
-        proc_stub.start()
-        self.__test_sessions[session_id]["stub_proc"] = proc_stub
-        self.__test_sessions[session_id]["stub_url"] = "http://%s:%s" \
-                                                       % (HOST_NS, stub_port)
+        self.__test_async_shell = StubExecThread(
+            cmd=cmdline, sessionid=session_id)
+        self.__test_async_shell.start()
+        self.__server_url = "http://%s:%s" % (HOST_NS, stub_port)
 
         timecnt = 0
         bready = False
