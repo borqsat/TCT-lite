@@ -24,6 +24,7 @@
 import threading
 import logging
 import logging.handlers
+import sys
 
 # logger levels
 LEVELS = {"CRITICAL": 50,
@@ -50,7 +51,7 @@ class Logger:
 
     def add_print_logger(self, level="INFO"):
         """Generate console writer [StreamHandler]"""
-        writer = logging.StreamHandler()
+        writer = logging.StreamHandler(sys.stdout)
         writer.setLevel(LEVELS[level])
         writer.setFormatter(self._formatter)
         self._logger.addHandler(writer)
@@ -77,7 +78,9 @@ class Logger:
     def info(self, msg):
         """info level message"""
         if msg is not None:
-            self._logger.info(msg)
+            # self._logger.info(msg)
+            sys.stdout.write(msg + '\r\n')
+            sys.stdout.flush()
 
     def warning(self, msg):
         """warning level message"""
