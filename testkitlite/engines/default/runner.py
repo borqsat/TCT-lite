@@ -88,6 +88,7 @@ class TRunner:
         self.stub_name = "httpserver"
         self.capabilities = {}
         self.has_capability = False
+        self.rerun = False
 
     def set_global_parameters(self, options):
         "get all options "
@@ -120,6 +121,8 @@ class TRunner:
             self.external_test = options.exttest
         if options.debug:
             self.debug = options.debug
+        if options.rerun:
+            self.rerun = options.rerun
 
     def set_pid_log(self, pid_log):
         """ get pid_log file """
@@ -493,7 +496,6 @@ class TRunner:
             totalfile = "%s.total" % totalfile
             totalfile = "%s.xml" % totalfile
             total_xml = etree.parse(totalfile)
-
             #LOGGER.info("|--[ merge webapi result file: %s ]" % resultfile)
             result_xml = etree.parse(resultfile)
             for total_suite in total_xml.getiterator('suite'):
@@ -843,6 +845,8 @@ class TRunner:
             if self.external_test is not None:
                 starup_parameters['external-test'] = self.external_test
             starup_parameters['debug'] = self.debug
+            if self.rerun:
+                starup_parameters['rerun'] = self.rerun
             if len(self.capabilities) > 0:
                 starup_parameters['capability'] = self.capabilities
         except IOError, error:
@@ -1016,10 +1020,18 @@ def write_set_result(testxmlfile, result):
 
     '''
     # write the set_result to set_xml
-    set_result_json = result
     set_result_xml = testxmlfile
     # covert JOSN to python dict string
-    set_result = set_result_json
+    set_result = result
+    if 'resultfile' in set_result:
+        write_file_result(set_result_xml, set_result)
+    else:
+        write_json_result(set_result_xml, set_result)
+
+
+def write_json_result(set_result_xml, set_result):
+    ''' fetch result form JSON'''
+
     case_results = set_result["cases"]
     try:
         parse_tree = etree.parse(set_result_xml)
@@ -1067,3 +1079,20 @@ def write_set_result(testxmlfile, result):
         traceback.print_exc()
         LOGGER.error(
             "[ Error: fail to write cases result, error: %s ]\n" % error)
+
+def write_file_result(set_result_xml, set_result):
+    result_file = set_result['resultfile']
+    try:
+        import shutil
+        if self.rerun:
+            LOGGER.info("[ Web UI FW Unit Test Does not support rerun.Result should be N/A ]\n")
+        else:
+            shutil.copy(result_file, set_result_xml)
+        LOGGER.info("[ cases result saved to resultfile ]\n")
+    except OSError, error:
+        traceback.print_exc()
+        LOGGER.error(
+            "[ Error: fail to write cases result, error: %s ]\n" % error)
+
+
+
