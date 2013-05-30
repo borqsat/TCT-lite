@@ -1094,13 +1094,13 @@ table#results td {\
 				statusFrame.src = "./manual_harness.html";
 				$($($('#main')).get(0)).attr('rows', "100,*");
 			}
+			oTestFrame = document.getElementById('testframe');
+			oTestFrame.src = '';
 		}
 		else {
 			// No manual cases, generate the result.
 			ask_generate_xml();
 		}
-		oTestFrame = document.getElementById('testframe');
-		oTestFrame.src = '';
 	}
 
 	function commit_test_result(result, msg) {
