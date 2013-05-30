@@ -212,7 +212,9 @@ try:
         make_option("--quit", dest="quit", action="store_true",
                     help="quit testkit-lite"),
         make_option("--debug", dest="debug", action="store_true",
-                    help="run in debug mode,more log information print out")
+                    help="run in debug mode,more log information print out"),
+        make_option("--rerun", dest="rerun", action="store_true",
+                    help="check if rerun test mode")
 
     ]
 
