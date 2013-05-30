@@ -358,34 +358,44 @@ class QUTestExecThread(threading.Thread):
         """run Qunit tests"""
         global TEST_SERVER_RESULT, TEST_SERVER_STATUS
         LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT = {"cases": []}
+        TEST_SERVER_RESULT = {"resultfile": ""}
         TEST_SERVER_STATUS = {"finished": 0}
         LOCK_OBJ.release()
+        rm_cmd = "sdb -s %s shell rm %s" % (self.device_id, UIFW_RESULT)
         ls_cmd = "sdb -s %s shell ls -l %s" % (self.device_id, UIFW_RESULT)
         time_stamp = ""
-        new_time_stamp = ""
-        ret = shell_command(ls_cmd)
-        if len(ret) > 0:
-            time_stamp = ret[0]
+        prev_stamp = ""
+        ret = shell_command(rm_cmd)
         time_out = 600
+        query_cnt = 0
         while time_out > 0:
-            time.sleep(2)
+            time.sleep(5)
             time_out -= 2
             ret = shell_command(ls_cmd)
             if len(ret) > 0:
-                new_time_stamp = ret[0]
-            if time_stamp != new_time_stamp:
-                continue
-            result_file = os.path.expanduser(
-                "~") + os.sep + self.test_session + "_uifw"
-            b_ok = _download_file(self.device_id,
-                                  UIFW_RESULT,
-                                  result_file)
-            if b_ok:
-                LOCK_OBJ.acquire()
-                TEST_SERVER_RESULT = {"resultfile": result_file}
-                LOCK_OBJ.release()
-            break
+                time_stamp = ret[0]
+            else:
+                time_stamp = ""
+
+            if time_stamp.find(prev_stamp) != -1:
+                query_cnt = query_cnt + 1
+            else:
+                prev_stamp = time_stamp
+                query_cnt = 0
+
+            LOGGER.info('[ uifw test suite running ... ]')
+
+            if query_cnt > 30:
+                result_file = os.path.expanduser(
+                    "~") + os.sep + self.test_session + "_uifw.xml"
+                b_ok = _download_file(self.device_id,
+                                      UIFW_RESULT,
+                                      result_file)
+                if b_ok:
+                    LOCK_OBJ.acquire()
+                    TEST_SERVER_RESULT = {"resultfile": result_file}
+                    LOCK_OBJ.release()
+                break
 
         LOCK_OBJ.acquire()
         TEST_SERVER_STATUS = {"finished": 1}
@@ -666,7 +676,7 @@ class TizenMobile:
         if self.__test_self_repeat:
             global TEST_SERVER_RESULT, TEST_SERVER_STATUS
             result_file = os.path.expanduser(
-                "~") + os.sep + sessionid + "_uifw"
+                "~") + os.sep + sessionid + "_uifw.xml"
             b_ok = _download_file(self.__device_id,
                                   UIFW_RESULT,
                                   result_file)
@@ -720,10 +730,10 @@ class TizenMobile:
         exetype = test_set["exetype"]
         ctype = test_set["type"]
         if self.__test_type == "webapi":
-            return self.__run_web_test(test_set_name, sessionid,
+            return self.__run_web_test(sessionid, test_set_name,
                                        exetype, ctype, cases)
         else:
-            return self.__run_core_test(test_set_name, sessionid,
+            return self.__run_core_test(sessionid, test_set_name,
                                         exetype, cases)
 
     def get_test_status(self, sessionid):
