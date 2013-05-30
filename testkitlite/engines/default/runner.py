@@ -362,7 +362,7 @@ class TRunner:
                         set_result = self.connector.get_test_result(
                             self.session_id)
                         # write_result to set_xml
-                        write_set_result(
+                        self.__write_set_result(
                             test_xml_set, set_result)
                         # shut down server
                         self.__shut_down_server(self.session_id)
@@ -906,6 +906,43 @@ class TRunner:
             LOGGER.error(
                 "[ Error: fail to parse capability xml, error: %s ]" % error)
             return False
+    def __write_set_result(self,testxmlfile, result):
+        '''
+            get the result JSON form com_module,
+            write them to orignal testxmlfile
+
+        '''
+        # write the set_result to set_xml
+        set_result_xml = testxmlfile
+        # covert JOSN to python dict string
+        set_result = result
+        if 'resultfile' in set_result:
+            self.__write_file_result(set_result_xml, set_result)
+        else:
+            write_json_result(set_result_xml, set_result)
+
+    def __write_file_result(self,set_result_xml, set_result):
+        result_file = set_result['resultfile']
+        try:
+            if self.rerun:
+                LOGGER.info("[ Web UI FW Unit Test Does not support rerun.Result should be N/A ]\n")
+            else:
+                test_tree = etree.parse(set_result_xml)
+                test_em =test_tree.getroot()
+                result_tree = etree.parse(result_file)
+                result_em = result_tree.getroot()
+                for result_suite in result_em.getiterator('suite'):
+                    for result_set in result_suite.getiterator('set'):
+                        for test_suite in test_em.getiterator('suite'):
+                            for test_set in test_em.getiterator('set'):
+                                if result_set.get('name') == test_set.get('name'):
+                                    test_suite.remove(test_set);
+                                    test_suite.append(result_set);
+            LOGGER.info("[ cases result saved to resultfile ]\n")
+        except OSError, error:
+            traceback.print_exc()
+            LOGGER.error(
+                "[ Error: fail to write cases result, error: %s ]\n" % error)
 
 
 def get_capability_form_node(capability_em):
@@ -1013,21 +1050,6 @@ def get_summary(start_time, end_time):
     summary.append(end_at)
     summary.tail = "\n  "
     return summary
-def write_set_result(testxmlfile, result):
-    '''
-        get the result JSON form com_module,
-        write them to orignal testxmlfile
-
-    '''
-    # write the set_result to set_xml
-    set_result_xml = testxmlfile
-    # covert JOSN to python dict string
-    set_result = result
-    if 'resultfile' in set_result:
-        write_file_result(set_result_xml, set_result)
-    else:
-        write_json_result(set_result_xml, set_result)
-
 
 def write_json_result(set_result_xml, set_result):
     ''' fetch result form JSON'''
@@ -1080,19 +1102,7 @@ def write_json_result(set_result_xml, set_result):
         LOGGER.error(
             "[ Error: fail to write cases result, error: %s ]\n" % error)
 
-def write_file_result(set_result_xml, set_result):
-    result_file = set_result['resultfile']
-    try:
-        import shutil
-        if self.rerun:
-            LOGGER.info("[ Web UI FW Unit Test Does not support rerun.Result should be N/A ]\n")
-        else:
-            shutil.copy(result_file, set_result_xml)
-        LOGGER.info("[ cases result saved to resultfile ]\n")
-    except OSError, error:
-        traceback.print_exc()
-        LOGGER.error(
-            "[ Error: fail to write cases result, error: %s ]\n" % error)
+
 
 
 
