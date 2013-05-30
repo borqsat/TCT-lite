@@ -361,15 +361,14 @@ class QUTestExecThread(threading.Thread):
         TEST_SERVER_RESULT = {"resultfile": ""}
         TEST_SERVER_STATUS = {"finished": 0}
         LOCK_OBJ.release()
-        rm_cmd = "sdb -s %s shell rm %s" % (self.device_id, UIFW_RESULT)
         ls_cmd = "sdb -s %s shell ls -l %s" % (self.device_id, UIFW_RESULT)
         time_stamp = ""
         prev_stamp = ""
-        ret = shell_command(rm_cmd)
+        LOGGER.info('[ uifw test suite start ...]')
         time_out = 600
         query_cnt = 0
         while time_out > 0:
-            time.sleep(5)
+            time.sleep(2)
             time_out -= 2
             ret = shell_command(ls_cmd)
             if len(ret) > 0:
@@ -377,15 +376,13 @@ class QUTestExecThread(threading.Thread):
             else:
                 time_stamp = ""
 
-            if time_stamp.find(prev_stamp) != -1:
+            if time_stamp == prev_stamp:
                 query_cnt = query_cnt + 1
             else:
                 prev_stamp = time_stamp
                 query_cnt = 0
 
-            LOGGER.info('[ uifw test suite running ... ]')
-
-            if query_cnt > 30:
+            if query_cnt >= 60:
                 result_file = os.path.expanduser(
                     "~") + os.sep + self.test_session + "_uifw.xml"
                 b_ok = _download_file(self.device_id,
@@ -396,7 +393,7 @@ class QUTestExecThread(threading.Thread):
                     TEST_SERVER_RESULT = {"resultfile": result_file}
                     LOCK_OBJ.release()
                 break
-
+        LOGGER.info('[ uifw test suite completed ... ]')
         LOCK_OBJ.acquire()
         TEST_SERVER_STATUS = {"finished": 1}
         LOCK_OBJ.release()
@@ -568,6 +565,7 @@ class TizenMobile:
 
         if wrt_tag.find('-r') != -1:
             self.__test_self_repeat = True
+            return session_id
         else:
             self.__test_self_repeat = False
 
