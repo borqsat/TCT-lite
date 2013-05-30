@@ -388,6 +388,7 @@ class HostCon:
         LOGGER.info("[ launch the stub httpserver ]")
         cmdline = " killall %s " % stub_app
         ret = shell_command(cmdline)
+        time.sleep(2)
         cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
         self.__test_async_shell = StubExecThread(
             cmd=cmdline, sessionid=session_id)
