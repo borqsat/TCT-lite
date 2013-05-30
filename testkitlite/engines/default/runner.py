@@ -934,10 +934,11 @@ class TRunner:
                 for result_suite in result_em.getiterator('suite'):
                     for result_set in result_suite.getiterator('set'):
                         for test_suite in test_em.getiterator('suite'):
-                            for test_set in test_em.getiterator('set'):
+                            for test_set in test_suite.getiterator('set'):
                                 if result_set.get('name') == test_set.get('name'):
-                                    test_suite.remove(test_set);
-                                    test_suite.append(result_set);
+                                    test_suite.remove(test_set)
+                                    test_suite.append(result_set)
+                test_tree.write(set_result_xml)
             LOGGER.info("[ cases result saved to resultfile ]\n")
         except OSError, error:
             traceback.print_exc()
