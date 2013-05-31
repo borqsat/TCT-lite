@@ -396,7 +396,7 @@ class HostCon:
         self.__server_url = "http://%s:%s" % (HOST_NS, stub_port)
 
         timecnt = 0
-        bready = False
+        blaunched = False
         while timecnt < 10:
             time.sleep(1)
             ret = http_request(get_url(self.__server_url,
@@ -411,10 +411,10 @@ class HostCon:
                     return result
                 else:
                     LOGGER.info("[ check server status, get ready! ]")
-                    bready = True
+                    blaunched = True
                 break
 
-        if bready:
+        if blaunched:
             ret = http_request(get_url(self.__server_url,
                                        "/init_test"),
                                "POST", test_opt)

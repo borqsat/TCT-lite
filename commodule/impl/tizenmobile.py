@@ -557,12 +557,14 @@ class TizenMobile:
         else:
             self.__test_auto_iu = False
 
+        # this suite is automated by itself
         if wrt_tag.find('-a') != -1:
             self.__test_self_exec = True
             testsuite_name = 'tct-webuifw-tests'
         else:
             self.__test_self_exec = False
 
+        # this suite is repeat just skip it
         if wrt_tag.find('-r') != -1:
             self.__test_self_repeat = True
             return session_id
@@ -582,11 +584,11 @@ class TizenMobile:
             cmdline = WRT_START_STR % (deviceid, test_opt["suite_id"])
             while timecnt < 3:
                 ret = shell_command(cmdline)
-                if len(ret) > 0:
-                    if ret[0].find('launched') != -1:
-                        blauched = True
-                        break
+                if len(ret) > 0 and ret[0].find('launched') != -1:
+                    blauched = True
+                    break
                 time.sleep(3)
+
             if not blauched:
                 LOGGER.info("[ launch test widget \"%s\" but get failed! ]" %
                             test_opt["suite_name"])
@@ -605,8 +607,6 @@ class TizenMobile:
         self.__test_async_shell.start()
         self.__stub_server_url = _get_forward_connect(deviceid, stub_port)
 
-        timecnt = 0
-        bready = False
         while timecnt < 10:
             time.sleep(1)
             ret = http_request(get_url(
@@ -620,13 +620,12 @@ class TizenMobile:
                                 "get error code %d ! ]" % ret["error_code"])
                     return None
                 else:
-                    bready = True
+                    blauched = True
                 break
 
-        if bready:
-            ret = http_request(get_url(self.__stub_server_url,
-                                       "/init_test"),
-                               "POST", test_opt)
+        if blauched:
+            ret = http_request(get_url(
+                self.__stub_server_url, "/init_test"), "POST", test_opt)
             if "error_code" in ret:
                 return None
 
@@ -779,8 +778,6 @@ class TizenMobile:
 
             ret = http_request(get_url(
                 self.__stub_server_url, "/shut_down_server"), "GET", {})
-            if ret:
-                return True
         return True
 
 

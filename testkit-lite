@@ -44,8 +44,8 @@ try:
 except ImportError, e:
     print "[ Error: loading logging failed, error: %s ]\n" % e
     print "try to run command " \
-    "'export PYTHONPATH=/usr/lib/python2.7/dist-packages' and " \
-    "'export PYTHONPATH=/usr/share/pyshared/' to resolve this issue"
+        "'export PYTHONPATH=/usr/lib/python2.7/dist-packages' and " \
+        "'export PYTHONPATH=/usr/share/pyshared/' to resolve this issue"
     sys.exit(1)
 
 # import  process kill
@@ -91,8 +91,8 @@ if not platform.system() == "Linux":
         if not os.path.exists(LOG_DIR):
             os.makedirs(LOG_DIR)
     except OSError, e:
-        LOGGER.error("[ Error: "\
-            "create results directory: %s failed, error: %s ]\n" %(LOG_DIR, e))
+        LOGGER.error("[ Error: create results directory:"
+                     " %s failed, error: %s ]\n" % (LOG_DIR, e))
 
 try:
     with open(PID_FILE, "w") as fd:
@@ -121,7 +121,7 @@ if "--version" in sys.argv:
         LOGGER.info("V%s" % VERSION)
     except ConfigParser.Error, error:
         LOGGER.error(
-           "[ Error: fail to parse version info, error: %s ]\n" % error)
+            "[ Error: fail to parse version info, error: %s ]\n" % error)
     sys.exit(1)
 
 # detect internal version option
@@ -146,9 +146,9 @@ try:
     from commodule.connector import Connector
 except ImportError, e:
     LOGGER.error("[ Error: loading test engine failed, error: %s ]\n" % e)
-    LOGGER.info("try to run command "\
-        "'export PYTHONPATH=/usr/lib/python2.7/dist-packages' and "\
-        "'export PYTHONPATH=/usr/share/pyshared/'to resolve this issue")
+    LOGGER.info("try to run command "
+                "'export PYTHONPATH=/usr/lib/python2.7/dist-packages' and "
+                "'export PYTHONPATH=/usr/share/pyshared/'to resolve this issue")
     sys.exit(1)
 
 
@@ -169,8 +169,9 @@ try:
     OPTION_LIST = [
         make_option("-f", "--testxml", dest="testxml",
                     action="callback", callback=varnarg,
-                    help="Specify the test.xml. If run more the one testxml,"\
-                    "just list them all and separate with a whitespace"),
+                    help="Specify the path of test definition file (tests.xml)."
+                    " If run more one test package,just list the all the path "
+                    " of \"tests.xml\" and separate with a whitespace"),
         make_option("-D", "--dryrun", dest="bdryrun",
                     action="store_true",
                     help="Dry-run the selected test cases"),
@@ -185,7 +186,7 @@ try:
                     If more than one testxml provided, \
                     results will be merged together to this output file"),
         make_option("-e", dest="exttest", action="store",
-                    help="Launch external test with an executable file"),
+                    help="Launch external test with a launcher, supports browser or other web-runtime"),
         make_option("--fullscreen", dest="fullscreen",
                     action="store_true",
                     help="Run web API test in full screen mode"),
@@ -203,12 +204,12 @@ try:
                     action="store_true",
                     help="Show internal version information"),
         make_option("--deviceid", dest="device_serial", action="store",
-                    help="set sdb device serial information"),
+                    help="set device serial information"),
         make_option("--comm", dest="commodule", action="store",
-                    help="set commodule type: \"tizenmobile\" by default," \
-                    " \"localhost\" for single mode"),
+                    help="set commodule by default,"
+                    "set \"localhost\" for browser testing only"),
         make_option("--capability", dest="capability", action="store",
-                    help="get capability file"),
+                    help="set platform for sepecfic device capability"),
         make_option("--quit", dest="quit", action="store_true",
                     help="quit testkit-lite"),
         make_option("--debug", dest="debug", action="store_true",
@@ -219,29 +220,26 @@ try:
     ]
 
     OPTION_LIST.extend([
-        make_option("--%s" % flt, 
-        dest="w%s" % flt, action="callback", callback=varnarg, 
-        help="Select the specified filter-rules : %s" % flt) 
-        for flt in  COMMON_FILTERS])
+        make_option("--%s" % flt,
+                    dest="w%s" % flt, action="callback", callback=varnarg,
+                    help="Select the specified filter-rules : %s" % flt)
+        for flt in COMMON_FILTERS])
 
     try:
         # untrusted behaviour of %%prog
-        USAGE = "%%prog [options] -f device:\"<somewhere/test.xml>\"\n\
-examples: %%prog  -f device:\"<somewhere>/test.xml\"\n\
-          %%prog  -f device:\"test.xml\" -D\n\
-          %%prog  -f device:\"test.xml\" -A\n\
-          %%prog  -f device:\"test.xml\" -M\n\
-          %%prog  -f device:\"test.xml\" --capability <capability file>\n\
-          %%prog  -f device:\"test1.xml test2.xml test3.xml\" ...\n\
-          %%prog  -f device:\"test.xml\" -D -A --type type1 --capability <capability file> --comm <commoduletype>...\n\
-          %%prog  -f device:\"test.xml\" -D -A --type type1 --status ready ...\n\
-\n\
-    run a webapi package: \n\
-          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' -o /tmp/wekit-tests-result.xml --priority P0 --status ready ...\n\
-    run both core and webapi packages: \n\
-          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml /usr/share/tts-bluez-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests tts-bluez-tests' -o /tmp/wekit-tests-result.xml ...\n\
-    run in single mode: \n\
-          %%prog -f \"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher webapi-webkit-tests' --comm localhost \n\
+        USAGE = "%%prog [options] -f [prefix:]\"<somewhere/test.xml>\" -e \"<launcher-name>\"\n\
+forms:    %%prog  -f [prefix:]\"<somewhere>/test.xml\"\n\
+          %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D\n\
+          %%prog  -f [prefix:]\"<somewhere>/test.xml\" -A\n\
+          %%prog  -f [prefix:]\"<somewhere>/test.xml\" -M\n\
+          %%prog  -f [prefix:]\"<somewhere>/test1.xml <somewhere>/test2.xml <somewhere>/test3.xml\" \n\
+          %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D -A --type type1 --capability <capability file> --comm <commoduletype>\n\
+          %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D -A --type type1 --status ready ...\n\
+exmaples: \n\
+    run a web test package from device side with device WRT (it is default): \n\
+          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher' -A \n\
+    run a web test package from local path with chrome browser: \n\
+          %%prog -f \"/usr/share/webapi-webkit-tests/tests.xml\" -e '<somewhere>/chrome-startup' -A --comm localhost \n\
 \n\
 Note: \n\
           1) Proxy settings should be disabled when execute webapi packages\n\
@@ -253,6 +251,7 @@ Note: \n\
           7) run command 'testkit-lite', \
             it might not be able to locate module 'testkitlite.engines.default.runner', \
             run command 'export PYTHONPATH=/usr/share/pyshared/' \
+            run command 'export PYTHONPATH=/usr/lib/python2.7/dist-packages' \
             to resolve this issue" % (LOG_DIR)
     except Exception:
         USAGE = None
@@ -270,8 +269,8 @@ Note: \n\
             LOGGER.info("[ Quit testkit-lite now ]")
             kill_testkit_lite(PID_FILE)
         except Exception, e:
-            LOGGER.error("[ Error: fail to kill existing testkit-lite,"\
-            " error: %s ]\n" % e)
+            LOGGER.error("[ Error: fail to kill existing testkit-lite,"
+                         " error: %s ]\n" % e)
             sys.exit(1)
 
     # detect conflict
@@ -307,9 +306,9 @@ Note: \n\
             if not EXISTS(TEST_PACKAGES_DIR):
                 os.makedirs(TEST_PACKAGES_DIR)
         except OSError, e:
-            LOGGER.error("[ Error: "\
-                "can't create test package directory: %s, error: %s ]\n" %
-                (TEST_PACKAGES_DIR, e))
+            LOGGER.error("[ Error: "
+                         "can't create test package directory: %s, error: %s ]\n" %
+                        (TEST_PACKAGES_DIR, e))
             sys.exit(1)
         REMOTE_TESTLITS = OPTIONS.testxml[0]
         REMOTE_TESTLITS = REMOTE_TESTLITS.split(':')[1]
@@ -364,8 +363,8 @@ Note: \n\
         if os.name == "posix":
             os.symlink(CURRENT_LOG_DIR, LATEST_DIR)
     except IOError, e:
-        LOGGER.error("[ Error: create session log directory: "\
-            "%s failed, error: %s ]\n" % (CURRENT_LOG_DIR, e))
+        LOGGER.error("[ Error: create session log directory: "
+                     "%s failed, error: %s ]\n" % (CURRENT_LOG_DIR, e))
 
     # 2) prepare run test
     # run more than one tests.xml
@@ -378,14 +377,14 @@ Note: \n\
             filename = os.path.splitext(filename)[0]
             if platform.system() == "Linux":
                 if not filename.startswith('/'):
-                    LOGGER.error("[ Error:"\
-                        " xml file %s should start with '/' ]" % filename)
+                    LOGGER.error("[ Error:"
+                                 " xml file %s should start with '/' ]" % filename)
                     sys.exit(1)
                 else:
                     filename = filename.split('/')[-2]
                     if filename == "":
-                        LOGGER.error("[ Error:"\
-                            " unable to find package name from %s ]" % t)
+                        LOGGER.error("[ Error:"
+                                     " unable to find package name from %s ]" % t)
                         sys.exit(1)
             else:
                 filename = filename.split('\\')[-2]
@@ -396,8 +395,8 @@ Note: \n\
                 ep = etree.parse(t)
                 suiteparent = ep.getroot()
             except etree.ParseError, e:
-                LOGGER.error("[ Error: no case found in testxml, "\
-                    "pls check the test package ]\n")
+                LOGGER.error("[ Error: no case found in testxml, "
+                             "pls check the test package ]\n")
                 sys.exit(1)
             no_test_definition = 1
             for tf in ep.getiterator('test_definition'):
@@ -426,7 +425,7 @@ Note: \n\
                     tree.write(output)
             except IOError, e:
                 LOGGER.error(
-                    "[ Error: create filtered total result file: %s failed, "\
+                    "[ Error: create filtered total result file: %s failed, "
                     "error: %s ]\n" % (resultfile, e))
         else:
             print "[ Have no test xml found ]"
@@ -440,8 +439,8 @@ Note: \n\
                     RUNNER.add_filter_rules(**WFILTERS)
                     RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
                 except IOError, e:
-                    LOGGER.error("[ Error: prepare_run test xml: "\
-                        "%s from testkit-lite failed, error: %s ]\n" % (t, e))
+                    LOGGER.error("[ Error: prepare_run test xml: "
+                                 "%s from testkit-lite failed, error: %s ]\n" % (t, e))
         else:
             for t in TESTXMLS:
                 try:
@@ -449,16 +448,16 @@ Note: \n\
                     RUNNER.add_filter_rules(**WFILTERS)
                     RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
                 except IOError, e:
-                    LOGGER.error("[ Error: prepare_run test xml: "\
-                        "%s from testkit-lite failed, error: %s ]\n" % (t, e))
+                    LOGGER.error("[ Error: prepare_run test xml: "
+                                 "%s from testkit-lite failed, error: %s ]\n" % (t, e))
             for t in TESTXMLS:
                 try:
                     WFILTERS['execution_type'] = ["manual"]
                     RUNNER.add_filter_rules(**WFILTERS)
                     RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
                 except IOError, e:
-                    LOGGER.error("[ Error: prepare_run test xml: "\
-                        "%s from testkit-lite failed, error: %s ]\n" % (t, e))
+                    LOGGER.error("[ Error: prepare_run test xml: "
+                                 "%s from testkit-lite failed, error: %s ]\n" % (t, e))
     else:
         for t in TESTXMLS:
             try:
@@ -466,27 +465,27 @@ Note: \n\
                 RUNNER.add_filter_rules(**WFILTERS)
                 RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
             except IOError, e:
-                LOGGER.error("[ Error: prepare_run test xml: "\
-                    "%s from testkit-lite failed, error: %s ]\n" % (t, e))
+                LOGGER.error("[ Error: prepare_run test xml: "
+                             "%s from testkit-lite failed, error: %s ]\n" % (t, e))
 
     try:
         RUNNER.run_case(CURRENT_LOG_DIR)
     except Exception, e:
-        traceback.print_exc() 
-        LOGGER.error("[ Error: run_test_case failed ,error: %s ]\n" % e)  
+        traceback.print_exc()
+        LOGGER.error("[ Error: run_test_case failed ,error: %s ]\n" % e)
     try:
         RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
         LOGGER.info("[ all tasks for testkit lite are accomplished, goodbye ]")
     except Exception, e:
         traceback.print_exc()
-        LOGGER.error("[ Error: merge_resultfile "\
-            "failed,error: %s ]\n" % e)
+        LOGGER.error("[ Error: merge_resultfile "
+                     "failed,error: %s ]\n" % e)
 
 except KeyboardInterrupt, e:
     LOGGER.info("\n[ exiting testkit-lite on user cancel ]\n")
     sys.exit(1)
 except Exception, e:
-    LOGGER.error("\n[ Error: exiting testkit-lite "\
-        "by catching a critical error: %s ]\n" % e)
+    LOGGER.error("\n[ Error: exiting testkit-lite "
+                 "by catching a critical error: %s ]\n" % e)
     traceback.print_exc()
     sys.exit(1)
