@@ -1,3 +1,4 @@
+<!doctype html>
 <!--
 # Copyright (C) 2012 Intel Corporation
 # 
@@ -16,10 +17,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # Authors:
-#              Zhang, Huihui <huihuix.zhang@intel.com>
-#              Wendong,Sui  <weidongx.sun@intel.com>
+#              Wang, Jing <jing.j.wang@intel.com>
+#              Tang, Shaofeng  <shaofeng.tang@intel.com>
 -->
-<!doctype html>
 <head>
 <meta name="viewport" content="width=device-width">
 <script src="jquery.js"></script>
@@ -707,7 +707,7 @@ table#results td {\
 	}
 
 	function close_window(){
-		//for webapi-nonw3c-webgl-tests run by tizen-tool emulator html,window.parent.close() no function,must call window.close, why?
+		//for tct-webgl-tests run by tizen-tool emulator html,window.parent.close() no function,must call window.close, why?
 		if(window.parent != window.self){
 			window.open('','_self','');
 			window.close();
@@ -1136,6 +1136,6 @@ table#results td {\
 <body id="main" onload='precheck_init()'>
 	<iframe frameborder="1" height="30px" width="100%" id="messageframe"></iframe>
 	<iframe frameborder="1" height="30px" width="100%" id="statusframe"></iframe>
-	<iframe frameborder="1" height="2500px" width="100%" id="testframe"></iframe>
+	<iframe frameborder="1" height="2500px" width="100%" id="testframe" allowFullScreen="true" mozAllowFullScreen="true" webkitAllowFullscreen="true"></iframe>
 </body>
 </html>
