@@ -392,7 +392,7 @@ class HostCon:
         self.__test_async_shell = StubExecThread(
             cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
-        time.sleep(1)
+        time.sleep(2)
         self.__server_url = "http://%s:%s" % (HOST_NS, stub_port)
 
         timecnt = 0

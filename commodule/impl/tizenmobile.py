@@ -350,7 +350,7 @@ UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
 
 class QUTestExecThread(threading.Thread):
 
-    """sdb communication for serve_forever app in async mode"""
+    """sdb communication for Jquery Unit test suite """
     def __init__(self, deviceid="", sessionid=""):
         super(QUTestExecThread, self).__init__()
         self.device_id = deviceid
@@ -364,11 +364,16 @@ class QUTestExecThread(threading.Thread):
         TEST_SERVER_STATUS = {"finished": 0}
         LOCK_OBJ.release()
         ls_cmd = "sdb -s %s shell ls -l %s" % (self.device_id, UIFW_RESULT)
+        exit_code, ret = shell_command(ls_cmd)
+        if len(ret) > 0:
+            prev_stamp = ret[0]
+        else:
+            prev_stamp = ""
         time_stamp = ""
         prev_stamp = ""
         LOGGER.info('[ web uifw test suite start ...]')
         time_out = 600
-        query_cnt = 0
+        status_cnt = 0
         while time_out > 0:
             time.sleep(2)
             time_out -= 2
@@ -379,12 +384,15 @@ class QUTestExecThread(threading.Thread):
                 time_stamp = ""
 
             if time_stamp == prev_stamp:
-                query_cnt = query_cnt + 1
+                continue
             else:
                 prev_stamp = time_stamp
-                query_cnt = 0
+                status_cnt += 1
 
-            if query_cnt >= 60:
+            if status_cnt == 1:
+                LOGGER.info('[ web uifw begin generating result xml ... ]')
+            elif status_cnt >= 2:
+                LOGGER.info('[ web uifw end generating result xml ... ]')
                 result_file = os.path.expanduser(
                     "~") + os.sep + self.test_session + "_uifw.xml"
                 b_ok = _download_file(self.device_id,
@@ -685,6 +693,7 @@ class TizenMobile:
             b_ok = _download_file(self.__device_id,
                                   UIFW_RESULT,
                                   result_file)
+            LOGGER.info('[ web uifw test suite result splitting ...]')
             if b_ok:
                 TEST_SERVER_RESULT = {"resultfile": result_file}
                 TEST_SERVER_STATUS = {"finished": 1}

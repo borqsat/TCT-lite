@@ -40,6 +40,8 @@ def shell_command(cmd):
     ret1 = proc.stdout.readlines()
     ret2 = proc.stderr.readlines()
     exit_code = proc.poll()
+    if exit_code is None:
+        exit_code = 0
     result = ret1 or ret2
     return [exit_code, result]
 
