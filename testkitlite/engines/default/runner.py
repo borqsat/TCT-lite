@@ -439,8 +439,9 @@ class TRunner:
         for total in totals:
             result_xml = etree.parse(total)
             for suite in result_xml.getiterator('suite'):
-                suite.tail = "\n"
-                root.append(suite)
+                if suite.getiterator('testcase'):
+                    suite.tail = "\n"
+                    root.append(suite)
         # print test summary
         self.__print_summary()
         # generate actual xml file
@@ -509,6 +510,7 @@ class TRunner:
             total_xml.write(totalfile)
             totals.add(totalfile)
         return totals
+
     def __merge_result_by_name(
         self,result_set,total_set,result_suite, total_suite):
         ''' merge result select by name'''
