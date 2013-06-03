@@ -39,8 +39,9 @@ def shell_command(cmd):
                             stderr=subprocess.PIPE)
     ret1 = proc.stdout.readlines()
     ret2 = proc.stderr.readlines()
+    exit_code = proc.poll()
     result = ret1 or ret2
-    return result
+    return [exit_code, result]
 
 
 def shell_command_ext(cmd="",
