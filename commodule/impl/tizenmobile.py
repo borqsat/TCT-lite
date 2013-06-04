@@ -409,7 +409,7 @@ class QUTestExecThread(threading.Thread):
         LOCK_OBJ.release()
 
 WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i /opt/%s/%s.wgt"
-WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l | grep %s | awk '{print $NF}'"
+WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l|grep '%s'| awk '{print $NF}'"
 WRT_START_STR = "sdb -s %s shell wrt-launcher -s %s"
 WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
 
