@@ -884,7 +884,6 @@ class TRunner:
     def __shut_down_server(self, sessionid):
         '''shut_down httpserver'''
         try:
-            LOGGER.info('[ show down server ]')
             self.connector.finalize_test(sessionid)
         except Exception, error:
             LOGGER.error("[ Error: fail to close webapi http server, "\
