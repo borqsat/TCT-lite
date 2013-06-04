@@ -238,10 +238,10 @@ forms:    %%prog  -f [prefix:]\"<somewhere>/test.xml\"\n\
           %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D -A --type type1 --capability <capability file> --comm <commoduletype>\n\
           %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D -A --type type1 --status ready ...\n\
 exmaples: \n\
-    run a web test package from device side with device WRT (it is default): \n\
-          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher' -A \n\
+    run a web test package from device side with device WRT: \n\
+          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher' -A --comm tizenmobile\n\
     run a web test package from local path with chrome browser: \n\
-          %%prog -f \"/usr/share/webapi-webkit-tests/tests.xml\" -e '<somewhere>/chrome-startup' -A --comm localhost \n\
+          %%prog -f \"/usr/share/webapi-webkit-tests/tests.xml\" -e '<somewhere>/chrome-startup' -A \n\
 \n\
 Note: \n\
           1) Proxy settings should be disabled when execute webapi packages\n\
@@ -283,7 +283,7 @@ Note: \n\
             raise ValueError("For single mode, pls set local file to test ")
         COMMODULE_TYPE = OPTIONS.commodule
     else:
-        COMMODULE_TYPE = "tizenmobile"
+        COMMODULE_TYPE = "localhost"
 
     CONNECTOR = Connector({"testremote": COMMODULE_TYPE}).get_connector()
     if CONNECTOR == None:

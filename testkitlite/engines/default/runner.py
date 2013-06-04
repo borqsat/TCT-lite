@@ -335,6 +335,9 @@ class TRunner:
                     self.current_test_xml = JOIN(latest_dir, webapi_total_file)
 
                 self.__run_with_commodule(webapi_file)
+        import glob, shutil
+        for sfile in glob.glob(JOIN(latest_dir, "../xsd/*.*")):
+            shutil.copy(sfile, latest_dir)
 
     def __run_with_commodule(self, webapi_file):
         """run_with_commodule,Initialization,check status,get result"""
