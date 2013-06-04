@@ -617,7 +617,8 @@ class TizenMobile:
             cmd=cmdline, sessionid=session_id)
         self.__test_async_shell.start()
         time.sleep(2)
-        self.__stub_server_url = _get_forward_connect(deviceid, stub_port)
+        if self.__stub_server_url is None:
+            self.__stub_server_url = _get_forward_connect(deviceid, stub_port)
         LOGGER.info("[ Access baseURL: %s ]" % self.__stub_server_url)
 
         while timecnt < 10:
