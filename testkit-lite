@@ -64,13 +64,13 @@ DIRNAME = os.path.dirname
 BASENAME = os.path.basename
 ABSPATH = os.path.abspath
 
-TESTKIT_DIR = "/opt/testkit/lite"
+TESTKIT_DIR = os.getcwd()
 if not platform.system() == "Linux":
     TESTKIT_DIR = DIRNAME(ABSPATH(__file__))
     sys.path += [JOIN(TESTKIT_DIR)]
     TESTKIT_DIR = JOIN(TESTKIT_DIR, "results")
 
-LOG_DIR = TESTKIT_DIR
+LOG_DIR = JOIN(TESTKIT_DIR, 'result')
 PID_FILE = JOIN(LOG_DIR, "pid.log")
 TEST_PACKAGES_DIR = JOIN(TESTKIT_DIR, "test_packages")
 COMMON_FILTERS = {
@@ -86,13 +86,14 @@ COMMON_FILTERS = {
 # start testkit-lite in Singleton mode
 kill_testkit_lite(PID_FILE)
 
-if not platform.system() == "Linux":
+if platform.system() == "Linux":
     try:
         if not os.path.exists(LOG_DIR):
             os.makedirs(LOG_DIR)
     except OSError, e:
-        LOGGER.error("[ Error: create results directory:"
-                     " %s failed, error: %s ]\n" % (LOG_DIR, e))
+        LOGGER.error("[ Error: "
+                     "create results directory: %s failed,"
+                     " error: %s ]\n" % (LOG_DIR, e))
 
 try:
     with open(PID_FILE, "w") as fd:
@@ -107,6 +108,7 @@ try:
     os.chmod(PID_FILE, 0666)
 except OSError, e:
     pass
+
 
 # detect version option
 if "--version" in sys.argv:
