@@ -570,7 +570,7 @@ class TRunner:
         environment.attrib['device_model'] = device_info["device_model"]
         environment.attrib['device_name'] = device_info["device_name"]
         environment.attrib['firmware_version'] = ""
-        environment.attrib['host'] = ""
+        environment.attrib['host'] = platform.platform()
         environment.attrib['os_version'] = device_info["os_version"]
         environment.attrib['resolution'] = device_info["resolution"]
         environment.attrib['screen_size'] = device_info["screen_size"]
