@@ -33,7 +33,8 @@ def str2str(s):
     if isinstance(s, unicode):
         return s.encode(STRENCODE)
     if isinstance(s, str):
-        s = filter(lambda x: x in string.printable, s)
+        blank = [' ','\n','\r']
+        s = filter(lambda x: x in string.punctuation or x in string.letters or x in string.digits or x in blank , s)
         return s
     return ""
 
