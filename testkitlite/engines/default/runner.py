@@ -566,10 +566,10 @@ class TRunner:
         device_info = self.connector.get_device_info(self.deviceid)
         # add environment node
         environment = etree.Element('environment')
-        environment.attrib['device_id'] = ""
+        environment.attrib['device_id'] = device_info["device_id"]
         environment.attrib['device_model'] = device_info["device_model"]
         environment.attrib['device_name'] = device_info["device_name"]
-        environment.attrib['firmware_version'] = ""
+        environment.attrib['firmware_version'] = device_info["fw_version"]
         environment.attrib['host'] = platform.platform()
         environment.attrib['os_version'] = device_info["os_version"]
         environment.attrib['resolution'] = device_info["resolution"]
