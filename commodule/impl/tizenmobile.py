@@ -449,7 +449,7 @@ class TizenMobile:
         screen_size_str = "Empty screen_size"
         device_model_str = "Empty device_model"
         device_name_str = "Empty device_name"
-        os_version_str = "Empty os_version"
+        os_version_str = ""
         fm_version_str = "Empty fw_version"
 
         # get resolution and screen size
