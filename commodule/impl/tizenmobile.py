@@ -531,6 +531,8 @@ class TizenMobile:
                 exit_code, ret = shell_command(cmd)
             else:
                 test_wgt = test_suite
+                cmd = WRT_INSTALL_STR % (deviceid, test_suite, test_suite)
+                exit_code, ret = shell_command(cmd)
 
             # query the whether test widget is installed ok
             cmd = WRT_QUERY_STR % (deviceid, test_wgt)
