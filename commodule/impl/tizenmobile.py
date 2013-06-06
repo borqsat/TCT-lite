@@ -449,7 +449,8 @@ class TizenMobile:
         screen_size_str = "Empty screen_size"
         device_model_str = "Empty device_model"
         device_name_str = "Empty device_name"
-        os_version_str = ""
+        os_version_str = "Empty os_version"
+        fm_version_str = "Empty fw_version"
 
         # get resolution and screen size
         exit_code, ret = shell_command("sdb -s %s shell xrandr" % deviceid)
@@ -473,12 +474,20 @@ class TizenMobile:
         for line in ret:
             if len(line) > 1:
                 os_version_str = "%s %s" % (os_version_str, line)
+        # get fw version
+        # exit_code, ret = shell_command(
+        #     "sdb -s %s shell cat /etc/zypp/config" % deviceid)
+        # for line in ret:
+        #     if len(line) > 1:
+        #         fm_version_str = "%s %s" % (fm_version_str, line)
         os_version_str = os_version_str[0:-1]
+        device_info["device_id"] = deviceid
         device_info["resolution"] = resolution_str
         device_info["screen_size"] = screen_size_str
         device_info["device_model"] = device_model_str
         device_info["device_name"] = device_name_str
         device_info["os_version"] = os_version_str
+        device_info["fw_version"] = fm_version_str
         return device_info
 
     def install_package(self, deviceid, pkgpath):
