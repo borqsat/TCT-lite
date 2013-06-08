@@ -66,16 +66,25 @@ TEST_SERVER_STATUS = {}
 def _get_test_options(test_launcher, test_suite):
     """get test option dict """
     test_opt = {}
+    suite_id = None
     if test_launcher.find('WRTLauncher') != -1:
         test_opt["launcher"] = "wrt-launcher"
-        cmd = "wrt-launcher -l | grep %s | awk '{print $NF}'" % test_suite
+        cmd = "wrt-launcher -l | grep %s | awk '{print $2\":\"$NF}'" \
+            % test_suite
         exit_code, ret = shell_command(cmd)
-        if len(ret) == 0:
+        for line in ret:
+            items = line.split(':')
+            if len(items) > 1 and items[0] == test_suite:
+                suite_id = items[1].strip('\r\n')
+                break
+
+        if suite_id is None:
             LOGGER.info("[ test suite \"%s\" not found in target ]"
                         % test_suite)
             return None
         else:
-            test_opt["suite_id"] = ret[0].strip('\r\n')
+            test_opt["suite_id"] = suite_id
+
     else:
         test_opt["launcher"] = test_launcher
 
@@ -325,10 +334,11 @@ class HostCon:
     def get_device_info(self, deviceid=None):
         """get tizen deivce inforamtion"""
         device_info = {}
-        resolution_str = "Empty resolution"
-        screen_size_str = "Empty screen_size"
-        device_model_str = "Empty device_model"
-        device_name_str = "Empty device_name"
+        resolution_str = ""
+        screen_size_str = ""
+        device_model_str = ""
+        device_name_str = ""
+        build_id_str = ""
         os_version_str = ""
 
         # get resolution and screen size
@@ -339,25 +349,36 @@ class HostCon:
             if match:
                 resolution_str = "%s x %s" % (match.group(1), match.group(2))
                 screen_size_str = "%s x %s" % (match.group(3), match.group(4))
+
         # get architecture
         exit_code, ret = shell_command("uname -m")
         if len(ret) > 0:
             device_model_str = ret[0]
+
         # get hostname
         exit_code, ret = shell_command("uname -n")
         if len(ret) > 0:
             device_name_str = ret[0]
+
         # get os version
         exit_code, ret = shell_command("cat /etc/issue")
         for line in ret:
             if len(line) > 1:
                 os_version_str = "%s %s" % (os_version_str, line)
         os_version_str = os_version_str[0:-1]
+
+        # get build id
+        exit_code, ret = shell_command("cat /etc/os-release")
+        for line in ret:
+            if line.find("BUILD_ID=") != -1:
+                build_id_str = line.split('=')[1].strip('\"\r\n')
+
         device_info["resolution"] = resolution_str
         device_info["screen_size"] = screen_size_str
         device_info["device_model"] = device_model_str
         device_info["device_name"] = device_name_str
         device_info["os_version"] = os_version_str
+        device_info["build_id"] = build_id_str
         return device_info
 
     def __init_webtest_opt(self, params):

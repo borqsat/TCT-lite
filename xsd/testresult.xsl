@@ -92,14 +92,14 @@
 								</td>
 							</tr>
 							<tr>
-								<td>Firmware Version</td>
+								<td>Build ID</td>
 								<td>
 									<xsl:choose>
-										<xsl:when test="test_definition/environment/@firmware_version">
-											<xsl:if test="test_definition/environment/@firmware_version = ''">
+										<xsl:when test="test_definition/environment/@build_id">
+											<xsl:if test="test_definition/environment/@build_id = ''">
 												N/A
 											</xsl:if>
-											<xsl:value-of select="test_definition/environment/@firmware_version" />
+											<xsl:value-of select="test_definition/environment/@build_id" />
 										</xsl:when>
 										<xsl:otherwise>
 											N/A

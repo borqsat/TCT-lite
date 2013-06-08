@@ -408,7 +408,8 @@ class QUTestExecThread(threading.Thread):
         LOCK_OBJ.release()
 
 WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i /opt/%s/%s.wgt"
-WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l|grep '%s'| awk '{print $NF}'"
+WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l|grep '%s' " \
+                "|awk '{print $2\":\"$NF}'"
 WRT_START_STR = "sdb -s %s shell wrt-launcher -s %s"
 WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
 WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
@@ -445,12 +446,12 @@ class TizenMobile:
     def get_device_info(self, deviceid=None):
         """get tizen deivce inforamtion"""
         device_info = {}
-        resolution_str = "Empty resolution"
-        screen_size_str = "Empty screen_size"
-        device_model_str = "Empty device_model"
-        device_name_str = "Empty device_name"
+        resolution_str = ""
+        screen_size_str = ""
+        device_model_str = ""
+        device_name_str = ""
+        build_id_str = ""
         os_version_str = ""
-        fm_version_str = "Empty fw_version"
 
         # get resolution and screen size
         exit_code, ret = shell_command("sdb -s %s shell xrandr" % deviceid)
@@ -460,26 +461,31 @@ class TizenMobile:
             if match:
                 resolution_str = "%s x %s" % (match.group(1), match.group(2))
                 screen_size_str = "%s x %s" % (match.group(3), match.group(4))
+
         # get architecture
         exit_code, ret = shell_command("sdb -s %s shell uname -m" % deviceid)
         if len(ret) > 0:
             device_model_str = ret[0]
+
         # get hostname
         exit_code, ret = shell_command("sdb -s %s shell uname -n" % deviceid)
         if len(ret) > 0:
             device_name_str = ret[0]
+
         # get os version
         exit_code, ret = shell_command(
             "sdb -s %s shell cat /etc/issue" % deviceid)
         for line in ret:
             if len(line) > 1:
                 os_version_str = "%s %s" % (os_version_str, line)
-        # get fw version
-        # exit_code, ret = shell_command(
-        #     "sdb -s %s shell cat /etc/zypp/config" % deviceid)
-        # for line in ret:
-        #     if len(line) > 1:
-        #         fm_version_str = "%s %s" % (fm_version_str, line)
+
+        # get build id
+        exit_code, ret = shell_command(
+            "sdb -s %s shell cat /etc/os-release" % deviceid)
+        for line in ret:
+            if line.find("BUILD_ID=") != -1:
+                build_id_str = line.split('=')[1].strip('\"\r\n')
+
         os_version_str = os_version_str[0:-1]
         device_info["device_id"] = deviceid
         device_info["resolution"] = resolution_str
@@ -487,7 +493,7 @@ class TizenMobile:
         device_info["device_model"] = device_model_str
         device_info["device_name"] = device_name_str
         device_info["os_version"] = os_version_str
-        device_info["fw_version"] = fm_version_str
+        device_info["build_id"] = build_id_str
         return device_info
 
     def install_package(self, deviceid, pkgpath):
@@ -522,6 +528,7 @@ class TizenMobile:
         test_opt = {}
         test_opt["suite_name"] = test_suite
         cmd = ""
+        suite_id = None
         if test_launcher.find('WRTLauncher') != -1:
             test_opt["launcher"] = "wrt-launcher"
             # test suite need to be installed by commodule
@@ -537,13 +544,19 @@ class TizenMobile:
             # query the whether test widget is installed ok
             cmd = WRT_QUERY_STR % (deviceid, test_wgt)
             exit_code, ret = shell_command(cmd)
-            if len(ret) == 0:
+            for line in ret:
+                items = line.split(':')
+                if len(items) > 1 and items[0] == test_wgt:
+                    suite_id = items[1].strip('\r\n')
+                    break
+
+            if suite_id is None:
                 LOGGER.info("[ test widget \"%s\" not installed in target ]"
                             % test_wgt)
                 return None
             else:
-                test_opt["suite_id"] = ret[0].strip('\r\n')
-                self.__test_wgt = test_opt["suite_id"]
+                test_opt["suite_id"] = suite_id
+                self.__test_wgt = suite_id
         else:
             test_opt["launcher"] = test_launcher
 

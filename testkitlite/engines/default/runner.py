@@ -425,9 +425,9 @@ class TRunner:
         mergefile = JOIN(latest_dir, mergefile)
         end_time = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
         LOGGER.info("\n[ test complete at time: %s ]" % end_time)
-        #LOGGER.info("[ start merging test result xml files, "\
+        # LOGGER.info("[ start merging test result xml files, "\
         #    "this might take some time, please wait ]")
-        #LOGGER.info("[ merge result files into %s ]" % mergefile)
+        # LOGGER.info("[ merge result files into %s ]" % mergefile)
         root = etree.Element('test_definition')
         root.tail = "\n"
         totals = set()
@@ -447,10 +447,10 @@ class TRunner:
         # generate actual xml file
         LOGGER.info("[ generate result xml: %s ]" % mergefile)
         if self.skip_all_manual:
-            LOGGER.info("[ some results of core manual cases are N/A,"\
-                "please refer to the above result file ]")
-        LOGGER.info("[ merge complete, write to the result file,"\
-            " this might take some time, please wait ]")
+            LOGGER.info("[ some results of core manual cases are N/A,"
+                        "please refer to the above result file ]")
+        LOGGER.info("[ merge complete, write to the result file,"
+                    " this might take some time, please wait ]")
         # get useful info for xml
         # add environment node
         # add summary node
@@ -475,17 +475,17 @@ class TRunner:
                 if os.path.splitext(self.resultfile)[-1] == '.xml':
                     if not os.path.exists(os.path.dirname(self.resultfile)):
                         os.makedirs(os.path.dirname(self.resultfile))
-                    LOGGER.info("[ copy result xml to output file:"\
-                        " %s ]" % self.resultfile)
+                    LOGGER.info("[ copy result xml to output file:"
+                                " %s ]" % self.resultfile)
                     copyfile(mergefile, self.resultfile)
                 else:
                     LOGGER.info(
-                        "[ Please specify and xml file for result output,"\
+                        "[ Please specify and xml file for result output,"
                         " not:%s ]" % self.resultfile)
         except IOError, error:
-            LOGGER.error("[ Error: fail to copy the result file to: %s,"\
-                " please check if you have created its parent directory,"\
-                " error: %s ]" % (self.resultfile, error))
+            LOGGER.error("[ Error: fail to copy the result file to: %s,"
+                         " please check if you have created its parent directory,"
+                         " error: %s ]" % (self.resultfile, error))
 
     def __merge_result(self, setresultfiles, totals):
         """ merge set result to total"""
@@ -497,7 +497,7 @@ class TRunner:
             totalfile = "%s.total" % totalfile
             totalfile = "%s.xml" % totalfile
             total_xml = etree.parse(totalfile)
-            #LOGGER.info("|--[ merge webapi result file: %s ]" % resultfile)
+            # LOGGER.info("|--[ merge webapi result file: %s ]" % resultfile)
             result_xml = etree.parse(resultfile)
             for total_suite in total_xml.getiterator('suite'):
                 for total_set in total_suite.getiterator('set'):
@@ -506,24 +506,24 @@ class TRunner:
                             # when total xml and result xml have same suite
                             # name and set name
                             self.__merge_result_by_name(
-                                result_set,total_set,result_suite, total_suite)
+                                result_set, total_set, result_suite, total_suite)
             total_xml.write(totalfile)
             totals.add(totalfile)
         return totals
 
     def __merge_result_by_name(
-        self,result_set,total_set,result_suite, total_suite):
+            self, result_set, total_set, result_suite, total_suite):
         ''' merge result select by name'''
         if result_set.get('name') == total_set.get('name') \
-        and result_suite.get('name') == total_suite.get('name'):
+                and result_suite.get('name') == total_suite.get('name'):
             # set cases that doesn't have result in result \
             # set to N/A
             # append cases from result set to total set
             result_case_iterator = result_set.getiterator(
                 'testcase')
             if result_case_iterator:
-                #LOGGER.info("----[ suite: %s, set: %s, time: %s ]"
-                #% (result_suite.get('name'), result_set.get('name'), 
+                # LOGGER.info("----[ suite: %s, set: %s, time: %s ]"
+                #% (result_suite.get('name'), result_set.get('name'),
                 #    datetime.today().strftime("%Y-%m-%d_%H_%M_%S")))
                 for result_case in result_case_iterator:
                     try:
@@ -531,7 +531,7 @@ class TRunner:
                         total_set.append(result_case)
                     except IOError, error:
                         LOGGER.error("[ Error: fail to append %s, error: %s ]"
-                            % (result_case.get('id'), error))
+                                     % (result_case.get('id'), error))
 
     def __count_result(self, result_case):
         """ record the pass,failed,block,N/A case number"""
@@ -569,7 +569,7 @@ class TRunner:
         environment.attrib['device_id'] = device_info["device_id"]
         environment.attrib['device_model'] = device_info["device_model"]
         environment.attrib['device_name'] = device_info["device_name"]
-        environment.attrib['firmware_version'] = device_info["fw_version"]
+        environment.attrib['build_id'] = device_info["build_id"]
         environment.attrib['host'] = platform.platform()
         environment.attrib['os_version'] = device_info["os_version"]
         environment.attrib['resolution'] = device_info["resolution"]
@@ -591,9 +591,9 @@ class TRunner:
             + int(self.testresult_dict["not_run"])
         LOGGER.info("  [ total case number: %s ]" % (total_case_number))
         if total_case_number == 0:
-            LOGGER.info("[Warning: found 0 case from the result files, "\
-                "if it's not right, please check the test xml files, "\
-                "or the filter values ]")
+            LOGGER.info("[Warning: found 0 case from the result files, "
+                        "if it's not right, please check the test xml files, "
+                        "or the filter values ]")
         else:
             LOGGER.info("  [ pass rate: %.2f%% ]" % (int(
                 self.testresult_dict["pass"]) * 100 / int(total_case_number)))
@@ -641,16 +641,16 @@ class TRunner:
                         case_detail_tmp["entry"] = tcase.find(
                             'description/test_script_entry').text
                         if tcase.find(
-                            'description/test_script_entry').get('timeout'):
+                                'description/test_script_entry').get('timeout'):
                             case_detail_tmp["timeout"] = tcase.find(
                                 'description/test_script_entry'
-                                ).get('timeout')
+                            ).get('timeout')
                         if tcase.find(
                             'description/test_script_entry'
-                            ).get('test_script_expected_result'):
+                        ).get('test_script_expected_result'):
                             case_detail_tmp["expected_result"] = tcase.find(
                                 'description/test_script_entry'
-                                ).get('test_script_expected_result')
+                            ).get('test_script_expected_result')
                     for this_step in tcase.getiterator("step"):
                         step_detail_tmp = {}
                         step_detail_tmp.setdefault("order", "1")
@@ -701,8 +701,8 @@ class TRunner:
             self.set_parameters = parameters
 
         except IOError, error:
-            LOGGER.error("[ Error: fail to prepare cases parameters, "\
-                "error: %s ]\n" % error)
+            LOGGER.error("[ Error: fail to prepare cases parameters, "
+                         "error: %s ]\n" % error)
             return False
         return True
 
@@ -886,8 +886,8 @@ class TRunner:
         try:
             self.connector.finalize_test(sessionid)
         except Exception, error:
-            LOGGER.error("[ Error: fail to close webapi http server, "\
-                "error: %s ]" % error)
+            LOGGER.error("[ Error: fail to close webapi http server, "
+                         "error: %s ]" % error)
 
     def get_capability(self, file_name):
         """get_capability from file """
@@ -907,7 +907,8 @@ class TRunner:
             LOGGER.error(
                 "[ Error: fail to parse capability xml, error: %s ]" % error)
             return False
-    def __write_set_result(self,testxmlfile, result):
+
+    def __write_set_result(self, testxmlfile, result):
         '''
             get the result JSON form com_module,
             write them to orignal testxmlfile
@@ -922,14 +923,15 @@ class TRunner:
         else:
             write_json_result(set_result_xml, set_result)
 
-    def __write_file_result(self,set_result_xml, set_result):
+    def __write_file_result(self, set_result_xml, set_result):
         result_file = set_result['resultfile']
         try:
             if self.rerun:
-                LOGGER.info("[ Web UI FW Unit Test Does not support rerun.Result should be N/A ]\n")
+                LOGGER.info(
+                    "[ Web UI FW Unit Test Does not support rerun.Result should be N/A ]\n")
             else:
                 test_tree = etree.parse(set_result_xml)
-                test_em =test_tree.getroot()
+                test_em = test_tree.getroot()
                 result_tree = etree.parse(result_file)
                 result_em = result_tree.getroot()
                 for result_suite in result_em.getiterator('suite'):
@@ -962,13 +964,13 @@ def get_capability_form_node(capability_em):
     if tcap.get("type").lower() == 'integer':
         if tcap.get("support").lower() == 'true':
             if tcap.getiterator(
-                "value") and tcap.find("value").text is not None:
+                    "value") and tcap.find("value").text is not None:
                 capability[tmp_key] = int(tcap.find("value").text)
 
     if tcap.get("type").lower() == 'string':
         if tcap.get("support").lower() == 'true':
             if tcap.getiterator(
-                "value") and tcap.find("value").text is not None:
+                    "value") and tcap.find("value").text is not None:
                 capability[tmp_key] = tcap.find("value").text
 
     return capability
@@ -1008,8 +1010,8 @@ def replace_cdata(file_name):
         remove(file_name)
         move(abs_path, file_name)
     except IOError, error:
-        LOGGER.error("[ Error: fail to replace cdata in the result file, "\
-            "error: %s ]\n" % error)
+        LOGGER.error("[ Error: fail to replace cdata in the result file, "
+                     "error: %s ]\n" % error)
 
 
 def extract_notes(buf, pattern):
@@ -1040,6 +1042,7 @@ def insert_notes(case, buf, pattern="###[NOTE]###"):
     else:
         notes_elm.text += "\n" + extract_notes(buf, pattern)
 
+
 def get_summary(start_time, end_time):
     """ set summary node """
     summary = etree.Element('summary')
@@ -1052,6 +1055,7 @@ def get_summary(start_time, end_time):
     summary.append(end_at)
     summary.tail = "\n  "
     return summary
+
 
 def write_json_result(set_result_xml, set_result):
     ''' fetch result form JSON'''
@@ -1068,15 +1072,15 @@ def write_json_result(set_result_xml, set_result):
                         # Check performance test
                         if tcase.find('measurement') is not None:
                             for measurement in tcase.getiterator(
-                                'measurement'):
+                                    'measurement'):
                                 if 'measures' in case_result:
                                     m_results = case_result['measures']
                                     for m_result in m_results:
                                         if measurement.get(
-                                            'name') == m_result['name'] and 'value' in m_result:
+                                                'name') == m_result['name'] and 'value' in m_result:
                                             measurement.set(
                                                 'value', m_result[
-                                                  'value'])
+                                                    'value'])
                         if tcase.find("./result_info") is not None:
                             tcase.remove(tcase.find("./result_info"))
                         result_info = etree.SubElement(tcase, "result_info")
@@ -1103,8 +1107,3 @@ def write_json_result(set_result_xml, set_result):
         traceback.print_exc()
         LOGGER.error(
             "[ Error: fail to write cases result, error: %s ]\n" % error)
-
-
-
-
-
