@@ -436,6 +436,9 @@ class HostCon:
     def init_test(self, deviceid, params):
         """init the test envrionment"""
         self.__device_id = deviceid
+        self.__test_set_name = ""
+        if "testset-name" in params:
+            self.__test_set_name = params["testset-name"]
         if "client-command" in params and params['client-command'] is not None:
             self.__test_type = "webapi"
             return self.__init_webtest_opt(params)
@@ -494,7 +497,8 @@ class HostCon:
             return False
         if not "cases" in test_set:
             return False
-        test_set_name = os.path.split(test_set["current_set_name"])[1]
+
+        test_set_name = self.__test_set_name
         cases = test_set["cases"]
         exetype = test_set["exetype"]
         ctype = test_set["type"]
