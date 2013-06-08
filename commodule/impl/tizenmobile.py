@@ -564,7 +564,7 @@ class TizenMobile:
         test_launcher = params["external-test"]
         testsuite_name = params["testsuite-name"]
         testset_name = params["testset-name"]
-        client_cmds = params['client-command'].strip(' ').split(' ')
+        client_cmds = params['client-command'].strip().split()
 
         wrt_tag = ""
         if len(client_cmds) >= 2:
@@ -597,7 +597,6 @@ class TizenMobile:
         else:
             self.__test_self_repeat = False
 
-        self.__test_set_name = testset_name
         test_opt = self.__get_test_options(
             deviceid, test_launcher, testsuite_name, testset_name)
 
@@ -663,6 +662,9 @@ class TizenMobile:
     def init_test(self, deviceid, params):
         """init the test envrionment"""
         self.__device_id = deviceid
+        self.__test_set_name = ""
+        if "testset-name" in params:
+            self.__test_set_name = params["testset-name"]
         if "client-command" in params and params['client-command'] is not None:
             self.__test_type = "webapi"
             return self.__init_webtest_opt(deviceid, params)
