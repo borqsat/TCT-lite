@@ -92,6 +92,22 @@
 								</td>
 							</tr>
 							<tr>
+								<td>Firmware Version</td>
+								<td>
+									<xsl:choose>
+										<xsl:when test="test_definition/environment/@firmware_version">
+											<xsl:if test="test_definition/environment/@firmware_version = ''">
+												N/A
+											</xsl:if>
+											<xsl:value-of select="test_definition/environment/@firmware_version" />
+										</xsl:when>
+										<xsl:otherwise>
+											N/A
+										</xsl:otherwise>
+									</xsl:choose>
+								</td>
+							</tr>
+							<tr>
 								<td>Build ID</td>
 								<td>
 									<xsl:choose>
