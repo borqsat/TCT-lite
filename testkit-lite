@@ -187,17 +187,6 @@ try:
                     results will be merged together to this output file"),
         make_option("-e", dest="exttest", action="store",
                     help="Launch external test with a launcher, supports browser or other web-runtime"),
-        make_option("--fullscreen", dest="fullscreen",
-                    action="store_true",
-                    help="Run web API test in full screen mode"),
-        make_option("--non-active", dest="non_active",
-                    action="store_true",
-                    help="Disable the ability to set the result of \
-                    core manual cases from the console"),
-        make_option("--enable-memory-collection",
-                    dest="enable_memory_collection", action="store_true",
-                    help="Enable the ability to release memory \
-                    when the free memory is less than 100M"),
         make_option("--version", dest="version_info", action="store_true",
                     help="Show version information"),
         make_option("--internal-version", dest="internal_version_info",
