@@ -42,6 +42,6 @@ chmod ugo+rwx /opt/testkit/lite
 %defattr(-,root,root)
 
 %doc
-/opt/testkit/lite/Testkit-Lite_User_Guide.pdf
+/opt/testkit/lite/testkit-lite_user_guide.pdf
 
 %changelog
