@@ -80,7 +80,7 @@ class TRunner:
         self.pid_log = None
         self.set_parameters = {}
         self.connector = connector
-        self.stub_name = "httpserver"
+        self.stub_name = "testkit-stub"
         self.capabilities = {}
         self.has_capability = False
         self.rerun = False
@@ -801,7 +801,7 @@ class TRunner:
     def __init_com_module(self, testxml):
         """
             send init test to com_module
-            if webapi test,com_module will start httpserver
+            if webapi test,com_module will start testkit-stub
             else com_module send the test case to devices
         """
         starup_prms = self.__prepare_starup_parameters(testxml)
@@ -865,7 +865,7 @@ class TRunner:
             return True
 
     def __shut_down_server(self, sessionid):
-        '''shut_down httpserver'''
+        '''shut_down testkit-stub'''
         try:
             self.connector.finalize_test(sessionid)
         except Exception, error:
