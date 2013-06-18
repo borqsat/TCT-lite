@@ -426,10 +426,11 @@ class TizenMobile:
         self.__test_async_shell = None
         self.__test_async_http = None
         self.__test_async_core = None
-        self.__test_set_block = 100
+        self.__test_set_block = 300
         self.__device_id = None
         self.__test_type = None
         self.__test_auto_iu = False
+        self.__test_fuzzy_match = False
         self.__test_self_exec = False
         self.__test_self_repeat = False
         self.__test_wgt = None
@@ -546,7 +547,9 @@ class TizenMobile:
             exit_code, ret = shell_command(cmd)
             for line in ret:
                 items = line.split(':')
-                if len(items) > 1 and items[0] == test_wgt:
+                if len(items) < 1:
+                    continue
+                if (self.__test_fuzzy_match and items[0].find(test_wgt) !=-1) or (items[0] == test_wgt):
                     suite_id = items[1].strip('\r\n')
                     break
 
@@ -578,7 +581,6 @@ class TizenMobile:
         testsuite_name = params["testsuite-name"]
         testset_name = params["testset-name"]
         client_cmds = params['client-command'].strip().split()
-
         wrt_tag = ""
         if len(client_cmds) >= 2:
             wrt_tag = client_cmds[1]
@@ -589,13 +591,18 @@ class TizenMobile:
         if "capability" in params:
             capability_opt = params["capability"]
 
-        if wrt_tag.find('-iu') != -1:
+        if wrt_tag.find('iu') != -1:
             self.__test_auto_iu = True
         else:
             self.__test_auto_iu = False
 
+        if wrt_tag.find('z') != -1:
+            self.__test_fuzzy_match = True
+        else:
+            self.__test_fuzzy_match = False
+
         # this suite is automated by itself
-        if wrt_tag.find('-a') != -1:
+        if wrt_tag.find('a') != -1:
             self.__test_type = "jqunit"
             self.__test_self_exec = True
             testsuite_name = 'tct-webuifw-tests'
@@ -603,7 +610,7 @@ class TizenMobile:
             self.__test_self_exec = False
 
         # this suite is repeat just skip it
-        if wrt_tag.find('-r') != -1:
+        if wrt_tag.find('r') != -1:
             self.__test_type = "jqunit"
             self.__test_self_repeat = True
             return session_id
@@ -622,7 +629,7 @@ class TizenMobile:
         if self.__test_self_exec:
             return session_id
 
-        LOGGER.info("[ launch the stub httpserver ]")
+        LOGGER.info("[ launch the stub process ]")
         cmdline = "sdb shell killall %s " % stub_app
         exit_code, ret = shell_command(cmdline)
         time.sleep(2)

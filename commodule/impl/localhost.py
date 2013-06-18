@@ -319,7 +319,7 @@ class HostCon:
     """ Implementation for transfer data to Test Target in Local Host"""
 
     def __init__(self):
-        self.__test_set_block = 100
+        self.__test_set_block = 300
         self.__device_id = None
         self.__server_url = None
         self.__test_async_shell = None
