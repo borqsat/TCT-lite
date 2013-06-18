@@ -823,7 +823,10 @@ class TRunner:
             parse_tree = etree.parse(testxml)
             tsuite = parse_tree.getroot().getiterator('suite')[0]
             tset = parse_tree.getroot().getiterator('set')[0]
-            starup_parameters['client-command'] = tsuite.get("launcher")
+            if tset.get("launcher") is not None:
+                starup_parameters['client-command'] = tset.get("launcher")
+            else:
+                starup_parameters['client-command'] = tsuite.get("launcher")
             starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['testset-name'] = tset.get("name")
             starup_parameters['stub-name'] = self.stub_name
