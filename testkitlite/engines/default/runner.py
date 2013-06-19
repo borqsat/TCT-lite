@@ -58,17 +58,12 @@ class TRunner:
         """ init all self parameters here """
         # dryrun
         self.bdryrun = False
-        # non_active
-        self.non_active = False
-        # enable_memory_collection
-        self.enable_memory_collection = False
         # result file
         self.resultfile = None
         # external test
         self.external_test = None
         # filter rules
         self.filter_rules = None
-        self.fullscreen = False
         self.debug = False
         self.resultfiles = set()
         self.core_auto_files = []
@@ -85,7 +80,7 @@ class TRunner:
         self.pid_log = None
         self.set_parameters = {}
         self.connector = connector
-        self.stub_name = "httpserver"
+        self.stub_name = "testkit-stub"
         self.capabilities = {}
         self.has_capability = False
         self.rerun = False
@@ -96,26 +91,17 @@ class TRunner:
         if options.bdryrun:
             self.bdryrun = options.bdryrun
         # release memory when the free memory is less than 100M
-        if options.enable_memory_collection:
-            self.enable_memory_collection = options.enable_memory_collection
-        # Disable set the result of core manual cases from the console
-        if options.non_active:
-            self.non_active = options.non_active
         # apply user specify test result file
         if options.resultfile:
             self.resultfile = options.resultfile
         # set device_id
         if options.device_serial:
             self.deviceid = options.device_serial
-
         if not options.device_serial:
             if len(self.connector.get_device_ids()) > 0:
                 self.deviceid = self.connector.get_device_ids()[0]
             else:
                 raise Exception("[ No devices connected ]")
-
-        if options.fullscreen:
-            self.fullscreen = True
         # set the external test WRTLauncher
         if options.exttest:
             self.external_test = options.exttest
@@ -301,10 +287,7 @@ class TRunner:
                 time.sleep(3)
                 LOGGER.info("\n[ testing xml: %s.xml ]" % temp_test_xml)
                 self.current_test_xml = temp_test_xml
-            if self.non_active:
-                self.skip_all_manual = True
-            else:
-                self.__run_with_commodule(core_manual_file)
+            self.__run_with_commodule(core_manual_file)
 
     def __run_webapi_test(self, latest_dir):
         """ run webAPI test"""
@@ -818,7 +801,7 @@ class TRunner:
     def __init_com_module(self, testxml):
         """
             send init test to com_module
-            if webapi test,com_module will start httpserver
+            if webapi test,com_module will start testkit-stub
             else com_module send the test case to devices
         """
         starup_prms = self.__prepare_starup_parameters(testxml)
@@ -840,7 +823,10 @@ class TRunner:
             parse_tree = etree.parse(testxml)
             tsuite = parse_tree.getroot().getiterator('suite')[0]
             tset = parse_tree.getroot().getiterator('set')[0]
-            starup_parameters['client-command'] = tsuite.get("launcher")
+            if tset.get("launcher") is not None:
+                starup_parameters['client-command'] = tset.get("launcher")
+            else:
+                starup_parameters['client-command'] = tsuite.get("launcher")
             starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['testset-name'] = tset.get("name")
             starup_parameters['stub-name'] = self.stub_name
@@ -882,7 +868,7 @@ class TRunner:
             return True
 
     def __shut_down_server(self, sessionid):
-        '''shut_down httpserver'''
+        '''shut_down testkit-stub'''
         try:
             self.connector.finalize_test(sessionid)
         except Exception, error:
