@@ -55,7 +55,7 @@ def _get_forward_connect(device_id, remote_port=None):
             sock_inner.bind((host, inner_port))
             sock_inner.close()
             bflag = False
-        except socket.error, error:
+        except socket.error as error:
             if error.errno == 98 or error.errno == 13:
                 bflag = True
         if bflag:
@@ -214,7 +214,7 @@ class CoreTestExecThread(threading.Thread):
                                     item['value'] = config.get(ind, 'value')
                                     retmeasures.append(item)
                                     os.remove(tmpname)
-                                except IOError, error:
+                                except IOError as error:
                                     LOGGER.error(
                                         "[ Error: fail to parse value,"
                                         " error:%s ]\n" % error)
@@ -267,7 +267,7 @@ class CoreTestExecThread(threading.Thread):
                                 LOGGER.info(
                                     "[ Warnning: you input: '%s' is invalid,"
                                     " please try again ]" % test_result)
-                except IOError, error:
+                except IOError as error:
                     LOGGER.info(
                         "[ Error: fail to get core manual test step,"
                         " error: %s ]\n" % error)
@@ -322,10 +322,10 @@ class WebTestExecThread(threading.Thread):
                         LOCK_OBJ.release()
                         break
                 elif "finished" in ret:
+                    err_cnt = 0
                     LOCK_OBJ.acquire()
                     TEST_SERVER_STATUS = ret
                     LOCK_OBJ.release()
-                    err_cnt = 0
                     # check if current test set is finished
                     if ret["finished"] == 1:
                         set_finished = True
@@ -420,20 +420,19 @@ class TizenMobile:
     """ Implementation for transfer data
         between Host and Tizen Mobile Device
     """
-
     def __init__(self):
-        self.__stub_server_url = None
-        self.__test_async_shell = None
-        self.__test_async_http = None
-        self.__test_async_core = None
-        self.__test_set_block = 300
-        self.__device_id = None
-        self.__test_type = None
-        self.__test_auto_iu = False
-        self.__test_fuzzy_match = False
-        self.__test_self_exec = False
-        self.__test_self_repeat = False
-        self.__test_wgt = None
+        self.__st = dict({'server_url': None,
+                          'async_shell': None,
+                          'async_http': None,
+                          'async_core': None,
+                          'block_size': 300,
+                          'device_id': None,
+                          'test_type': None,
+                          'auto_iu': False,
+                          'fuzzy_match': False,
+                          'self_exec': False,
+                          'self_repeat': False,
+                          'test_wgt': None})
 
     def get_device_ids(self):
         """get tizen deivce list of ids"""
@@ -533,7 +532,7 @@ class TizenMobile:
         if test_launcher.find('WRTLauncher') != -1:
             test_opt["launcher"] = "wrt-launcher"
             # test suite need to be installed by commodule
-            if self.__test_auto_iu:
+            if self.__st['auto_iu']:
                 test_wgt = test_set
                 cmd = WRT_INSTALL_STR % (deviceid, test_suite, test_wgt)
                 exit_code, ret = shell_command(cmd)
@@ -542,14 +541,19 @@ class TizenMobile:
                 cmd = WRT_INSTALL_STR % (deviceid, test_suite, test_suite)
                 exit_code, ret = shell_command(cmd)
 
+            if exit_code == -1:
+                return None
+
             # query the whether test widget is installed ok
             cmd = WRT_QUERY_STR % (deviceid, test_wgt)
             exit_code, ret = shell_command(cmd)
+            if exit_code == -1:
+                return None
             for line in ret:
                 items = line.split(':')
                 if len(items) < 1:
                     continue
-                if (self.__test_fuzzy_match and items[0].find(test_wgt) !=-1) or (items[0] == test_wgt):
+                if (self.__st['fuzzy_match'] and items[0].find(test_wgt) != -1) or items[0] == test_wgt:
                     suite_id = items[1].strip('\r\n')
                     break
 
@@ -559,7 +563,7 @@ class TizenMobile:
                 return None
             else:
                 test_opt["suite_id"] = suite_id
-                self.__test_wgt = suite_id
+                self.__st['test_wgt'] = suite_id
         else:
             test_opt["launcher"] = test_launcher
 
@@ -591,44 +595,35 @@ class TizenMobile:
         if "capability" in params:
             capability_opt = params["capability"]
 
-        if wrt_tag.find('iu') != -1:
-            self.__test_auto_iu = True
-        else:
-            self.__test_auto_iu = False
+        self.__st['auto_iu'] = wrt_tag.find('iu') != -1
+        self.__st['fuzzy_match'] = wrt_tag.find('z') != -1
+        self.__st['self_exec'] = wrt_tag.find('a') != -1
+        self.__st['self_repeat'] = wrt_tag.find('r') != -1
 
-        if wrt_tag.find('z') != -1:
-            self.__test_fuzzy_match = True
-        else:
-            self.__test_fuzzy_match = False
-
-        # this suite is automated by itself
-        if wrt_tag.find('a') != -1:
-            self.__test_type = "jqunit"
-            self.__test_self_exec = True
+        # uifw, this suite is self execution
+        if self.__st['self_exec']:
+            self.__st['test_type'] = "jqunit"
             testsuite_name = 'tct-webuifw-tests'
-        else:
-            self.__test_self_exec = False
 
-        # this suite is repeat just skip it
-        if wrt_tag.find('r') != -1:
-            self.__test_type = "jqunit"
-            self.__test_self_repeat = True
+        # uifw, this suite is duplicated
+        if self.__st['self_repeat']:
+            self.__st['test_type'] = "jqunit"
+            self.__st['self_repeat'] = True
             return session_id
-        else:
-            self.__test_self_repeat = False
 
         test_opt = self.__get_test_options(
             deviceid, test_launcher, testsuite_name, testset_name)
 
         if test_opt is None:
+            LOGGER.info("[ init the test options, get failed ]")
             return None
+
+        # test suite don't need a stub process
+        if self.__st['self_exec']:
+            return session_id
 
         timecnt = 0
         blauched = False
-        # test suite is executed by framework of itself, no stub process needed
-        if self.__test_self_exec:
-            return session_id
-
         LOGGER.info("[ launch the stub process ]")
         cmdline = "sdb shell killall %s " % stub_app
         exit_code, ret = shell_command(cmdline)
@@ -636,18 +631,17 @@ class TizenMobile:
 
         cmdline = "sdb -s %s shell %s --port:%s %s" \
             % (deviceid, stub_app, stub_port, debug_opt)
-        self.__test_async_shell = StubExecThread(
-            cmd=cmdline, sessionid=session_id)
-        self.__test_async_shell.start()
+        self.__st['async_shell'] = StubExecThread(cmdline, session_id)
+        self.__st['async_shell'].start()
         time.sleep(2)
 
-        if self.__stub_server_url is None:
-            self.__stub_server_url = _get_forward_connect(deviceid, stub_port)
-        LOGGER.info("[ Access device from url: %s ]" % self.__stub_server_url)
+        if self.__st['server_url'] is None:
+            self.__st['server_url'] = _get_forward_connect(deviceid, stub_port)
+        LOGGER.info("[ Access device from url: %s ]" % self.__st['server_url'])
 
         while timecnt < 10:
             ret = http_request(get_url(
-                self.__stub_server_url, "/check_server_status"), "GET", {})
+                self.__st['server_url'], "/check_server_status"), "GET", {})
             if ret is None:
                 LOGGER.info("[ check server status, not ready yet! ]")
                 timecnt += 1
@@ -664,14 +658,14 @@ class TizenMobile:
 
         if blauched:
             ret = http_request(get_url(
-                self.__stub_server_url, "/init_test"), "POST", test_opt)
+                self.__st['server_url'], "/init_test"), "POST", test_opt)
             if "error_code" in ret:
                 LOGGER.info("[ init test suite, "
                             "get error code %d ! ]" % ret["error_code"])
                 return None
 
             if capability_opt is not None:
-                ret = http_request(get_url(self.__stub_server_url,
+                ret = http_request(get_url(self.__st['server_url'],
                                            "/set_capability"),
                                    "POST", capability_opt)
             return session_id
@@ -681,24 +675,24 @@ class TizenMobile:
 
     def init_test(self, deviceid, params):
         """init the test envrionment"""
-        self.__device_id = deviceid
+        self.__st['device_id'] = deviceid
         self.__test_set_name = ""
         if "testset-name" in params:
             self.__test_set_name = params["testset-name"]
         if "client-command" in params and params['client-command'] is not None:
-            self.__test_type = "webapi"
+            self.__st['test_type'] = "webapi"
             return self.__init_webtest_opt(deviceid, params)
         else:
-            self.__test_type = "coreapi"
+            self.__st['test_type'] = "coreapi"
             return str(uuid.uuid1())
 
     def __run_core_test(self, sessionid, test_set_name, exetype, cases):
         """
             process the execution for core api test
         """
-        self.__test_async_core = CoreTestExecThread(
-            self.__device_id, test_set_name, exetype, cases)
-        self.__test_async_core.start()
+        self.__st['async_core'] = CoreTestExecThread(
+            self.__st['device_id'], test_set_name, exetype, cases)
+        self.__st['async_core'].start()
         return True
 
     def __run_jqt_test(self, sessionid, test_set_name, exetype, cases):
@@ -708,9 +702,9 @@ class TizenMobile:
         cmdline = ""
         blauched = False
         timecnt = 0
-        if self.__test_self_exec:
+        if self.__st['self_exec']:
             cmdline = WRT_START_STR % (
-                self.__device_id, self.__test_wgt)
+                self.__st['device_id'], self.__st['test_wgt'])
             while timecnt < 3:
                 exit_code, ret = shell_command(cmdline)
                 if len(ret) > 0 and ret[0].find('launched') != -1:
@@ -719,21 +713,21 @@ class TizenMobile:
                 time.sleep(3)
             if not blauched:
                 LOGGER.info(
-                    "[ launch widget \"%s\" failed! ]" % self.__test_wgt)
+                    "[ launch widget \"%s\" failed! ]" % self.__st['test_wgt'])
 
-            self.__test_async_shell = QUTestExecThread(
-                deviceid=self.__device_id,
+            self.__st['async_shell'] = QUTestExecThread(
+                deviceid=self.__st['device_id'],
                 sessionid=sessionid,
                 test_set=test_set_name,
                 cases=cases)
-            self.__test_async_shell.start()
+            self.__st['async_shell'].start()
             return True
 
-        if self.__test_self_repeat:
+        if self.__st['self_repeat']:
             global TEST_SERVER_RESULT, TEST_SERVER_STATUS
             result_file = os.path.expanduser(
                 "~") + os.sep + sessionid + "_uifw.xml"
-            b_ok = _download_file(self.__device_id,
+            b_ok = _download_file(self.__st['device_id'],
                                   UIFW_RESULT,
                                   result_file)
             for test_case in cases:
@@ -756,10 +750,10 @@ class TizenMobile:
         """
         case_count = len(cases)
         blknum = 0
-        if case_count % self.__test_set_block == 0:
-            blknum = case_count / self.__test_set_block
+        if case_count % self.__st['block_size'] == 0:
+            blknum = case_count / self.__st['block_size']
         else:
-            blknum = case_count / self.__test_set_block + 1
+            blknum = case_count / self.__st['block_size'] + 1
 
         idx = 1
         test_set_blocks = []
@@ -770,17 +764,17 @@ class TizenMobile:
             block_data["totalBlk"] = str(blknum)
             block_data["currentBlk"] = str(idx)
             block_data["casecount"] = str(case_count)
-            start = (idx - 1) * self.__test_set_block
+            start = (idx - 1) * self.__st['block_size']
             if idx == blknum:
                 end = case_count
             else:
-                end = idx * self.__test_set_block
+                end = idx * self.__st['block_size']
             block_data["cases"] = cases[start:end]
             test_set_blocks.append(block_data)
             idx += 1
-        self.__test_async_http = WebTestExecThread(
-            self.__stub_server_url, test_set_name, test_set_blocks)
-        self.__test_async_http.start()
+        self.__st['async_http'] = WebTestExecThread(
+            self.__st['server_url'], test_set_name, test_set_blocks)
+        self.__st['async_http'].start()
         return True
 
     def run_test(self, sessionid, test_set):
@@ -795,13 +789,13 @@ class TizenMobile:
         cases = test_set["cases"]
         exetype = test_set["exetype"]
         ctype = test_set["type"]
-        if self.__test_type == "webapi":
+        if self.__st['test_type'] == "webapi":
             return self.__run_web_test(test_set_name,
                                        exetype, ctype, cases)
-        elif self.__test_type == "jqunit":
+        elif self.__st['test_type'] == "jqunit":
             return self.__run_jqt_test(sessionid, test_set_name,
                                        exetype, cases)
-        elif self.__test_type == "coreapi":
+        elif self.__st['test_type'] == "coreapi":
             return self.__run_core_test(sessionid, test_set_name,
                                         exetype, cases)
         else:
@@ -835,7 +829,7 @@ class TizenMobile:
             LOCK_OBJ.acquire()
             result = TEST_SERVER_RESULT
             LOCK_OBJ.release()
-        except OSError, error:
+        except OSError as error:
             LOGGER.error(
                 "[ Error: failed to get test result, error:%s ]\n" % error)
         return result
@@ -845,13 +839,14 @@ class TizenMobile:
         if sessionid is None:
             return False
 
-        if self.__test_type == "webapi":
-            if self.__test_auto_iu:
-                cmd = WRT_UNINSTL_STR % (self.__device_id, self.__test_wgt)
+        if self.__st['test_type'] == "webapi":
+            if self.__st['auto_iu']:
+                cmd = WRT_UNINSTL_STR % (
+                    self.__st['device_id'], self.__st['test_wgt'])
                 exit_code, ret = shell_command(cmd)
 
             ret = http_request(get_url(
-                self.__stub_server_url, "/shut_down_server"), "GET", {})
+                self.__st['server_url'], "/shut_down_server"), "GET", {})
         return True
 
 

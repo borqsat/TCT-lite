@@ -181,7 +181,7 @@ class CoreTestExecThread(threading.Thread):
                                     config.read(fname)
                                     item['value'] = config.get(ind, 'value')
                                     retmeasures.append(item)
-                                except IOError, error:
+                                except IOError as error:
                                     LOGGER.error(
                                         "[ Error: failed to parse value,"
                                         " error: %s ]\n" % error)
@@ -235,7 +235,7 @@ class CoreTestExecThread(threading.Thread):
                                 LOGGER.info(
                                     "[ Warning: you input: '%s' is invalid,"
                                     " please try again ]" % test_result)
-                except IOError, error:
+                except IOError as error:
                     LOGGER.error(
                         "[ Error: fail to get core manual test step,"
                         " error: %s ]\n" % error)
@@ -373,6 +373,7 @@ class HostCon:
             if line.find("BUILD_ID=") != -1:
                 build_id_str = line.split('=')[1].strip('\"\r\n')
 
+        device_info["device_id"] = 'localhost'
         device_info["resolution"] = resolution_str
         device_info["screen_size"] = screen_size_str
         device_info["device_model"] = device_model_str
@@ -555,7 +556,7 @@ class HostCon:
             LOCK_OBJ.acquire()
             result = TEST_SERVER_RESULT
             LOCK_OBJ.release()
-        except OSError, error:
+        except OSError as error:
             LOGGER.error(
                 "[ Error: failed to get test result, error: %s ]\n" % error)
 
@@ -577,3 +578,4 @@ class HostCon:
 def get_target_conn():
     """ Get connection for Test Target"""
     return HostCon()
+Con()

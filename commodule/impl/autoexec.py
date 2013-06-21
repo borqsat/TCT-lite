@@ -30,6 +30,8 @@ import subprocess
 from .killall import killall
 from .str2 import str2str
 
+TIME_OUT = 15
+
 
 def shell_command(cmd):
     """shell communication for quick return in sync mode"""
@@ -37,12 +39,19 @@ def shell_command(cmd):
                             shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
-    ret1 = proc.stdout.readlines()
-    ret2 = proc.stderr.readlines()
-    exit_code = proc.poll()
+    time_cnt = 0
+    while time_cnt < TIME_OUT:
+        exit_code = proc.poll()
+        if not exit_code is None:
+            break
+        time_cnt += 0.2
+        time.sleep(0.2)
+
     if exit_code is None:
-        exit_code = 0
-    result = ret1 or ret2
+        exit_code = -1
+        result = []
+    else:
+        result = proc.stdout.readlines() or proc.stderr.readlines()
     return [exit_code, result]
 
 
