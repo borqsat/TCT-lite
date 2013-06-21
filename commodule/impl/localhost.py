@@ -578,4 +578,3 @@ class HostCon:
 def get_target_conn():
     """ Get connection for Test Target"""
     return HostCon()
-Con()
