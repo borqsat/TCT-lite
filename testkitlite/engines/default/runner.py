@@ -29,6 +29,7 @@ import os
 import platform
 import time
 import sys
+import traceback
 import collections
 from datetime import datetime
 from shutil import copyfile
@@ -58,6 +59,8 @@ class TRunner:
         """ init all self parameters here """
         # dryrun
         self.bdryrun = False
+        # non_active
+        self.non_active = False
         # result file
         self.resultfile = None
         # external test
@@ -90,7 +93,9 @@ class TRunner:
         # apply dryrun
         if options.bdryrun:
             self.bdryrun = options.bdryrun
-        # release memory when the free memory is less than 100M
+        # Disable set the result of core manual cases from the console
+        if options.non_active:
+            self.non_active = options.non_active
         # apply user specify test result file
         if options.resultfile:
             self.resultfile = options.resultfile
@@ -287,7 +292,10 @@ class TRunner:
                 time.sleep(3)
                 LOGGER.info("\n[ testing xml: %s.xml ]" % temp_test_xml)
                 self.current_test_xml = temp_test_xml
-            self.__run_with_commodule(core_manual_file)
+            if self.non_active:
+                self.skip_all_manual = True
+            else:
+                self.__run_with_commodule(core_manual_file)
 
     def __run_webapi_test(self, latest_dir):
         """ run webAPI test"""
@@ -467,8 +475,8 @@ class TRunner:
                         " not:%s ]" % self.resultfile)
         except IOError, error:
             LOGGER.error("[ Error: fail to copy the result file to: %s,"
-                         " please check if you have created its parent directory,"
-                         " error: %s ]" % (self.resultfile, error))
+                      " please check if you have created its parent directory,"
+                      " error: %s ]" % (self.resultfile, error))
 
     def __merge_result(self, setresultfiles, totals):
         """ merge set result to total"""
@@ -489,7 +497,7 @@ class TRunner:
                             # when total xml and result xml have same suite
                             # name and set name
                             self.__merge_result_by_name(
-                                result_set, total_set, result_suite, total_suite)
+                              result_set, total_set, result_suite, total_suite)
             total_xml.write(totalfile)
             totals.add(totalfile)
         return totals
@@ -773,11 +781,12 @@ class TRunner:
 
     def __extract_measures(self, buf, pattern):
         """
-        This function extracts lines from <buf> containing the defined <pattern>.
-        For each line containing the pattern, it extracts the string to the end of line
-        Then it splits the content in multiple fields using the defined separator <field_sep>
-        and maps the fields to measurement attributes defined in xsd
-        Finally, a list containing all measurement objects found in input buffer is returned
+        This function extracts lines from <buf> containing the defined
+        <pattern>. For each line containing the pattern, it extracts the 
+        string to the end of line Then it splits the content in multiple 
+        fields using the defined separator <field_sep> and maps the fields 
+        to measurement attributes defined in xsd. Finally, a list containing 
+        all measurement objects found in input buffer is returned
         """
         out = []
         for line in buf.split("\n"):
@@ -910,11 +919,12 @@ class TRunner:
             write_json_result(set_result_xml, set_result)
 
     def __write_file_result(self, set_result_xml, set_result):
+        """write xml result file"""
         result_file = set_result['resultfile']
         try:
             if self.rerun:
-                LOGGER.info(
-                    "[ Web UI FW Unit Test Does not support rerun.Result should be N/A ]\n")
+                LOGGER.info("[ Web UI FW Unit Test Does not support rerun.\
+                      Result should be N/A ]\n")
             else:
                 test_tree = etree.parse(set_result_xml)
                 test_em = test_tree.getroot()
@@ -924,7 +934,8 @@ class TRunner:
                     for result_set in result_suite.getiterator('set'):
                         for test_suite in test_em.getiterator('suite'):
                             for test_set in test_suite.getiterator('set'):
-                                if result_set.get('name') == test_set.get('name'):
+                                if result_set.get('name') == \
+                                             test_set.get('name'):
                                     test_suite.remove(test_set)
                                     test_suite.append(result_set)
                 test_tree.write(set_result_xml)
@@ -1062,8 +1073,8 @@ def write_json_result(set_result_xml, set_result):
                                 if 'measures' in case_result:
                                     m_results = case_result['measures']
                                     for m_result in m_results:
-                                        if measurement.get(
-                                                'name') == m_result['name'] and 'value' in m_result:
+                                        if measurement.get('name') == \
+                                  m_result['name'] and 'value' in m_result:
                                             measurement.set(
                                                 'value', m_result[
                                                     'value'])
