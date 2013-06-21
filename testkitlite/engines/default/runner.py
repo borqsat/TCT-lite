@@ -58,6 +58,8 @@ class TRunner:
         """ init all self parameters here """
         # dryrun
         self.bdryrun = False
+        # non_active
+        self.non_active = False
         # result file
         self.resultfile = None
         # external test
@@ -90,7 +92,9 @@ class TRunner:
         # apply dryrun
         if options.bdryrun:
             self.bdryrun = options.bdryrun
-        # release memory when the free memory is less than 100M
+        # Disable set the result of core manual cases from the console
+        if options.non_active:
+            self.non_active = options.non_active
         # apply user specify test result file
         if options.resultfile:
             self.resultfile = options.resultfile
@@ -287,7 +291,10 @@ class TRunner:
                 time.sleep(3)
                 LOGGER.info("\n[ testing xml: %s.xml ]" % temp_test_xml)
                 self.current_test_xml = temp_test_xml
-            self.__run_with_commodule(core_manual_file)
+            if self.non_active:
+                self.skip_all_manual = True
+            else:
+                self.__run_with_commodule(core_manual_file)
 
     def __run_webapi_test(self, latest_dir):
         """ run webAPI test"""

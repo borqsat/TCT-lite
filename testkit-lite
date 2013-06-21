@@ -204,7 +204,10 @@ try:
         make_option("--debug", dest="debug", action="store_true",
                     help="run in debug mode,more log information print out"),
         make_option("--rerun", dest="rerun", action="store_true",
-                    help="check if rerun test mode")
+                    help="check if rerun test mode"),
+        make_option("--non-active", dest="non_active", action="store_true",
+                    help="Disable the ability to set the result of \
+                    core manual cases from the console")
 
     ]
 
