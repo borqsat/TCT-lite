@@ -41,8 +41,8 @@ if '/usr/share/pyshared' not in sys.path:
 # import logger
 try:
     from commodule.log import LOGGER
-except ImportError, e:
-    print "[ Error: loading logging failed, error: %s ]\n" % e
+except ImportError, err:
+    print "[ Error: loading logging failed, error: %s ]\n" % err
     print "try to run command " \
         "'export PYTHONPATH=/usr/lib/python2.7/dist-packages' and " \
         "'export PYTHONPATH=/usr/share/pyshared/' to resolve this issue"
@@ -51,8 +51,8 @@ except ImportError, e:
 # import  process kill
 try:
     from testkitlite.common.process_killall import kill_testkit_lite
-except ImportError, e:
-    LOGGER.error("[ Error: loading module killall failed, error: %s ]\n" % e)
+except ImportError, err:
+    LOGGER.error("[ Error: loading module killall failed, error: %s ]\n" % err)
     LOGGER.info("try to run command \
 'export PYTHONPATH=/usr/lib/python2.7/dist-packages' and \
 'export PYTHONPATH=/usr/share/pyshared/' to resolve this issue")
@@ -63,6 +63,8 @@ EXISTS = os.path.exists
 DIRNAME = os.path.dirname
 BASENAME = os.path.basename
 ABSPATH = os.path.abspath
+SPLIT = os.path.split
+ISLINK = os.path.islink
 
 TESTKIT_DIR = "/opt/testkit/lite"
 if not platform.system() == "Linux":
@@ -88,11 +90,11 @@ kill_testkit_lite(PID_FILE)
 
 if not platform.system() == "Linux":
     try:
-        if not os.path.exists(LOG_DIR):
+        if not EXISTS(LOG_DIR):
             os.makedirs(LOG_DIR)
-    except OSError, e:
+    except OSError, err:
         LOGGER.error("[ Error: create results directory:"
-                     " %s failed, error: %s ]\n" % (LOG_DIR, e))
+                     " %s failed, error: %s ]\n" % (LOG_DIR, err))
 
 try:
     with open(PID_FILE, "w") as fd:
@@ -100,12 +102,12 @@ try:
         fd.writelines(PID + '\n')
 except OSError, e:
     LOGGER.error("[ Error: can't create pid log file: %s, error: %s ]\n" %
-                (PID_FILE, e))
+                (PID_FILE, err))
     sys.exit(1)
 
 try:
     os.chmod(PID_FILE, 0666)
-except OSError, e:
+except OSError:
     pass
 
 # detect version option
@@ -115,13 +117,13 @@ if "--version" in sys.argv:
         if platform.system() == "Linux":
             CONFIG.read('/opt/testkit/lite/VERSION')
         else:
-            VERSION_FILE = os.path.join(sys.path[0], 'VERSION')
+            VERSION_FILE = JOIN(sys.path[0], 'VERSION')
             CONFIG.read(VERSION_FILE)
         VERSION = CONFIG.get('public_version', 'version')
         LOGGER.info("V%s" % VERSION)
-    except ConfigParser.Error, error:
+    except ConfigParser.Error, err:
         LOGGER.error(
-            "[ Error: fail to parse version info, error: %s ]\n" % error)
+            "[ Error: fail to parse version info, error: %s ]\n" % err)
     sys.exit(1)
 
 # detect internal version option
@@ -131,12 +133,12 @@ if "--internal-version" in sys.argv:
         if platform.system() == "Linux":
             CONFIG.read('/opt/testkit/lite/VERSION')
         else:
-            VERSION_FILE = os.path.join(sys.path[0], 'VERSION')
+            VERSION_FILE = JOIN(sys.path[0], 'VERSION')
             CONFIG.read(VERSION_FILE)
         VERSION = CONFIG.get('internal_version', 'version')
         print VERSION
-    except ConfigParser.Error, error:
-        print "[ Error: fail to parse version info, error: %s ]\n" % error
+    except ConfigParser.Error, err:
+        print "[ Error: fail to parse version info, error: %s ]\n" % err
     sys.exit(1)
 
 
@@ -144,8 +146,8 @@ if "--internal-version" in sys.argv:
 try:
     from testkitlite.engines.default.runner import TRunner
     from commodule.connector import Connector
-except ImportError, e:
-    LOGGER.error("[ Error: loading test engine failed, error: %s ]\n" % e)
+except ImportError, err:
+    LOGGER.error("[ Error: loading test engine failed, error: %s ]\n" % err)
     LOGGER.info("try to run command "
                 "'export PYTHONPATH=/usr/lib/python2.7/dist-packages' and "
                 "'export PYTHONPATH=/usr/share/pyshared/'to resolve this issue")
@@ -186,7 +188,8 @@ try:
                     If more than one testxml provided, \
                     results will be merged together to this output file"),
         make_option("-e", dest="exttest", action="store",
-                    help="Launch external test with a launcher, supports browser or other web-runtime"),
+                    help="Launch external test with a launcher,\
+                         supports browser or other web-runtime"),
         make_option("--version", dest="version_info", action="store_true",
                     help="Show version information"),
         make_option("--internal-version", dest="internal_version_info",
@@ -219,19 +222,25 @@ try:
 
     try:
         # untrusted behaviour of %%prog
-        USAGE = "%%prog [options] -f [prefix:]\"<somewhere/test.xml>\" -e \"<launcher-name>\"\n\
+        USAGE = "%%prog [options] -f [prefix:]\"<somewhere/test.xml>\" -e \
+\"<launcher-name>\"\n\
 forms:    %%prog  -f [prefix:]\"<somewhere>/test.xml\"\n\
           %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D\n\
           %%prog  -f [prefix:]\"<somewhere>/test.xml\" -A\n\
           %%prog  -f [prefix:]\"<somewhere>/test.xml\" -M\n\
-          %%prog  -f [prefix:]\"<somewhere>/test1.xml <somewhere>/test2.xml <somewhere>/test3.xml\" \n\
-          %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D -A --type type1 --capability <capability file> --comm <commoduletype>\n\
-          %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D -A --type type1 --status ready ...\n\
+          %%prog  -f [prefix:]\"<somewhere>/test1.xml <somewhere>/test2.xml \
+<somewhere>/test3.xml\" \n\
+          %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D -A \
+--type type1 --capability <capability file> --comm <commoduletype>\n\
+          %%prog  -f [prefix:]\"<somewhere>/test.xml\" -D -A --type type1 \
+--status ready ...\n\
 exmaples: \n\
     run a web test package from device side with device WRT (it is default): \n\
-          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e 'WRTLauncher' -A \n\
+          %%prog -f device:\"/usr/share/webapi-webkit-tests/tests.xml\" -e \
+'WRTLauncher' -A \n\
     run a web test package from local path with chrome browser: \n\
-          %%prog -f \"/usr/share/webapi-webkit-tests/tests.xml\" -e '<somewhere>/chrome-startup' -A --comm localhost \n\
+          %%prog -f \"/usr/share/webapi-webkit-tests/tests.xml\" -e \
+'<somewhere>/chrome-startup' -A --comm localhost \n\
 \n\
 Note: \n\
           1) Proxy settings should be disabled when execute webapi packages\n\
@@ -239,9 +248,12 @@ Note: \n\
           3) %%prog enables both auto and manual tests by default\n\
           4) Obviously -A and -M are conflict options\n\
           5) -e option does not support -D mode\n\
-          6) The test cases' order in the result files might be arbitrary, when running same tests.xml with same options. This is caused by python's API 'getiterator' from module 'xml.etree.ElementTree'\n\
+          6) The test cases' order in the result files might be arbitrary,\
+when running same tests.xml with same options. This is caused \
+by python's API 'getiterator' from module 'xml.etree.ElementTree'\n\
           7) run command 'testkit-lite', \
-            it might not be able to locate module 'testkitlite.engines.default.runner', \
+            it might not be able to locate module 'testkitlite.engines.\
+default.runner', \
             run command 'export PYTHONPATH=/usr/share/pyshared/' \
             run command 'export PYTHONPATH=/usr/lib/python2.7/dist-packages' \
             to resolve this issue" % (LOG_DIR)
@@ -260,9 +272,9 @@ Note: \n\
         try:
             LOGGER.info("[ Quit testkit-lite now ]")
             kill_testkit_lite(PID_FILE)
-        except Exception, e:
+        except Exception, err:
             LOGGER.error("[ Error: fail to kill existing testkit-lite,"
-                         " error: %s ]\n" % e)
+                         " error: %s ]\n" % err)
             sys.exit(1)
 
     # detect conflict
@@ -297,10 +309,10 @@ Note: \n\
         try:
             if not EXISTS(TEST_PACKAGES_DIR):
                 os.makedirs(TEST_PACKAGES_DIR)
-        except OSError, e:
+        except OSError, err:
             LOGGER.error("[ Error: "
-                         "can't create test package directory: %s, error: %s ]\n" %
-                        (TEST_PACKAGES_DIR, e))
+                "can't create test package directory: %s, error: %s ]\n" %
+                        (TEST_PACKAGES_DIR, err))
             sys.exit(1)
         REMOTE_TESTLITS = OPTIONS.testxml[0]
         REMOTE_TESTLITS = REMOTE_TESTLITS.split(':')[1]
@@ -308,11 +320,11 @@ Note: \n\
         LOCALARRY = []
 
         for remote_file in TESTLISTARRARY:
-            tmp_remote_file = os.path.split(remote_file)
-            tmp_remote_folder = os.path.basename(tmp_remote_file[0])
-            tmp_remote_test_xml = os.path.join(
+            tmp_remote_file = SPLIT(remote_file)
+            tmp_remote_folder = BASENAME(tmp_remote_file[0])
+            tmp_remote_test_xml = JOIN(
                 tmp_remote_folder, tmp_remote_file[1])
-            local_test_package = os.path.join(
+            local_test_package = JOIN(
                 TEST_PACKAGES_DIR, tmp_remote_test_xml)
             down_status = RUNNER.connector.download_file(
                 RUNNER.deviceid, remote_file, local_test_package)
@@ -349,14 +361,14 @@ Note: \n\
     try:
         if EXISTS(LATEST_DIR):
             os.remove(LATEST_DIR)
-        if os.path.islink(LATEST_DIR):
+        if ISLINK(LATEST_DIR):
             os.remove(LATEST_DIR)
         os.makedirs(CURRENT_LOG_DIR)
         if os.name == "posix":
             os.symlink(CURRENT_LOG_DIR, LATEST_DIR)
-    except IOError, e:
+    except IOError, err:
         LOGGER.error("[ Error: create session log directory: "
-                     "%s failed, error: %s ]\n" % (CURRENT_LOG_DIR, e))
+                     "%s failed, error: %s ]\n" % (CURRENT_LOG_DIR, err))
 
     # 2) prepare run test
     # run more than one tests.xml
@@ -370,13 +382,13 @@ Note: \n\
             if platform.system() == "Linux":
                 if not filename.startswith('/'):
                     LOGGER.error("[ Error:"
-                                 " xml file %s should start with '/' ]" % filename)
+                          " xml file %s should start with '/' ]" % filename)
                     sys.exit(1)
                 else:
                     filename = filename.split('/')[-2]
                     if filename == "":
                         LOGGER.error("[ Error:"
-                                     " unable to find package name from %s ]" % t)
+                             " unable to find package name from %s ]" % t)
                         sys.exit(1)
             else:
                 filename = filename.split('\\')[-2]
@@ -386,7 +398,7 @@ Note: \n\
             try:
                 ep = etree.parse(t)
                 suiteparent = ep.getroot()
-            except etree.ParseError, e:
+            except etree.ParseError:
                 LOGGER.error("[ Error: no case found in testxml, "
                              "pls check the test package ]\n")
                 sys.exit(1)
@@ -415,10 +427,10 @@ Note: \n\
                 with open(resultfile, 'w') as output:
                     tree = etree.ElementTree(element=suiteparent)
                     tree.write(output)
-            except IOError, e:
+            except IOError, err:
                 LOGGER.error(
                     "[ Error: create filtered total result file: %s failed, "
-                    "error: %s ]\n" % (resultfile, e))
+                    "error: %s ]\n" % (resultfile, err))
         else:
             print "[ Have no test xml found ]"
             sys.exit(1)
@@ -430,54 +442,54 @@ Note: \n\
                     WFILTERS['execution_type'] = ["manual"]
                     RUNNER.add_filter_rules(**WFILTERS)
                     RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
-                except IOError, e:
+                except IOError, err:
                     LOGGER.error("[ Error: prepare_run test xml: "
-                                 "%s from testkit-lite failed, error: %s ]\n" % (t, e))
+                      "%s from testkit-lite failed, error: %s ]\n" % (t, err))
         else:
             for t in TESTXMLS:
                 try:
                     WFILTERS['execution_type'] = ["auto"]
                     RUNNER.add_filter_rules(**WFILTERS)
                     RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
-                except IOError, e:
+                except IOError, err:
                     LOGGER.error("[ Error: prepare_run test xml: "
-                                 "%s from testkit-lite failed, error: %s ]\n" % (t, e))
+                      "%s from testkit-lite failed, error: %s ]\n" % (t, err))
             for t in TESTXMLS:
                 try:
                     WFILTERS['execution_type'] = ["manual"]
                     RUNNER.add_filter_rules(**WFILTERS)
                     RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
-                except IOError, e:
+                except IOError, err:
                     LOGGER.error("[ Error: prepare_run test xml: "
-                                 "%s from testkit-lite failed, error: %s ]\n" % (t, e))
+                      "%s from testkit-lite failed, error: %s ]\n" % (t, err))
     else:
         for t in TESTXMLS:
             try:
                 WFILTERS['execution_type'] = ["auto"]
                 RUNNER.add_filter_rules(**WFILTERS)
                 RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
-            except IOError, e:
+            except IOError, err:
                 LOGGER.error("[ Error: prepare_run test xml: "
-                             "%s from testkit-lite failed, error: %s ]\n" % (t, e))
+                  "%s from testkit-lite failed, error: %s ]\n" % (t, err))
 
     try:
         RUNNER.run_case(CURRENT_LOG_DIR)
-    except Exception, e:
+    except Exception, err:
         traceback.print_exc()
-        LOGGER.error("[ Error: run_test_case failed ,error: %s ]\n" % e)
+        LOGGER.error("[ Error: run_test_case failed ,error: %s ]\n" % err)
     try:
         RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
         LOGGER.info("[ all tasks for testkit lite are accomplished, goodbye ]")
-    except Exception, e:
+    except Exception, err:
         traceback.print_exc()
         LOGGER.error("[ Error: merge_resultfile "
-                     "failed,error: %s ]\n" % e)
+                     "failed,error: %s ]\n" % err)
 
-except KeyboardInterrupt, e:
+except KeyboardInterrupt, err:
     LOGGER.info("\n[ exiting testkit-lite on user cancel ]\n")
     sys.exit(1)
-except Exception, e:
+except Exception, err:
     LOGGER.error("\n[ Error: exiting testkit-lite "
-                 "by catching a critical error: %s ]\n" % e)
+                 "by catching a critical error: %s ]\n" % err)
     traceback.print_exc()
     sys.exit(1)
