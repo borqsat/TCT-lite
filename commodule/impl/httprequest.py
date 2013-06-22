@@ -38,16 +38,18 @@ def http_request(url, rtype="POST", data=None):
     if rtype == "POST":
         headers = {'content-type': 'application/json'}
         try:
-            ret = requests.post(url, data=json.dumps(data), headers=headers)
+            ret = requests.post(url, data=json.dumps(
+                data), headers=headers, timeout=10)
+
             if ret:
                 result = ret.json()
-        except Exception, error:
+        except Exception as error:
             pass
     elif rtype == "GET":
         try:
-            ret = requests.get(url, params=data)
+            ret = requests.get(url, params=data, timeout=10)
             if ret:
                 result = ret.json()
-        except Exception, error:
+        except Exception as error:
             pass
     return result
