@@ -32,12 +32,6 @@ import xml.etree.ElementTree as etree
 from optparse import OptionParser, make_option
 from datetime import datetime
 
-# check if '/usr/lib/python2.7/dist-packages' in sys path
-if '/usr/lib/python2.7/dist-packages' not in sys.path:
-    sys.path.append('/usr/lib/python2.7/dist-packages/')
-if '/usr/share/pyshared' not in sys.path:
-    sys.path.append('/usr/share/pyshared/')
-
 # import logger
 try:
     from commodule.log import LOGGER
@@ -50,7 +44,7 @@ except ImportError, err:
 
 # import  process kill
 try:
-    from testkitlite.common.process_killall import kill_testkit_lite
+    from testkitlite.common.process_killall import kill_testkit_lite, clean_testxml
 except ImportError, err:
     LOGGER.error("[ Error: loading module killall failed, error: %s ]\n" % err)
     LOGGER.info("try to run command \
@@ -84,6 +78,7 @@ COMMON_FILTERS = {
     "category": [],
     "status": [],
     "component": []}
+down_status = False
 
 # start testkit-lite in Singleton mode
 kill_testkit_lite(PID_FILE)
@@ -469,26 +464,34 @@ default.runner', \
                 RUNNER.add_filter_rules(**WFILTERS)
                 RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
             except IOError, err:
+                clean_testxml(TESTXMLS)
                 LOGGER.error("[ Error: prepare_run test xml: "
                   "%s from testkit-lite failed, error: %s ]\n" % (t, err))
 
     try:
         RUNNER.run_case(CURRENT_LOG_DIR)
     except Exception, err:
+        clean_testxml(TESTXMLS)
         traceback.print_exc()
         LOGGER.error("[ Error: run_test_case failed ,error: %s ]\n" % err)
     try:
         RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
+        clean_testxml(TESTXMLS)
         LOGGER.info("[ all tasks for testkit lite are accomplished, goodbye ]")
     except Exception, err:
         traceback.print_exc()
+        clean_testxml(TESTXMLS)
         LOGGER.error("[ Error: merge_resultfile "
                      "failed,error: %s ]\n" % err)
 
 except KeyboardInterrupt, err:
+    if down_status:
+        clean_testxml(OPTIONS.testxml) 
     LOGGER.info("\n[ exiting testkit-lite on user cancel ]\n")
     sys.exit(1)
 except Exception, err:
+    if down_status:
+        clean_testxml(OPTIONS.testxml) 
     LOGGER.error("\n[ Error: exiting testkit-lite "
                  "by catching a critical error: %s ]\n" % err)
     traceback.print_exc()
