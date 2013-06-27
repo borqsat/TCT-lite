@@ -203,7 +203,7 @@ class TRunner:
                     tree = etree.ElementTree(element=root)
                     tree.write(output)
             except IOError, error:
-                LOGGER.error( "[ Error: create filtered result file: %s failed,\
+                LOGGER.error("[ Error: create filtered result file: %s failed,\
                  error: %s ]" % (suitefilename, error))
             case_suite_find = etree.parse(
                 suitefilename).getiterator('testcase')
@@ -507,6 +507,8 @@ class TRunner:
         ''' merge result select by name'''
         if result_set.get('name') == total_set.get('name') \
                 and result_suite.get('name') == total_suite.get('name'):
+            if result_set.get('set_debug_msg'):
+                total_set.set("set_debug_msg",result_set.get('set_debug_msg'))
             # set cases that doesn't have result in result \
             # set to N/A
             # append cases from result set to total set
@@ -1061,7 +1063,10 @@ def write_json_result(set_result_xml, set_result):
     try:
         parse_tree = etree.parse(set_result_xml)
         root_em = parse_tree.getroot()
+        dubug_file = os.path.basename(set_result_xml)
+        dubug_file = os.path.splitext(dubug_file)[0]+'.dlog'
         for tset in root_em.getiterator('set'):
+            tset.set("set_debug_msg",dubug_file)
             for tcase in tset.getiterator('testcase'):
                 for case_result in case_results:
                     if tcase.get("id") == case_result['case_id']:
