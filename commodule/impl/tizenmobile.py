@@ -34,8 +34,19 @@ from commodule.log import LOGGER
 from .httprequest import get_url, http_request
 from .autoexec import shell_command, shell_command_ext
 
-HOST_NS = "127.0.0.1"
+LOCAL_HOST_NS = "127.0.0.1"
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
+APP_QUERY_STR = "sdb -s %s shell ps aux | grep %s"
+APP_KILL_STR = "sdb -s %s shell killall %s "
+WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i /opt/%s/%s.wgt"
+WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l|grep '%s' " \
+                "|awk '{print $2\":\"$NF}'"
+WRT_START_STR = "sdb -s %s shell wrt-launcher -s %s"
+WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
+WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
+PMG_START = "sdb -s %s shell pmctrl start"
+PMG_STOP = "sdb -s %s shell pmctrl stop"
+KILL_DLOGS = "kill -9 `ps aux|grep 'dlog -v time'|awk '{print $2}'`"
 
 
 def _get_forward_connect(device_id, remote_port=None):
@@ -43,8 +54,8 @@ def _get_forward_connect(device_id, remote_port=None):
     if remote_port is None:
         return None
 
-    os.environ['no_proxy'] = HOST_NS
-    host = HOST_NS
+    os.environ['no_proxy'] = LOCAL_HOST_NS
+    host = LOCAL_HOST_NS
     inner_port = 9000
     time_out = 2
     bflag = False
@@ -93,6 +104,53 @@ def _upload_file(deviceid, remote_path, local_path):
     else:
         return True
 
+LOCK_OBJ = threading.Lock()
+TEST_SERVER_RESULT = []
+TEST_SERVER_STATUS = {}
+
+
+def _set_result(result_data):
+    """set cases result to the global result buffer"""
+    global TEST_SERVER_RESULT
+    if not result_data is None:
+        LOCK_OBJ.acquire()
+        TEST_SERVER_RESULT["cases"].extend(result_data)
+        LOCK_OBJ.release()
+
+
+class DlogThread(threading.Thread):
+
+    """stub instance serve_forever in async mode"""
+    def __init__(self, cmd=None, logfile=None):
+        super(DlogThread, self).__init__()
+        self.cmdline = cmd
+        self.logfile = logfile
+
+    def run(self):
+        buffer_1 = self.logfile
+        wbuffile1 = file(buffer_1, "w")
+        exit_code = None
+        import subprocess
+        cmd_open = subprocess.Popen(args=self.cmdline,
+                                    shell=True,
+                                    stdout=wbuffile1,
+                                    stderr=None)
+        global TEST_SERVER_STATUS
+        while True:
+            exit_code = cmd_open.poll()
+            if exit_code is not None:
+                break
+            time.sleep(0.5)
+            LOCK_OBJ.acquire()
+            set_status = TEST_SERVER_STATUS
+            LOCK_OBJ.release()
+            if 'finished' in set_status and int(set_status['finished']) == 1:
+                break
+        wbuffile1.close()
+        if exit_code is None:
+            from .killall import killall
+            killall(cmd_open.pid)
+
 
 class StubExecThread(threading.Thread):
 
@@ -114,23 +172,9 @@ class StubExecThread(threading.Thread):
                           stderr_file=stderr_file)
 
 
-LOCK_OBJ = threading.Lock()
-TEST_SERVER_RESULT = []
-TEST_SERVER_STATUS = {}
-
-
-def _set_result(result_data):
-    """set cases result to the global result buffer"""
-    global TEST_SERVER_RESULT
-    if not result_data is None:
-        LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT["cases"].extend(result_data)
-        LOCK_OBJ.release()
-
-
 class CoreTestExecThread(threading.Thread):
 
-    """ execute core test in async mode"""
+    """ execute core test in async mode """
     def __init__(self, device_id, test_set_name, exetype, test_cases):
         super(CoreTestExecThread, self).__init__()
         self.test_set_name = test_set_name
@@ -407,13 +451,6 @@ class QUTestExecThread(threading.Thread):
         TEST_SERVER_STATUS = {"finished": 1}
         LOCK_OBJ.release()
 
-WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i /opt/%s/%s.wgt"
-WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l|grep '%s' " \
-                "|awk '{print $2\":\"$NF}'"
-WRT_START_STR = "sdb -s %s shell wrt-launcher -s %s"
-WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
-WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
-
 
 class TizenMobile:
 
@@ -422,9 +459,11 @@ class TizenMobile:
     """
     def __init__(self):
         self.__st = dict({'server_url': None,
+                          'async_stub': None,
                           'async_shell': None,
                           'async_http': None,
                           'async_core': None,
+                          'dlog_shell': None,
                           'block_size': 300,
                           'device_id': None,
                           'test_type': None,
@@ -553,7 +592,8 @@ class TizenMobile:
                 items = line.split(':')
                 if len(items) < 1:
                     continue
-                if (self.__st['fuzzy_match'] and items[0].find(test_wgt) != -1) or items[0] == test_wgt:
+                if (self.__st['fuzzy_match'] and
+                        items[0].find(test_wgt) != -1) or items[0] == test_wgt:
                     suite_id = items[1].strip('\r\n')
                     break
 
@@ -618,27 +658,32 @@ class TizenMobile:
             LOGGER.info("[ init the test options, get failed ]")
             return None
 
-        # test suite don't need a stub process
+        # self executed test suite don't need stub server
         if self.__st['self_exec']:
             return session_id
 
-        timecnt = 0
-        blauched = False
-        LOGGER.info("[ launch the stub process ]")
-        cmdline = "sdb shell killall %s " % stub_app
-        exit_code, ret = shell_command(cmdline)
-        time.sleep(2)
+        # init test stub instance
+        exit_code, ret = shell_command(
+            APP_QUERY_STR % (deviceid, stub_app))
+        if len(ret) >= 1:
+            exit_code, ret = shell_command(
+                APP_KILL_STR % (deviceid, stub_app))
+            time.sleep(2)
 
+        LOGGER.info("[ launch stub process: %s ]" % stub_app)
         cmdline = "sdb -s %s shell %s --port:%s %s" \
             % (deviceid, stub_app, stub_port, debug_opt)
-        self.__st['async_shell'] = StubExecThread(cmdline, session_id)
-        self.__st['async_shell'].start()
+        self.__st['async_stub'] = StubExecThread(cmdline, session_id)
+        self.__st['async_stub'].start()
         time.sleep(2)
 
         if self.__st['server_url'] is None:
             self.__st['server_url'] = _get_forward_connect(deviceid, stub_port)
-        LOGGER.info("[ Access device from url: %s ]" % self.__st['server_url'])
+        LOGGER.info("[ Access device via forwarded url: %s ]" %
+                    self.__st['server_url'])
 
+        timecnt = 0
+        blauched = False
         while timecnt < 10:
             ret = http_request(get_url(
                 self.__st['server_url'], "/check_server_status"), "GET", {})
@@ -677,6 +722,10 @@ class TizenMobile:
         """init the test envrionment"""
         self.__st['device_id'] = deviceid
         self.__test_set_name = ""
+
+        # stop power manage
+        # exit_code, ret = shell_command(PMG_STOP % deviceid)
+
         if "testset-name" in params:
             self.__test_set_name = params["testset-name"]
         if "client-command" in params and params['client-command'] is not None:
@@ -731,7 +780,7 @@ class TizenMobile:
                                   UIFW_RESULT,
                                   result_file)
             for test_case in cases:
-                LOGGER.info("\n[uifw] execute case: %s # %s\n"
+                LOGGER.info("[uifw] execute case: %s # %s"
                             % (test_set_name, test_case['case_id']))
 
             if b_ok:
@@ -785,18 +834,26 @@ class TizenMobile:
             return False
         if not "cases" in test_set:
             return False
-        test_set_name = self.__test_set_name
+
+        cmdline = 'sdb -s %s dlog -c' % self.__st['device_id']
+        exit_code, ret = shell_command(cmdline)
+        cmdline = 'sdb -s %s dlog -v time' % self.__st['device_id']
+        test_set_log = test_set['current_set_name'].replace('.xml', '.dlog')
+        self.__st['dlog_shell'] = DlogThread(cmdline, test_set_log)
+        self.__st['dlog_shell'].start()
+        time.sleep(0.5)
+
         cases = test_set["cases"]
         exetype = test_set["exetype"]
         ctype = test_set["type"]
         if self.__st['test_type'] == "webapi":
-            return self.__run_web_test(test_set_name,
+            return self.__run_web_test(self.__test_set_name,
                                        exetype, ctype, cases)
         elif self.__st['test_type'] == "jqunit":
-            return self.__run_jqt_test(sessionid, test_set_name,
+            return self.__run_jqt_test(sessionid, self.__test_set_name,
                                        exetype, cases)
         elif self.__st['test_type'] == "coreapi":
-            return self.__run_core_test(sessionid, test_set_name,
+            return self.__run_core_test(sessionid, self.__test_set_name,
                                         exetype, cases)
         else:
             LOGGER.info("[ unsupported test type ! ]")
@@ -838,15 +895,20 @@ class TizenMobile:
         """clear the test stub and related resources"""
         if sessionid is None:
             return False
+        # resume power manage
+        # exit_code, ret = shell_command(PMG_START % self.__st['device_id'])
+        exit_code, ret = shell_command(KILL_DLOGS)
 
+        # finalize web stub
         if self.__st['test_type'] == "webapi":
             if self.__st['auto_iu']:
-                cmd = WRT_UNINSTL_STR % (
-                    self.__st['device_id'], self.__st['test_wgt'])
+                cmd = WRT_UNINSTL_STR % (self.__st[
+                                         'device_id'], self.__st['test_wgt'])
                 exit_code, ret = shell_command(cmd)
-
+            # shutdown stub process
             ret = http_request(get_url(
                 self.__st['server_url'], "/shut_down_server"), "GET", {})
+
         return True
 
 
