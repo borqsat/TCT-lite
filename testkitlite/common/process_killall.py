@@ -90,9 +90,10 @@ def kill_testkit_lite(pid_file):
                 "error: %s ]\n" % error)
     return None
 
-def clean_testxml(testxmls,commodule):
+def clean_testxml(testxmls,remote_test):
     """clean all test xmls"""
-    if commodule == 'tizenmobile' or commodule == None:
+
+    if remote_test:
         EXISTS = os.path.exists
         for testxml in testxmls:
             if EXISTS(testxml):

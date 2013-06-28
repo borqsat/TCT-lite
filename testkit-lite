@@ -79,6 +79,7 @@ COMMON_FILTERS = {
     "status": [],
     "component": []}
 down_status = False
+remote_test = False
 
 # start testkit-lite in Singleton mode
 kill_testkit_lite(PID_FILE)
@@ -301,6 +302,7 @@ default.runner', \
             sys.exit(1)
 
     if "device:" in OPTIONS.testxml[0]:
+        remote_test = True
         try:
             if not EXISTS(TEST_PACKAGES_DIR):
                 os.makedirs(TEST_PACKAGES_DIR)
@@ -464,34 +466,34 @@ default.runner', \
                 RUNNER.add_filter_rules(**WFILTERS)
                 RUNNER.prepare_run(t, resultdir=CURRENT_LOG_DIR)
             except IOError, err:
-                clean_testxml(TESTXMLS, OPTIONS.commodule)
+                clean_testxml(TESTXMLS, remote_test)
                 LOGGER.error("[ Error: prepare_run test xml: "
                   "%s from testkit-lite failed, error: %s ]\n" % (t, err))
 
     try:
         RUNNER.run_case(CURRENT_LOG_DIR)
     except Exception, err:
-        clean_testxml(TESTXMLS, OPTIONS.commodule)
+        clean_testxml(TESTXMLS, remote_test)
         traceback.print_exc()
         LOGGER.error("[ Error: run_test_case failed ,error: %s ]\n" % err)
     try:
         RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
-        clean_testxml(TESTXMLS, OPTIONS.commodule)
+        clean_testxml(TESTXMLS, remote_test)
         LOGGER.info("[ all tasks for testkit lite are accomplished, goodbye ]")
     except Exception, err:
         traceback.print_exc()
-        clean_testxml(TESTXMLS,OPTIONS.commodule)
+        clean_testxml(TESTXMLS,remote_test)
         LOGGER.error("[ Error: merge_resultfile "
                      "failed,error: %s ]\n" % err)
 
 except KeyboardInterrupt, err:
     if down_status:
-        clean_testxml(OPTIONS.testxml, OPTIONS.commodule) 
+        clean_testxml(OPTIONS.testxml, remote_test)
     LOGGER.info("\n[ exiting testkit-lite on user cancel ]\n")
     sys.exit(1)
 except Exception, err:
     if down_status:
-        clean_testxml(OPTIONS.testxml, OPTIONS.commodule) 
+        clean_testxml(OPTIONS.testxml, remote_test)
     LOGGER.error("\n[ Error: exiting testkit-lite "
                  "by catching a critical error: %s ]\n" % err)
     traceback.print_exc()
