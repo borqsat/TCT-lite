@@ -1,6 +1,6 @@
 Summary: TCT-Lite
 Name: testkit-lite
-Version: 2.3.4
+Version: 2.3.6
 Release: 1
 License: GPLv2
 Group: Applications/System
@@ -42,6 +42,6 @@ chmod ugo+rwx /opt/testkit/lite
 %defattr(-,root,root)
 
 %doc
-/opt/testkit/lite/testkit-lite_user_guide.pdf
+/opt/testkit/lite/testkit-lite_user_guide_for_tct.pdf
 
 %changelog

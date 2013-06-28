@@ -486,12 +486,12 @@ default.runner', \
 
 except KeyboardInterrupt, err:
     if down_status:
-        clean_testxml(OPTIONS.testxml, OPTIONS.commodule) 
+        clean_testxml(OPTIONS.testxml, OPTIONS.commodule)
     LOGGER.info("\n[ exiting testkit-lite on user cancel ]\n")
     sys.exit(1)
 except Exception, err:
     if down_status:
-        clean_testxml(OPTIONS.testxml, OPTIONS.commodule) 
+        clean_testxml(OPTIONS.testxml, OPTIONS.commodule)
     LOGGER.error("\n[ Error: exiting testkit-lite "
                  "by catching a critical error: %s ]\n" % err)
     traceback.print_exc()

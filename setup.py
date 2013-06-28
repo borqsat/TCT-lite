@@ -11,7 +11,7 @@ setup(
     version = "2.3.4",
     include_package_data = True,
     data_files = [('/opt/testkit/lite/',
-	          ('VERSION', 'doc/Testkit-Lite_User_Guide.pdf'))],
+	          ('VERSION', 'doc/testkit-lite_user_guide_for_tct.pdf'))],
     scripts = ('testkit-lite',),
     packages = find_packages(),
 )
