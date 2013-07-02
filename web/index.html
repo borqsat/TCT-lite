@@ -338,14 +338,14 @@
 							for (i = 0; i < fails.length; i++) {
 								var desccell = fails[i].childNodes[1];
 								if (desccell)
-									message += "###Test Start###"
+									message += "\n###Test Start###\n"
 											+ desccell.textContent
-											+ "###Test End###";
+											+ "\n###Test End###\n";
 								var msgcell = fails[i].childNodes[2];
 								if (msgcell)
-									message += "###Error1 Start###"
+									message += "###Error1 Start###\n"
 											+ msgcell.textContent
-											+ "###Error1 End###";
+											+ "\n###Error1 End###";
 							}
 							report('FAIL', message);
 						}
@@ -369,13 +369,13 @@
 						for (i = 0; i < fails.length; i++) {
 							var desccell = fails[i].childNodes[1];
 							if (desccell)
-								message += "###Test Start###"
-										+ desccell.textContent + "###Test End###";
+								message += "\n###Test Start###\n"
+										+ desccell.textContent + "\n###Test End###\n";
 							var msgcell = fails[i].childNodes[2];
 							if (msgcell)
-								message += "###Error2 Start###"
+								message += "###Error2 Start###\n"
 										+ msgcell.textContent
-										+ "###Error2 End###";
+										+ "\n###Error2 End###";
 						}
 					}
 					report('FAIL', message);
@@ -991,13 +991,13 @@ table#results td {\
 					for (i = 0; i < fails.length; i++) {
 						var desccell = fails[i].childNodes[1];
 						if (desccell) {
-							case_msg += "###Test Start###" + desccell.textContent
-									+ "###Test End###";
+							case_msg += "\n###Test Start###\n" + desccell.textContent
+									+ "\n###Test End###\n";
 						}
 						var msgcell = fails[i].childNodes[2];
 						if (msgcell) {
-							case_msg += "###Error1 Start###"
-									+ msgcell.textContent + "###Error1 End###";
+							case_msg += "###Error1 Start###\n"
+									+ msgcell.textContent + "\n###Error1 End###";
 						}
 					}
 					result = "FAIL";
