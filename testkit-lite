@@ -80,6 +80,7 @@ COMMON_FILTERS = {
     "component": []}
 down_status = False
 remote_test = False
+can_merge_result = False
 
 # start testkit-lite in Singleton mode
 kill_testkit_lite(PID_FILE)
@@ -471,6 +472,7 @@ default.runner', \
                   "%s from testkit-lite failed, error: %s ]\n" % (t, err))
 
     try:
+        can_merge_result = True
         RUNNER.run_case(CURRENT_LOG_DIR)
     except Exception, err:
         clean_testxml(TESTXMLS, remote_test)
@@ -487,11 +489,15 @@ default.runner', \
                      "failed,error: %s ]\n" % err)
 
 except KeyboardInterrupt, err:
+    if can_merge_result:
+        RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
     if down_status:
         clean_testxml(OPTIONS.testxml, remote_test)
     LOGGER.info("\n[ exiting testkit-lite on user cancel ]\n")
     sys.exit(1)
 except Exception, err:
+    if can_merge_result:
+        RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
     if down_status:
         clean_testxml(OPTIONS.testxml, remote_test)
     LOGGER.error("\n[ Error: exiting testkit-lite "
