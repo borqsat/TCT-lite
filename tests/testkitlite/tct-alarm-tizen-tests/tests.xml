@@ -1,0 +1,1028 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl"  href="./testcase.xsl"?>
+<test_definition>
+  <suite name="tct-alarm-tizen-tests" launcher="WRTLauncher">
+    <set name="Alarm">
+      <testcase purpose="check using getAll method in AlarmManager interface to get all alarms" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_getAll">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using getAll method in AlarmManager interface to get all alarms</step_desc>
+              <expected>alarms were successfully get</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_getAll.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="getAll" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="test whether the constructor with date parameter are supported" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_constructor_date">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>test whether the constructor with date parameter are supported</step_desc>
+              <expected>constructor with date parameter are supported</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_constructor_date.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using removeAll method in AlarmManager interface to remove all alarms" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_removeAll">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using removeAll method in AlarmManager interface to remove all alarms</step_desc>
+              <expected>alarms were removed with absolute successfully</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_removeAll.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="removeAll" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check date attribute" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_date_attribute">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check date attribute</step_desc>
+              <expected>should exist, properly type, readonly and have properly default value</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_date_attribute.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="attribute" element_name="date" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check daysOfTheWeek attribute" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_daysOfTheWeek_attribute">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check daysOfTheWeek attribute</step_desc>
+              <expected>should exist, properly type, readonly and have properly default value</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_daysOfTheWeek_attribute.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="attribute" element_name="daysOfTheWeek" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check period attribute" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_period_attribute">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check period attribute</step_desc>
+              <expected>should exist, properly type, readonly and have properly default value</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_period_attribute.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="attribute" element_name="period" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using get method in AlarmManager interface to get alarm" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_get">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using get method in AlarmManager interface to get alarm</step_desc>
+              <expected>alarm was successfully get</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_get.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="get" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using add method (with non-optional arguments) in AlarmManager interface to add absolute alarm" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_add_absolute_alarm">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using add method (with non-optional arguments) in AlarmManager interface to add absolute alarm</step_desc>
+              <expected>add alarm with absolute successfully</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_absolute_alarm.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using remove method in AlarmManager interface to remove absolute alarm" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_remove_absolute_alarm">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using remove method in AlarmManager interface to remove absolute alarm</step_desc>
+              <expected>alarm was removed with absolute successfully</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_remove_absolute_alarm.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="remove" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check delay attribute in AlarmRelative" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_delay_attribute">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check delay attribute in AlarmRelative</step_desc>
+              <expected>should exist, properly type, readonly</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_delay_attribute.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="attribute" element_name="delay" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check period attribute in AlarmRelative" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_period_attribute">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check period attribute in AlarmRelative</step_desc>
+              <expected>should exist, properly type, readonly and have properly default value</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_period_attribute.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="attribute" element_name="period" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if AlarmAbsolute constructor throws an exception" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P2" id="AlarmAbsolute_constructor_date_TypeMismatch">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if AlarmAbsolute constructor throws an exception</step_desc>
+              <expected>throws an exception</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_constructor_date_TypeMismatch.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using getNextScheduledDate method" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_getNextScheduledDate">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using getNextScheduledDate method</step_desc>
+              <expected>next scheduled date was successfully get</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_getNextScheduledDate.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="method" element_name="getNextScheduledDate" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check conversion of period parameter of AlarmRelative constructor" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_constructor_period_convert">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check conversion of period parameter of AlarmRelative constructor</step_desc>
+              <expected>pass test</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_constructor_period_convert.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if PERIOD_MINUTE is constant" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_PERIOD_MINUTE_const">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if PERIOD_MINUTE is constant</step_desc>
+              <expected>check if PERIOD_MINUTE is constant</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_PERIOD_MINUTE_const.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="attribute" element_name="PERIOD_MINUTE" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if PERIOD_HOUR is constant" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_PERIOD_HOUR_const">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if PERIOD_HOUR is constant</step_desc>
+              <expected>check if PERIOD_HOUR is constant</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_PERIOD_HOUR_const.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="attribute" element_name="PERIOD_HOUR" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if PERIOD_DAY is constant" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_PERIOD_DAY_const">
+        <description>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_PERIOD_DAY_const.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="attribute" element_name="PERIOD_DAY" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if PERIOD_WEEK is constant" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_PERIOD_WEEK_const">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if PERIOD_WEEK is constant</step_desc>
+              <expected>check if PERIOD_WEEK is constant</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_PERIOD_WEEK_const.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="attribute" element_name="PERIOD_WEEK" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if AlarmManager exist in tizen" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P3" id="AlarmManager_in_tizen">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if AlarmManager exist in tizen</step_desc>
+              <expected>should exist in tizen</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_in_tizen.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" usage="true" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if AlarmManager notexist" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P3" id="AlarmManager_notexist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if AlarmManager not exist</step_desc>
+              <expected>should not exist</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_notexist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" usage="true" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if AlarmManager possible extend" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P3" id="AlarmManager_extend">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if AlarmManager possible extend</step_desc>
+              <expected>possible for extend</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_extend.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" usage="true" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if method add exist and can be overriden" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P0" id="AlarmManager_add_exist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if method add exist and can be overriden</step_desc>
+              <expected>method add exist and can be overriden</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_exist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if method remove exist and can be overriden" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P0" id="AlarmManager_remove_exist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if method remove exist and can be overriden</step_desc>
+              <expected>method remove exist and can be overriden</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_remove_exist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="remove" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if method removeAll exist and can be overriden" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P0" id="AlarmManager_removeAll_exist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if method removeAll exist and can be overriden</step_desc>
+              <expected>method removeAll exist and can be overriden</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_removeAll_exist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="removeAll" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if method get exist and can be overriden" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P0" id="AlarmManager_get_exist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if method get exist and can be overriden</step_desc>
+              <expected>method get exist and can be overriden</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_get_exist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="get" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if method getAll exist and can be overriden" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P0" id="AlarmManager_getAll_exist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if method getAll exist and can be overriden</step_desc>
+              <expected>method getAll exist and can be overriden</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_getAll_exist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="getAll" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if AlarmAbsolute exist" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_exist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if AlarmAbsolute exist</step_desc>
+              <expected>should exist</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_exist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check with missing non-optional argument" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P2" id="AlarmManager_add_missarg">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check with missing non-optional argument</step_desc>
+              <expected>exceptions must be thrown</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_missarg.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using add method (with optional argument) in AlarmManager interface to add relative alarm" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_add_relative_alarm_with_appControl">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using add method (with optional argument) in AlarmManager interface to add relative alarm</step_desc>
+              <expected>add alarm with absolute successfully</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_relative_alarm_with_appControl.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if an exception was thrown when a fake system object was passed" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P2" id="AlarmManager_add_appControl_invalid_obj">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if an exception was thrown when a fake system object was passed</step_desc>
+              <expected>exceptions must be thrown</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_appControl_invalid_obj.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using remove method in AlarmManager interface to remove relative alarm" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_remove_relative_alarm">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using remove method in AlarmManager interface to remove relative alarm</step_desc>
+              <expected>alarm was removed with absolute successfully</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_remove_relative_alarm.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="remove" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using removeAll with extra argument to remove all alarms" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_removeAll_extra_argument">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using removeAll with extra argument to remove all alarms</step_desc>
+              <expected>alarms were removed with absolute successfully</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_removeAll_extra_argument.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="removeAll" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using getAll withe extra argument to get all alarms" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_getAll_extra_argument">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using getAll withe extra argument to get all alarms</step_desc>
+              <expected>alarms were successfully get</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_getAll_extra_argument.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="getAll" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check argument 'alarm' type conversion" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P2" id="AlarmManager_add_alarm_TypeMismatch">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check argument 'alarm' type conversion</step_desc>
+              <expected>an exception must be thrown when the input value cannot be converted into a proper value</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_alarm_TypeMismatch.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check argument 'appControl' type conversion" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P2" id="AlarmManager_add_appControl_TypeMismatch">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check argument 'appControl' type conversion</step_desc>
+              <expected>an exception must be thrown when the input value cannot be converted into a proper value</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_appControl_TypeMismatch.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="test whether the constructor with date parameter and day of the week parameter are supported" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_constructor_date_daysOfTheWeek">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>test whether the constructor with date parameter and day of the week parameter are supported</step_desc>
+              <expected>constructor with date parameter and day of the week parameter are supported</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_constructor_date_daysOfTheWeek.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="test whether the constructor with date parameter and period parameter are supported" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_constructor_date_period">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>test whether the constructor with date parameter and day of the week parameter are supported</step_desc>
+              <expected>constructor with date parameter and period parameter are supported</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_constructor_date_period.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if AlarmAbsolute possible extend" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P3" id="AlarmAbsolute_extend">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if AlarmAbsolute possible extend</step_desc>
+              <expected>possible for extend</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_extend.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" usage="true" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using add method (with non-optional arguments) in AlarmManager interface to add relative alarm" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_add_relative_alarm">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using add method (with non-optional arguments) in AlarmManager interface to add relative alarm</step_desc>
+              <expected>add alarm with absolute successfully</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_relative_alarm.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if method getNextScheduledDate exist and can be overriden" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P0" id="AlarmAbsolute_getNextScheduledDate_exist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if method getNextScheduledDate exist and can be overriden</step_desc>
+              <expected>method getNextScheduledDate exist and can be overriden</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_getNextScheduledDate_exist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="method" element_name="getNextScheduledDate" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if Alarm notexist" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P3" id="Alarm_notexist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if Alarm not exist</step_desc>
+              <expected>should not exist</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/Alarm_notexist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="Alarm" usage="true" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if AlarmRelative exist" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_exist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if AlarmRelative_exist</step_desc>
+              <expected>should exist</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_exist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using getNextScheduledDate method with extra argument" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_getNextScheduledDate_extra_argument">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using getNextScheduledDate method with extra argument</step_desc>
+              <expected>next scheduled date was successfully get</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_getNextScheduledDate_extra_argument.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="method" element_name="getNextScheduledDate" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check Alarm.id attribute of AlarmAbsolute" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="Alarm_id_attribute_absolute_alarm">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check Alarm.id attribute of AlarmAbsolute</step_desc>
+              <expected>should exist, properly type, readonly and have properly default value</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/Alarm_id_attribute_absolute_alarm.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="Alarm" element_type="attribute" element_name="id" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="test whether the constructor with delay parameter are supported" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_constructor_delay">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>test whether the constructor with delay parameter are supported</step_desc>
+              <expected>constructor with delay parameter are supported</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_constructor_delay.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="test whether the constructor with delay parameter and period parameter are supported" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_constructor_delay_period">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>test whether the constructor with delay parameter and day of the week parameter are supported</step_desc>
+              <expected>constructor with delay parameter and period parameter are supported</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_constructor_delay_period.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if AlarmRelative possible extend" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P3" id="AlarmRelative_extend">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if AlarmRelative possible extend</step_desc>
+              <expected>possible for extend</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_extend.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" usage="true" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if method getRemainingSeconds exist and can be overriden" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P0" id="AlarmRelative_getRemainingSeconds_exist">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if method getNextScheduledDate exist and can be overriden</step_desc>
+              <expected>method getRemainingSeconds exist and can be overriden</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_getRemainingSeconds_exist.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="method" element_name="getRemainingSeconds" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using getRemainingSeconds method" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_getRemainingSeconds">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using getRemainingSeconds method</step_desc>
+              <expected>next scheduled date was successfully get</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_getRemainingSeconds.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="method" element_name="getRemainingSeconds" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using getRemainingSeconds with extra argument" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_getRemainingSeconds_extra_argument">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using getRemainingSeconds with extra argument</step_desc>
+              <expected>next scheduled date was successfully get</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_getRemainingSeconds_extra_argument.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="method" element_name="getRemainingSeconds" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check conversion of delay parameter of AlarmRelative constructor" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_constructor_delay_convert">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check conversion of delay parameter of AlarmRelative constructor</step_desc>
+              <expected>pass test</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_constructor_delay_convert.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="constructor" element_name="constructor" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check if an exception was thrown when a wrong appControl was passed" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_add_appControl_invalid">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check if an exception was thrown when a wrong appControl was passed</step_desc>
+              <expected>exceptions must be thrown</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_appControl_invalid.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using add method (with optional argument) in AlarmManager interface to add absolute alarm" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_add_absolute_alarm_with_appControl">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using add method (with optional argument) in AlarmManager interface to add absolute alarm</step_desc>
+              <expected>add alarm with absolute successfully</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_add_absolute_alarm_with_appControl.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="add" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using getNextScheduledDate method for null return" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmAbsolute_getNextScheduledDate_return_null">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using getNextScheduledDate method for null return</step_desc>
+              <expected>After alarm has expired, getNextScheduledDate returns null.</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmAbsolute_getNextScheduledDate_return_null.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmAbsolute" element_type="method" element_name="getNextScheduledDate" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using get method in AlarmManager interface to get AlarmRelative" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmManager_get_AlarmRelative">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using get method in AlarmManager interface to get AlarmRelative</step_desc>
+              <expected>alarmRelative was successfully get</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmManager_get_AlarmRelative.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmManager" element_type="method" element_name="get" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check using getRemainingSeconds method for null return" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="AlarmRelative_getRemainingSeconds_return_null">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check using getRemainingSeconds method for null return</step_desc>
+              <expected>After alarm has expired, this method returns null.</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/AlarmRelative_getRemainingSeconds_return_null.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="AlarmRelative" element_type="method" element_name="getRemainingSeconds" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+      <testcase purpose="check Alarm.id attribute of AlarmRelative" type="compliance" status="approved" component="TizenAPI/Application/Alarm" execution_type="auto" priority="P1" id="Alarm_id_attribute_relative_alarm">
+        <description>
+          <steps>
+            <step order="1">
+              <step_desc>check Alarm.id attribute of AlarmRelative</step_desc>
+              <expected>should exist, properly type, readonly and have properly default value</expected>
+            </step>
+          </steps>
+          <test_script_entry>/opt/tct-alarm-tizen-tests/alarm/Alarm_id_attribute_relative_alarm.html</test_script_entry>
+        </description>
+        <specs>
+          <spec>
+            <spec_assertion interface="Alarm" element_type="attribute" element_name="id" specification="Alarm" section="Application" category="Tizen Device API Specifications"/>
+            <spec_url>https://developer.tizen.org/help/topic/org.tizen.web.device.apireference/tizen/alarm.html</spec_url>
+            <spec_statement>TBD</spec_statement>
+          </spec>
+        </specs>
+      </testcase>
+    </set>
+  </suite>
+</test_definition>
