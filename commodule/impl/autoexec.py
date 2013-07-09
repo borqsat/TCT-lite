@@ -40,6 +40,7 @@ def shell_command(cmd):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
     time_cnt = 0
+    exit_code = None
     while time_cnt < TIME_OUT:
         exit_code = proc.poll()
         if not exit_code is None:

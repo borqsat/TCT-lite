@@ -47,6 +47,8 @@ WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
 PMG_START = "sdb -s %s shell pmctrl start"
 PMG_STOP = "sdb -s %s shell pmctrl stop"
 KILL_DLOGS = "kill -9 `ps aux|grep 'dlog -v time'|awk '{print $2}'`"
+KILL_STUBS = "kill -9 `ps aux|grep 'testkit-stub'|awk '{print $2}'`"
+UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
 
 
 def _get_forward_connect(device_id, remote_port=None):
@@ -121,6 +123,7 @@ def _set_result(result_data):
 class DlogThread(threading.Thread):
 
     """stub instance serve_forever in async mode"""
+
     def __init__(self, cmd=None, logfile=None):
         super(DlogThread, self).__init__()
         self.cmdline = cmd
@@ -155,6 +158,7 @@ class DlogThread(threading.Thread):
 class StubExecThread(threading.Thread):
 
     """stub instance serve_forever in async mode"""
+
     def __init__(self, cmd=None, sessionid=None):
         super(StubExecThread, self).__init__()
         self.cmdline = cmd
@@ -175,6 +179,7 @@ class StubExecThread(threading.Thread):
 class CoreTestExecThread(threading.Thread):
 
     """ execute core test in async mode """
+
     def __init__(self, device_id, test_set_name, exetype, test_cases):
         super(CoreTestExecThread, self).__init__()
         self.test_set_name = test_set_name
@@ -200,7 +205,7 @@ class CoreTestExecThread(threading.Thread):
             current_idx += 1
             expected_result = "0"
             core_cmd = ""
-            time_out = None
+            time_out = 90
             measures = []
             retmeasures = []
             if "entry" in test_case:
@@ -330,6 +335,7 @@ class CoreTestExecThread(threading.Thread):
 class WebTestExecThread(threading.Thread):
 
     """execute web test in async mode"""
+
     def __init__(self, server_url, test_set_name, test_data_queue):
         super(WebTestExecThread, self).__init__()
         self.server_url = server_url
@@ -341,7 +347,7 @@ class WebTestExecThread(threading.Thread):
         if self.data_queue is None:
             return
 
-        set_finished = False
+        test_set_finished = False
         err_cnt = 0
         global TEST_SERVER_RESULT, TEST_SERVER_STATUS
         LOCK_OBJ.acquire()
@@ -351,6 +357,9 @@ class WebTestExecThread(threading.Thread):
             ret = http_request(get_url(
                 self.server_url, "/set_testcase"), "POST", test_block)
             if ret is None or "error_code" in ret:
+                LOCK_OBJ.acquire()
+                TEST_SERVER_STATUS = {"finished": 1}
+                LOCK_OBJ.release()
                 break
 
             while True:
@@ -367,35 +376,43 @@ class WebTestExecThread(threading.Thread):
                         break
                 elif "finished" in ret:
                     err_cnt = 0
-                    LOCK_OBJ.acquire()
-                    TEST_SERVER_STATUS = ret
-                    LOCK_OBJ.release()
                     # check if current test set is finished
                     if ret["finished"] == 1:
-                        set_finished = True
+                        test_set_finished = True
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        _set_result(ret["cases"])
+                        if 'cases' in ret:
+                            _set_result(ret["cases"])
+                        LOCK_OBJ.acquire()
+                        TEST_SERVER_STATUS = {"finished": 1}
+                        LOCK_OBJ.release()
                         break
                     # check if current block is finished
                     elif ret["block_finished"] == 1:
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        _set_result(ret["cases"])
+                        if 'cases' in ret:
+                            _set_result(ret["cases"])
+                        LOCK_OBJ.acquire()
+                        TEST_SERVER_STATUS = {"finished": 0}
+                        LOCK_OBJ.release()
                         break
+                    # check if cases delivered
+                    elif 'cases' in ret:
+                        _set_result(ret["cases"])
+
                 time.sleep(2)
 
-            if set_finished:
+            if test_set_finished:
                 break
-
-UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
 
 
 class QUTestExecThread(threading.Thread):
 
     """execute Jquery Unit test suite """
+
     def __init__(self, deviceid="", sessionid="", test_set="", cases=None):
         super(QUTestExecThread, self).__init__()
         self.device_id = deviceid
@@ -457,6 +474,7 @@ class TizenMobile:
     """ Implementation for transfer data
         between Host and Tizen Mobile Device
     """
+
     def __init__(self):
         self.__st = dict({'server_url': None,
                           'async_stub': None,
@@ -575,13 +593,12 @@ class TizenMobile:
                 test_wgt = test_set
                 cmd = WRT_INSTALL_STR % (deviceid, test_suite, test_wgt)
                 exit_code, ret = shell_command(cmd)
+                if exit_code == -1:
+                    LOGGER.info("[ failed to install widget \"%s\" in target ]"
+                                % test_wgt)
+                    return None
             else:
                 test_wgt = test_suite
-                cmd = WRT_INSTALL_STR % (deviceid, test_suite, test_suite)
-                exit_code, ret = shell_command(cmd)
-
-            if exit_code == -1:
-                return None
 
             # query the whether test widget is installed ok
             cmd = WRT_QUERY_STR % (deviceid, test_wgt)
@@ -598,7 +615,7 @@ class TizenMobile:
                     break
 
             if suite_id is None:
-                LOGGER.info("[ test widget \"%s\" not installed in target ]"
+                LOGGER.info("[ test widget \"%s\" not found in target ]"
                             % test_wgt)
                 return None
             else:
@@ -625,20 +642,17 @@ class TizenMobile:
         testsuite_name = params["testsuite-name"]
         testset_name = params["testset-name"]
         client_cmds = params['client-command'].strip().split()
-        wrt_tag = ""
-        if len(client_cmds) >= 2:
-            wrt_tag = client_cmds[1]
+        wrt_tag = client_cmds[1] if len(client_cmds) > 1 else ""
+        self.__st['auto_iu'] = wrt_tag.find('iu') != -1
+        self.__st['fuzzy_match'] = wrt_tag.find('z') != -1
+        self.__st['self_exec'] = wrt_tag.find('a') != -1
+        self.__st['self_repeat'] = wrt_tag.find('r') != -1
 
         if "debug" in params and params["debug"]:
             debug_opt = "--debug"
 
         if "capability" in params:
             capability_opt = params["capability"]
-
-        self.__st['auto_iu'] = wrt_tag.find('iu') != -1
-        self.__st['fuzzy_match'] = wrt_tag.find('z') != -1
-        self.__st['self_exec'] = wrt_tag.find('a') != -1
-        self.__st['self_repeat'] = wrt_tag.find('r') != -1
 
         # uifw, this suite is self execution
         if self.__st['self_exec']:
@@ -648,7 +662,6 @@ class TizenMobile:
         # uifw, this suite is duplicated
         if self.__st['self_repeat']:
             self.__st['test_type'] = "jqunit"
-            self.__st['self_repeat'] = True
             return session_id
 
         test_opt = self.__get_test_options(
@@ -692,14 +705,13 @@ class TizenMobile:
                 timecnt += 1
                 time.sleep(1)
                 continue
-
-            if "error_code" in ret:
+            elif "error_code" in ret:
                 LOGGER.info("[ check server status, "
                             "get error code %d ! ]" % ret["error_code"])
                 return None
             else:
                 blauched = True
-            break
+                break
 
         if blauched:
             ret = http_request(get_url(
@@ -722,9 +734,6 @@ class TizenMobile:
         """init the test envrionment"""
         self.__st['device_id'] = deviceid
         self.__test_set_name = ""
-
-        # stop power manage
-        # exit_code, ret = shell_command(PMG_STOP % deviceid)
 
         if "testset-name" in params:
             self.__test_set_name = params["testset-name"]
@@ -895,20 +904,22 @@ class TizenMobile:
         """clear the test stub and related resources"""
         if sessionid is None:
             return False
-        # resume power manage
-        # exit_code, ret = shell_command(PMG_START % self.__st['device_id'])
-        exit_code, ret = shell_command(KILL_DLOGS)
 
+        # clear dlog hang processes
+        exit_code, ret = shell_command(KILL_DLOGS)
         # finalize web stub
         if self.__st['test_type'] == "webapi":
             if self.__st['auto_iu']:
                 cmd = WRT_UNINSTL_STR % (self.__st[
                                          'device_id'], self.__st['test_wgt'])
                 exit_code, ret = shell_command(cmd)
-            # shutdown stub process
+            # shutdown stub server
             ret = http_request(get_url(
-                self.__st['server_url'], "/shut_down_server"), "GET", {})
-
+                               self.__st['server_url'], "/shut_down_server"),
+                               "GET", {})
+            # clear existed stub hang processes
+            if ret is None:
+                exit_code, ret = shell_command(KILL_STUBS)
         return True
 
 

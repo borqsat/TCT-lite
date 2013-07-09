@@ -41,6 +41,7 @@ os.environ["no_proxy"] = HOST_NS
 class StubExecThread(threading.Thread):
 
     """ stub instance serve_forever in async mode"""
+
     def __init__(self, cmd=None, sessionid=None):
         super(StubExecThread, self).__init__()
         self.cmdline = cmd
@@ -104,6 +105,7 @@ def _set_result(result_data):
 class CoreTestExecThread(threading.Thread):
 
     """sdb communication for serve_forever app in async mode"""
+
     def __init__(self, device_id, test_set_name, exetype, test_cases):
         super(CoreTestExecThread, self).__init__()
         self.test_set_name = test_set_name
@@ -129,7 +131,7 @@ class CoreTestExecThread(threading.Thread):
             current_idx += 1
             expected_result = "0"
             core_cmd = ""
-            time_out = None
+            time_out = 90
             measures = []
             retmeasures = []
             if "entry" in test_case:
@@ -254,6 +256,7 @@ class CoreTestExecThread(threading.Thread):
 class WebTestExecThread(threading.Thread):
 
     """sdb communication for serve_forever app in async mode"""
+
     def __init__(self, server_url, test_set_name, test_data_queue):
         super(WebTestExecThread, self).__init__()
         self.server_url = server_url
