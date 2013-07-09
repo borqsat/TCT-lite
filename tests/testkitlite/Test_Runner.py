@@ -28,12 +28,18 @@ from testkitlite.engines.default.runner import *
 from commodule.connector import Connector
 import unittest
 import json
-from optparse import OptionParser  
-
+from optparse import OptionParser
+from mock import MagicMock
+import traceback
 #test Class 
 class RunnerTestCase(unittest.TestCase):
     def setUp(self):
-        self.CONNECTOR = Connector({"testremote": "tizenMobile"}).get_connector()
+        self.CONNECTOR = Connector({"testremote": "tizenmobile"}).get_connector()
+        self.CONNECTOR.init_test = MagicMock(return_value='123456')
+        self.CONNECTOR.run_case = MagicMock(return_value=True)
+        self.CONNECTOR.get_test_status = MagicMock(return_value={'finished':"1"})
+        self.CONNECTOR.get_test_result = MagicMock(return_value={"cases":{}})
+        self.CONNECTOR.get_device_info = MagicMock(return_value={"device_id":"None","device_model":"None", "device_name":"None", "build_id":"None", "os_version":"None", "resolution":"None", "screen_size":"None"})
         self.runner = TRunner(self.CONNECTOR)
         self.log_dir = os.path.join(os.path.expandvars('$HOME'),"testresult")
         if not os.path.exists(self.log_dir):
@@ -48,30 +54,27 @@ class RunnerTestCase(unittest.TestCase):
 
     def test_set_global_parameters(self):
         parser = OptionParser()
-        parser.add_option("-D", "--dryrun",dest="bdryrun",action="store_true",help="Dry-run")
+        parser.add_option("-D", "--dryrun", dest="bdryrun",
+                    action="store_true",
+                    help="Dry-run the selected test cases"),
         parser.add_option("-o", "--output", dest="resultfile",
                                 help=""),
         parser.add_option("-e", dest="exttest", action="store",
-                                help="")
-        parser.add_option("--fullscreen", dest="fullscreen", action="store_true",
-                                help="Run web API test in full screen mode")
+                                help=""),
         parser.add_option("--non-active", dest="non_active", action="store_true",
-                                help="")
-        parser.add_option("--enable-memory-collection", dest="enable_memory_collection", action="store_true",
-                                help="")
+                                help=""),
         parser.add_option("--deviceid",dest="device_serial", action="store",
-                                help="set sdb device serial information" )
-        parser.add_option("--stubname", dest="stubname",
-                    action="store",
-                    help="set stub name")
+                                help="set sdb device serial information" ),
+        parser.add_option("--debug", dest="debug", action="store_true",
+                    help="run in debug mode,more log information print out"),
+        parser.add_option("--rerun", dest="rerun", action="store_true",
+                    help="check if rerun test mode")
 
-        args = ["-D", "yes","--output","/home/test/","-e","WRTLauncher cts-webapi-tizen-alarm-tests",
-                "--fullscreen","none","--non-active","none","--enable-memory-collection","none",
-                "--deviceid","123"]  
+        args = ["--output",self.log_dir,"-e","WRTLauncher",
+                "--non-active","none",
+                "--deviceid","123"]
         (options, args) = parser.parse_args(args)  
-        print options
         self.runner.set_global_parameters(options)
-        self.assertEqual(self.runner.bdryrun,True)
 
     def test_set_session_id(self):
         self.runner.set_session_id('12345')
@@ -86,23 +89,26 @@ class RunnerTestCase(unittest.TestCase):
         wfilters = {}
         wfilters['execution_type'] = ["auto"]
         self.runner.add_filter_rules(**wfilters)
-        a = self.runner.prepare_run('/usr/share/cts-webapi-tizen-alarm-tests/tests.xml',self.log_dir)
-        print a
+        a = self.runner.prepare_run('./tct-alarm-tizen-tests/tests.xml',self.log_dir)
         self.assertEqual(a,True)
 
     def test_run_case(self):
-        self.runner.exe_sequence = ['cts-webapi-tizen-alarm-tests.auto']
-        self.runner.testsuite_dict = {'cts-webapi-tizen-alarm-tests.auto': ['/home/test/autotest/2013-03-11-14:17:08.864498/cts-webapi-tizen-alarm-tests.auto.xml']}
+        self.test_prepare_run()
+        # self.runner.external_test = 'WRTLauncher'
+        # self.runner.exe_sequence = ['tct-alarm-tizen-tests.auto']
+        # self.runner.testsuite_dict = {'tct-alarm-tizen-tests.auto': ['/home/test/testresult/tct-time-tizen-tests.auto.suite_1_set_1.xml']}
         self.runner.run_case(self.log_dir)
 
     def test_merge_resultfile(self):
-        start_time = '2013-03-11-12:16:33.637293'#depend you start test time 
-        self.runner.merge_resultfile(start_time, self.log_dir)
+        self.runner.resultfiles = set([os.path.join('merge_result',"tct-time-tizen-tests.auto.suite_1_set_1.xml")])
+        start_time = '2013-07-08_16_36_43'#depend you start test time
+        self.runner.merge_resultfile(start_time, 'merge_result')
+
 
 
 def suite():
     suite = unittest.TestSuite()
-    suite.addTest(RunnerTestCase("test_set_global_parameters"))
+    suite.addTest(RunnerTestCase("test_merge_resultfile"))
     return suite
 
 #run test

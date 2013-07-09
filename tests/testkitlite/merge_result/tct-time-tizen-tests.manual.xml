@@ -1,0 +1,6 @@
+<test_definition>
+  <suite launcher="WRTLauncher" name="tct-time-tizen-tests">
+    <set name="Time">
+      </set>
+  </suite>
+</test_definition>
