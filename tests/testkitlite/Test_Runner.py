@@ -39,7 +39,7 @@ class RunnerTestCase(unittest.TestCase):
         self.CONNECTOR.run_case = MagicMock(return_value=True)
         self.CONNECTOR.get_test_status = MagicMock(return_value={'finished':"1"})
         self.CONNECTOR.get_test_result = MagicMock(return_value={"cases":{}})
-        self.CONNECTOR.get_device_info = MagicMock(return_value={"device_id":None,"device_model":None, "device_name":None, "build_id":None, "os_version":None, "resolution":None, "screen_size":None})
+        self.CONNECTOR.get_device_info = MagicMock(return_value={"device_id":"None","device_model":"None", "device_name":"None", "build_id":"None", "os_version":"None", "resolution":"None", "screen_size":"None"})
         self.runner = TRunner(self.CONNECTOR)
         self.log_dir = os.path.join(os.path.expandvars('$HOME'),"testresult")
         if not os.path.exists(self.log_dir):
@@ -74,7 +74,6 @@ class RunnerTestCase(unittest.TestCase):
                 "--non-active","none",
                 "--deviceid","123"]
         (options, args) = parser.parse_args(args)  
-        print options
         self.runner.set_global_parameters(options)
 
     def test_set_session_id(self):
@@ -101,9 +100,9 @@ class RunnerTestCase(unittest.TestCase):
         self.runner.run_case(self.log_dir)
 
     def test_merge_resultfile(self):
-        #self.runner.resultfiles = set([os.path.join(self.log_dir,"tct-alarm-tizen-tests.auto.xml")])
+        self.runner.resultfiles = set([os.path.join('merge_result',"tct-time-tizen-tests.auto.suite_1_set_1.xml")])
         start_time = '2013-07-08_16_36_43'#depend you start test time
-        self.runner.merge_resultfile(start_time, self.log_dir)
+        self.runner.merge_resultfile(start_time, 'merge_result')
 
 
 
