@@ -100,9 +100,9 @@ class RunnerTestCase(unittest.TestCase):
         self.runner.run_case(self.log_dir)
 
     def test_merge_resultfile(self):
-        self.runner.resultfiles = set([os.path.join('merge_result',"tct-time-tizen-tests.auto.suite_1_set_1.xml")])
+        self.runner.resultfiles = set([os.path.join(os.path.dirname(__file__),"merge_result/tct-time-tizen-tests.auto.suite_1_set_1.xml")])
         start_time = '2013-07-08_16_36_43'#depend you start test time
-        self.runner.merge_resultfile(start_time, 'merge_result')
+        self.runner.merge_resultfile(start_time, os.path.join(os.path.dirname(__file__),"merge_result"))
 
 
 
