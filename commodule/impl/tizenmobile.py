@@ -357,6 +357,9 @@ class WebTestExecThread(threading.Thread):
             ret = http_request(get_url(
                 self.server_url, "/set_testcase"), "POST", test_block)
             if ret is None or "error_code" in ret:
+                LOGGER.error(
+                    "[ set testcases time out,"
+                    "please confirm target is available ]")
                 LOCK_OBJ.acquire()
                 TEST_SERVER_STATUS = {"finished": 1}
                 LOCK_OBJ.release()
@@ -370,6 +373,9 @@ class WebTestExecThread(threading.Thread):
                 if ret is None or "error_code" in ret:
                     err_cnt += 1
                     if err_cnt >= 3:
+                        LOGGER.error(
+                            "[ check status time out,"
+                            "please confirm target is available ]")
                         LOCK_OBJ.acquire()
                         TEST_SERVER_STATUS = {"finished": 1}
                         LOCK_OBJ.release()
