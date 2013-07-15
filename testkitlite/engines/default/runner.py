@@ -465,7 +465,8 @@ class TRunner:
             if self.resultfile:
                 if os.path.splitext(self.resultfile)[-1] == '.xml':
                     if not os.path.exists(os.path.dirname(self.resultfile)):
-                        os.makedirs(os.path.dirname(self.resultfile))
+                        if len(os.path.dirname(self.resultfile))>0:
+                            os.makedirs(os.path.dirname(self.resultfile))
                     LOGGER.info("[ copy result xml to output file:"
                                 " %s ]" % self.resultfile)
                     copyfile(mergefile, self.resultfile)
@@ -923,6 +924,7 @@ class TRunner:
     def __write_file_result(self, set_result_xml, set_result):
         """write xml result file"""
         result_file = set_result['resultfile']
+        
         try:
             if self.rerun:
                 LOGGER.info("[ Web UI FW Unit Test Does not support rerun.\
@@ -932,12 +934,15 @@ class TRunner:
                 test_em = test_tree.getroot()
                 result_tree = etree.parse(result_file)
                 result_em = result_tree.getroot()
+                dubug_file = os.path.basename(set_result_xml)
+                dubug_file = os.path.splitext(dubug_file)[0]+'.dlog'
                 for result_suite in result_em.getiterator('suite'):
                     for result_set in result_suite.getiterator('set'):
                         for test_suite in test_em.getiterator('suite'):
-                            for test_set in test_suite.getiterator('set'):
+                            for test_set in test_suite.getiterator('set'):                                
                                 if result_set.get('name') == \
                                              test_set.get('name'):
+                                    result_set.set("set_debug_msg",dubug_file)
                                     test_suite.remove(test_set)
                                     test_suite.append(result_set)
                 test_tree.write(set_result_xml)
