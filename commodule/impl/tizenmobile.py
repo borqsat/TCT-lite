@@ -47,7 +47,6 @@ WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
 PMG_START = "sdb -s %s shell pmctrl start"
 PMG_STOP = "sdb -s %s shell pmctrl stop"
 KILL_DLOGS = "kill -9 `ps aux|grep 'dlog -v time'|awk '{print $2}'`"
-KILL_STUBS = "kill -9 `ps aux|grep 'testkit-stub'|awk '{print $2}'`"
 UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
 
 
