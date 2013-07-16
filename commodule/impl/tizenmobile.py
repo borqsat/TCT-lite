@@ -161,27 +161,6 @@ class DlogThread(threading.Thread):
             killall(cmd_open.pid)
 
 
-class StubExecThread(threading.Thread):
-
-    """stub instance serve_forever in async mode"""
-
-    def __init__(self, cmd=None, sessionid=None):
-        super(StubExecThread, self).__init__()
-        self.cmdline = cmd
-        self.sessionid = sessionid
-
-    def run(self):
-        stdout_file = os.path.expanduser(
-            "~") + os.sep + self.sessionid + "_stdout"
-        stderr_file = os.path.expanduser(
-            "~") + os.sep + self.sessionid + "_stderr"
-        shell_command_ext(cmd=self.cmdline,
-                          timeout=None,
-                          boutput=True,
-                          stdout_file=stdout_file,
-                          stderr_file=stderr_file)
-
-
 class CoreTestExecThread(threading.Thread):
 
     """ execute core test in async mode """
