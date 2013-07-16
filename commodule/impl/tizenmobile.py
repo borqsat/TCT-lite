@@ -88,8 +88,9 @@ def _download_file(deviceid, remote_path, local_path):
     cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
     exit_code, ret = shell_command(cmd)
     if exit_code != 0:
+        error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
         LOGGER.info("[ Download file \"%s\" from target failed, error: %s ]"
-                    % (remote_path, ret[0].strip('\r\n')))
+                    % (remote_path, error))
         return False
     else:
         return True
@@ -98,10 +99,11 @@ def _download_file(deviceid, remote_path, local_path):
 def _upload_file(deviceid, remote_path, local_path):
     """upload file to device"""
     cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
-    exit_code, result = shell_command(cmd)
+    exit_code, ret = shell_command(cmd)
     if exit_code != 0:
+        error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
         LOGGER.info("[ Upload file \"%s\" failed,"
-                    " get error: %s ]" % (local_path, result))
+                    " get error: %s ]" % (local_path, error))
         return False
     else:
         return True
@@ -897,7 +899,8 @@ class TizenMobile:
 
         # clear dlog hang processes
         exit_code, ret = shell_command(KILL_DLOGS)
-        # finalize web stub
+
+        # uninstall widget
         if self.__st['test_type'] == "webapi" and self.__st['auto_iu']:
             cmd = WRT_UNINSTL_STR % (self.__st[
                                      'device_id'], self.__st['test_wgt'])
