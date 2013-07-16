@@ -88,8 +88,9 @@ def _download_file(deviceid, remote_path, local_path):
     cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
     exit_code, ret = shell_command(cmd)
     if exit_code != 0:
+        error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
         LOGGER.info("[ Download file \"%s\" from target failed, error: %s ]"
-                    % (remote_path, ret[0].strip('\r\n')))
+                    % (remote_path, error))
         return False
     else:
         return True
@@ -98,10 +99,11 @@ def _download_file(deviceid, remote_path, local_path):
 def _upload_file(deviceid, remote_path, local_path):
     """upload file to device"""
     cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
-    exit_code, result = shell_command(cmd)
+    exit_code, ret = shell_command(cmd)
     if exit_code != 0:
+        error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
         LOGGER.info("[ Upload file \"%s\" failed,"
-                    " get error: %s ]" % (local_path, result))
+                    " get error: %s ]" % (local_path, error))
         return False
     else:
         return True
@@ -159,27 +161,6 @@ class DlogThread(threading.Thread):
         if exit_code is None:
             from .killall import killall
             killall(cmd_open.pid)
-
-
-class StubExecThread(threading.Thread):
-
-    """stub instance serve_forever in async mode"""
-
-    def __init__(self, cmd=None, sessionid=None):
-        super(StubExecThread, self).__init__()
-        self.cmdline = cmd
-        self.sessionid = sessionid
-
-    def run(self):
-        stdout_file = os.path.expanduser(
-            "~") + os.sep + self.sessionid + "_stdout"
-        stderr_file = os.path.expanduser(
-            "~") + os.sep + self.sessionid + "_stderr"
-        shell_command_ext(cmd=self.cmdline,
-                          timeout=None,
-                          boutput=True,
-                          stdout_file=stdout_file,
-                          stderr_file=stderr_file)
 
 
 class CoreTestExecThread(threading.Thread):
@@ -918,7 +899,8 @@ class TizenMobile:
 
         # clear dlog hang processes
         exit_code, ret = shell_command(KILL_DLOGS)
-        # finalize web stub
+
+        # uninstall widget
         if self.__st['test_type'] == "webapi" and self.__st['auto_iu']:
             cmd = WRT_UNINSTL_STR % (self.__st[
                                      'device_id'], self.__st['test_wgt'])

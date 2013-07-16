@@ -37,28 +37,6 @@ DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 HOST_NS = "127.0.0.1"
 os.environ["no_proxy"] = HOST_NS
 
-
-class StubExecThread(threading.Thread):
-
-    """ stub instance serve_forever in async mode"""
-
-    def __init__(self, cmd=None, sessionid=None):
-        super(StubExecThread, self).__init__()
-        self.cmdline = cmd
-        self.sessionid = sessionid
-
-    def run(self):
-        stdout_file = os.path.expanduser(
-            "~") + os.sep + self.sessionid + "_stdout"
-        stderr_file = os.path.expanduser(
-            "~") + os.sep + self.sessionid + "_stderr"
-        shell_command_ext(cmd=self.cmdline,
-                          timeout=None,
-                          boutput=True,
-                          stdout_file=stdout_file,
-                          stderr_file=stderr_file)
-
-
 LOCK_OBJ = threading.Lock()
 TEST_SERVER_RESULT = []
 TEST_SERVER_STATUS = {}
@@ -93,13 +71,19 @@ def _get_test_options(test_launcher, test_suite):
     return test_opt
 
 
-def _set_result(result_data):
+def _set_result(suite_name, result_data):
     """set cases result to the global result buffer"""
     global TEST_SERVER_RESULT
     if not result_data is None:
         LOCK_OBJ.acquire()
+        cases_list = result_data
         TEST_SERVER_RESULT["cases"].extend(result_data)
         LOCK_OBJ.release()
+        if suite_name is None:
+            return
+        for case_it in cases_list:
+            LOGGER.info("execute case: %s # %s...(%s)" % (
+                suite_name, case_it['case_id'], case_it['result']))
 
 
 class CoreTestExecThread(threading.Thread):
@@ -247,7 +231,7 @@ class CoreTestExecThread(threading.Thread):
             LOGGER.info("Case Result: %s" % test_case["result"])
             result_list.append(test_case)
 
-        _set_result(result_list)
+        _set_result(None, result_list)
         LOCK_OBJ.acquire()
         TEST_SERVER_STATUS = {"finished": 1}
         LOCK_OBJ.release()
@@ -255,21 +239,22 @@ class CoreTestExecThread(threading.Thread):
 
 class WebTestExecThread(threading.Thread):
 
-    """sdb communication for serve_forever app in async mode"""
+    """execute web test in async mode"""
 
-    def __init__(self, server_url, test_set_name, test_data_queue):
+    def __init__(self, server_url, test_suite_name, test_data_queue):
         super(WebTestExecThread, self).__init__()
         self.server_url = server_url
-        self.test_set_name = test_set_name
+        self.test_suite_name = test_suite_name
         self.data_queue = test_data_queue
 
     def run(self):
         """run web tests"""
         if self.data_queue is None:
             return
-        set_finished = False
+
+        test_set_finished = False
         err_cnt = 0
-        global TEST_SERVER_STATUS, TEST_SERVER_RESULT
+        global TEST_SERVER_RESULT, TEST_SERVER_STATUS
         LOCK_OBJ.acquire()
         TEST_SERVER_RESULT = {"cases": []}
         LOCK_OBJ.release()
@@ -277,6 +262,12 @@ class WebTestExecThread(threading.Thread):
             ret = http_request(get_url(
                 self.server_url, "/set_testcase"), "POST", test_block)
             if ret is None or "error_code" in ret:
+                LOGGER.error(
+                    "[ set testcases time out,"
+                    "please confirm target is available ]")
+                LOCK_OBJ.acquire()
+                TEST_SERVER_STATUS = {"finished": 1}
+                LOCK_OBJ.release()
                 break
 
             while True:
@@ -287,33 +278,46 @@ class WebTestExecThread(threading.Thread):
                 if ret is None or "error_code" in ret:
                     err_cnt += 1
                     if err_cnt >= 3:
+                        LOGGER.error(
+                            "[ check status time out,"
+                            "please confirm target is available ]")
                         LOCK_OBJ.acquire()
                         TEST_SERVER_STATUS = {"finished": 1}
                         LOCK_OBJ.release()
                         break
                 elif "finished" in ret:
-                    LOCK_OBJ.acquire()
-                    TEST_SERVER_STATUS = ret
-                    LOCK_OBJ.release()
                     err_cnt = 0
+                    # check if cases delivered
+                    if 'cases' in ret:
+                        _set_result(self.test_suite_name, ret["cases"])
+
                     # check if current test set is finished
                     if ret["finished"] == 1:
-                        set_finished = True
+                        test_set_finished = True
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        _set_result(ret["cases"])
+                        if 'cases' in ret:
+                            _set_result(self.test_suite_name, ret["cases"])
+                        LOCK_OBJ.acquire()
+                        TEST_SERVER_STATUS = {"finished": 1}
+                        LOCK_OBJ.release()
                         break
                     # check if current block is finished
                     elif ret["block_finished"] == 1:
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        _set_result(ret["cases"])
+                        if 'cases' in ret:
+                            _set_result(self.test_suite_name, ret["cases"])
+                        LOCK_OBJ.acquire()
+                        TEST_SERVER_STATUS = {"finished": 0}
+                        LOCK_OBJ.release()
                         break
+
                 time.sleep(2)
 
-            if set_finished:
+            if test_set_finished:
                 break
 
 
@@ -398,6 +402,7 @@ class HostCon:
         stub_port = "8000"
         test_launcher = params["external-test"]
         testsuite_name = params["testsuite-name"]
+        self.test_suite_name = testsuite_name
 
         if "debug" in params and params["debug"]:
             debug_opt = "--debug"
@@ -409,15 +414,13 @@ class HostCon:
         if test_opt is None:
             return None
 
-        LOGGER.info("[ launch the stub httpserver ]")
-        cmdline = " killall %s " % stub_app
-        exit_code, ret = shell_command(cmdline)
-        time.sleep(2)
-        cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
-        self.__test_async_shell = StubExecThread(
-            cmd=cmdline, sessionid=session_id)
-        self.__test_async_shell.start()
-        time.sleep(2)
+        # init testkit-stub deamon process
+        exit_code, ret = shell_command("ps aux | grep %s" % stub_app)
+        if len(ret) < 2:
+            LOGGER.info("[ launch stub process: %s ]" % stub_app)
+            cmdline = "%s --port:%s %s &" % (stub_app, stub_port, debug_opt)
+            exit_code, ret = shell_command(cmdline)
+            time.sleep(2)
         self.__server_url = "http://%s:%s" % (HOST_NS, stub_port)
 
         timecnt = 0
@@ -510,7 +513,7 @@ class HostCon:
             test_set_blocks.append(block_data)
             idx += 1
         self.__test_async_http = WebTestExecThread(
-            self.__server_url, test_set_name, test_set_blocks)
+            self.__server_url, self.test_suite_name, test_set_blocks)
         self.__test_async_http.start()
         return True
 
@@ -566,16 +569,10 @@ class HostCon:
         return result
 
     def finalize_test(self, sessionid):
-        """clear the test stub and related resources"""
+        """clear the related resources"""
         if sessionid is None:
             return False
-
-        if self.__test_type == "webapi":
-            ret = http_request(get_url(
-                self.__server_url, "/shut_down_server"), "GET", {})
-            if ret:
-                return True
-        return False
+        return True
 
 
 def get_target_conn():
