@@ -415,10 +415,10 @@ class HostCon:
             return None
 
         # init testkit-stub deamon process
-        exit_code, ret = shell_command("ps aux | grep %s" % stub_app)
-        if len(ret) < 2:
+        exit_code, ret = shell_command("ps ax | grep %s | grep -v grep" % stub_app)
+        if len(ret) < 1:
             LOGGER.info("[ launch stub process: %s ]" % stub_app)
-            cmdline = "%s --port:%s %s &" % (stub_app, stub_port, debug_opt)
+            cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
             exit_code, ret = shell_command(cmdline)
             time.sleep(2)
         self.__server_url = "http://%s:%s" % (HOST_NS, stub_port)
@@ -426,11 +426,11 @@ class HostCon:
         timecnt = 0
         blaunched = False
         while timecnt < 10:
-            time.sleep(1)
             ret = http_request(get_url(self.__server_url,
                                        "/check_server_status"), "GET", {})
             if ret is None:
                 LOGGER.info("[ check server status, not ready yet! ]")
+                time.sleep(1)
                 timecnt += 1
                 continue
 
