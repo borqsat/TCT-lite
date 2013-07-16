@@ -111,13 +111,19 @@ TEST_SERVER_RESULT = []
 TEST_SERVER_STATUS = {}
 
 
-def _set_result(result_data):
+def _set_result(suite_name, result_data):
     """set cases result to the global result buffer"""
     global TEST_SERVER_RESULT
     if not result_data is None:
         LOCK_OBJ.acquire()
+        cases_list = result_data
         TEST_SERVER_RESULT["cases"].extend(result_data)
         LOCK_OBJ.release()
+        if suite_name is None:
+            return
+        for case_it in cases_list:
+            LOGGER.info("execute case: %s # %s...(%s)" % (
+                suite_name, case_it['case_id'], case_it['result']))
 
 
 class DlogThread(threading.Thread):
@@ -326,7 +332,7 @@ class CoreTestExecThread(threading.Thread):
             LOGGER.info("Case Result: %s" % test_case["result"])
             result_list.append(test_case)
 
-        _set_result(result_list)
+        _set_result(None, result_list)
         LOCK_OBJ.acquire()
         TEST_SERVER_STATUS = {"finished": 1}
         LOCK_OBJ.release()
@@ -336,10 +342,10 @@ class WebTestExecThread(threading.Thread):
 
     """execute web test in async mode"""
 
-    def __init__(self, server_url, test_set_name, test_data_queue):
+    def __init__(self, server_url, test_suite_name, test_data_queue):
         super(WebTestExecThread, self).__init__()
         self.server_url = server_url
-        self.test_set_name = test_set_name
+        self.test_suite_name = test_suite_name
         self.data_queue = test_data_queue
 
     def run(self):
@@ -382,6 +388,10 @@ class WebTestExecThread(threading.Thread):
                         break
                 elif "finished" in ret:
                     err_cnt = 0
+                    # check if cases delivered
+                    if 'cases' in ret:
+                        _set_result(self.test_suite_name, ret["cases"])
+
                     # check if current test set is finished
                     if ret["finished"] == 1:
                         test_set_finished = True
@@ -389,7 +399,7 @@ class WebTestExecThread(threading.Thread):
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
                         if 'cases' in ret:
-                            _set_result(ret["cases"])
+                            _set_result(self.test_suite_name, ret["cases"])
                         LOCK_OBJ.acquire()
                         TEST_SERVER_STATUS = {"finished": 1}
                         LOCK_OBJ.release()
@@ -400,14 +410,11 @@ class WebTestExecThread(threading.Thread):
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
                         if 'cases' in ret:
-                            _set_result(ret["cases"])
+                            _set_result(self.test_suite_name, ret["cases"])
                         LOCK_OBJ.acquire()
                         TEST_SERVER_STATUS = {"finished": 0}
                         LOCK_OBJ.release()
                         break
-                    # check if cases delivered
-                    elif 'cases' in ret:
-                        _set_result(ret["cases"])
 
                 time.sleep(2)
 
@@ -647,6 +654,7 @@ class TizenMobile:
         test_launcher = params["external-test"]
         testsuite_name = params["testsuite-name"]
         testset_name = params["testset-name"]
+        self.__st['testsuite_name'] = testsuite_name
         client_cmds = params['client-command'].strip().split()
         wrt_tag = client_cmds[1] if len(client_cmds) > 1 else ""
         self.__st['auto_iu'] = wrt_tag.find('iu') != -1
@@ -681,29 +689,22 @@ class TizenMobile:
         if self.__st['self_exec']:
             return session_id
 
-        # init test stub instance
+        # init testkit-stub deamon process
         exit_code, ret = shell_command(
             APP_QUERY_STR % (deviceid, stub_app))
-        if len(ret) >= 1:
-            exit_code, ret = shell_command(
-                APP_KILL_STR % (deviceid, stub_app))
+        if len(ret) < 1:
+            LOGGER.info("[ launch stub process: %s ]" % stub_app)
+            cmdline = "sdb -s %s shell %s --port:%s %s &" \
+                % (deviceid, stub_app, stub_port, debug_opt)
+            exit_code, ret = shell_command(cmdline)
             time.sleep(2)
-
-        LOGGER.info("[ launch stub process: %s ]" % stub_app)
-        cmdline = "sdb -s %s shell %s --port:%s %s" \
-            % (deviceid, stub_app, stub_port, debug_opt)
-        self.__st['async_stub'] = StubExecThread(cmdline, session_id)
-        self.__st['async_stub'].start()
-        time.sleep(2)
 
         if self.__st['server_url'] is None:
             self.__st['server_url'] = _get_forward_connect(deviceid, stub_port)
-        LOGGER.info("[ Access device via forwarded url: %s ]" %
-                    self.__st['server_url'])
 
         timecnt = 0
         blauched = False
-        while timecnt < 10:
+        while timecnt < 3:
             ret = http_request(get_url(
                 self.__st['server_url'], "/check_server_status"), "GET", {})
             if ret is None:
@@ -722,7 +723,10 @@ class TizenMobile:
         if blauched:
             ret = http_request(get_url(
                 self.__st['server_url'], "/init_test"), "POST", test_opt)
-            if "error_code" in ret:
+            if ret is None:
+                LOGGER.info("[ init test suite failed! ]")
+                return None
+            elif "error_code" in ret:
                 LOGGER.info("[ init test suite, "
                             "get error code %d ! ]" % ret["error_code"])
                 return None
@@ -837,7 +841,8 @@ class TizenMobile:
             test_set_blocks.append(block_data)
             idx += 1
         self.__st['async_http'] = WebTestExecThread(
-            self.__st['server_url'], test_set_name, test_set_blocks)
+            self.__st['server_url'], self.__st['testsuite_name'],
+            test_set_blocks)
         self.__st['async_http'].start()
         return True
 
@@ -914,18 +919,10 @@ class TizenMobile:
         # clear dlog hang processes
         exit_code, ret = shell_command(KILL_DLOGS)
         # finalize web stub
-        if self.__st['test_type'] == "webapi":
-            if self.__st['auto_iu']:
-                cmd = WRT_UNINSTL_STR % (self.__st[
-                                         'device_id'], self.__st['test_wgt'])
-                exit_code, ret = shell_command(cmd)
-            # shutdown stub server
-            ret = http_request(get_url(
-                               self.__st['server_url'], "/shut_down_server"),
-                               "GET", {})
-            # clear existed stub hang processes
-            if ret is None:
-                exit_code, ret = shell_command(KILL_STUBS)
+        if self.__st['test_type'] == "webapi" and self.__st['auto_iu']:
+            cmd = WRT_UNINSTL_STR % (self.__st[
+                                     'device_id'], self.__st['test_wgt'])
+            exit_code, ret = shell_command(cmd)
         return True
 
 
