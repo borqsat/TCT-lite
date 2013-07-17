@@ -489,6 +489,8 @@ default.runner', \
                      "failed,error: %s ]\n" % err)
 
 except KeyboardInterrupt, err:
+    if RUNNER.session_id:
+        RUNNER.connector.finalize_test(RUNNER.session_id)
     if can_merge_result:
         RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
     if down_status:
