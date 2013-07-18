@@ -563,7 +563,7 @@ class TRunner:
         environment.attrib['device_id'] = device_info["device_id"]
         environment.attrib['device_model'] = device_info["device_model"]
         environment.attrib['device_name'] = device_info["device_name"]
-        environment.attrib['build_id'] = device_info["build_id"]
+        # environment.attrib['build_id'] = device_info["build_id"]
         environment.attrib['host'] = platform.platform()
         environment.attrib['os_version'] = device_info["os_version"]
         environment.attrib['resolution'] = device_info["resolution"]
@@ -939,7 +939,7 @@ class TRunner:
                 for result_suite in result_em.getiterator('suite'):
                     for result_set in result_suite.getiterator('set'):
                         for test_suite in test_em.getiterator('suite'):
-                            for test_set in test_suite.getiterator('set'):                                
+                            for test_set in test_suite.getiterator('set'):
                                 if result_set.get('name') == \
                                              test_set.get('name'):
                                     result_set.set("set_debug_msg",dubug_file)
