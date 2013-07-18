@@ -925,7 +925,6 @@ class TRunner:
     def __write_file_result(self, set_result_xml, set_result):
         """write xml result file"""
         result_file = set_result['resultfile']
-        
         try:
             if self.rerun:
                 LOGGER.info("[ Web UI FW Unit Test Does not support rerun.\
@@ -1126,7 +1125,7 @@ def get_buildinfo():
         root = etree.parse(builfinfo_file).getroot()
         for element in root.findall("buildinfo"):
             if element is not None:
-                if element.get("name")=='buildVersion':
+                if element.get("name").lower()=='buildversion':
                     child = etree.Element.getchildren(element)
                     if child and child[0].text:
                         buildid = child[0].text
