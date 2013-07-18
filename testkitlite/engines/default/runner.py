@@ -39,6 +39,7 @@ from tempfile import mktemp
 from shutil import move
 from os import remove
 from commodule.log import LOGGER
+from commodule.impl.autoexec import shell_command
 
 
 JOIN = os.path.join
@@ -563,7 +564,7 @@ class TRunner:
         environment.attrib['device_id'] = device_info["device_id"]
         environment.attrib['device_model'] = device_info["device_model"]
         environment.attrib['device_name'] = device_info["device_name"]
-        # environment.attrib['build_id'] = device_info["build_id"]
+        environment.attrib['build_id'] = get_buildinfo()
         environment.attrib['host'] = platform.platform()
         environment.attrib['os_version'] = device_info["os_version"]
         environment.attrib['resolution'] = device_info["resolution"]
@@ -1114,3 +1115,20 @@ def write_json_result(set_result_xml, set_result):
         traceback.print_exc()
         LOGGER.error(
             "[ Error: fail to write cases result, error: %s ]\n" % error)
+
+def get_buildinfo():
+    """ get builf info"""
+    buildid = ''
+    cmd = 'sdb pull /opt/usr/media/Documents/tct/buildinfo.xml /opt/testkit/lite/buildinfo.xml'
+    shell_command(cmd)
+    builfinfo_file = '/opt/testkit/lite/buildinfo.xml'
+    if EXISTS(builfinfo_file):
+        root = etree.parse(builfinfo_file).getroot()
+        for element in root.findall("buildinfo"):
+            if element is not None:
+                if element.get("name")=='buildVersion':
+                    child = etree.Element.getchildren(element)
+                    if child and child[0].text:
+                        buildid = child[0].text
+    return buildid
+
