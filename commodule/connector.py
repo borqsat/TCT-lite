@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,Boston, MA 02110-1301,USA.
 #
 # Authors:
-#              Liu,chengtao <liux.chengtao@intel.com>
+#              Liu,chengtao <chengtaox.liu@intel.com>
 """Test connector for test instance and target instance"""
 
 from .log import LOGGER
