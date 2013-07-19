@@ -19,7 +19,8 @@
 #
 # Authors:
 #              Zhang, Huihui <huihuix.zhang@intel.com>
-#              Wendong,Sui  <weidongx.sun@intel.com>
+#              Wendong, Sui  <weidongx.sun@intel.com>
+#              Liu,chengtao <chengtaox.liu@intel.com>
 """ The shell command executor module"""
 
 import os
@@ -30,10 +31,8 @@ import subprocess
 from .killall import killall
 from .str2 import str2str
 
-TIME_OUT = 15
 
-
-def shell_command(cmd):
+def shell_command(cmd, timeout=15):
     """shell communication for quick return in sync mode"""
     proc = subprocess.Popen(cmd,
                             shell=True,
@@ -41,7 +40,7 @@ def shell_command(cmd):
                             stderr=subprocess.PIPE)
     time_cnt = 0
     exit_code = None
-    while time_cnt < TIME_OUT:
+    while time_cnt < timeout:
         exit_code = proc.poll()
         if not exit_code is None:
             break

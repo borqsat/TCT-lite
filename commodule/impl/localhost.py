@@ -18,7 +18,7 @@
 # Boston, MA  02110-1301, USA.
 #
 # Authors:
-#              Liu ChengTao <liux.chengtao@intel.com>
+#           Liu,chengtao <chengtaox.liu@intel.com>
 """ The implementation for local mode"""
 
 import os
@@ -35,6 +35,7 @@ from .autoexec import shell_command, shell_command_ext
 
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 HOST_NS = "127.0.0.1"
+CNT_RETRY = 10
 os.environ["no_proxy"] = HOST_NS
 
 LOCK_OBJ = threading.Lock()
@@ -260,7 +261,7 @@ class WebTestExecThread(threading.Thread):
         LOCK_OBJ.release()
         for test_block in self.data_queue:
             ret = http_request(get_url(
-                self.server_url, "/set_testcase"), "POST", test_block)
+                self.server_url, "/set_testcase"), "POST", test_block, 30)
             if ret is None or "error_code" in ret:
                 LOGGER.error(
                     "[ set testcases time out,"
@@ -277,7 +278,7 @@ class WebTestExecThread(threading.Thread):
 
                 if ret is None or "error_code" in ret:
                     err_cnt += 1
-                    if err_cnt >= 3:
+                    if err_cnt >= CNT_RETRY:
                         LOGGER.error(
                             "[ check status time out,"
                             "please confirm target is available ]")
@@ -415,17 +416,28 @@ class HostCon:
             return None
 
         # init testkit-stub deamon process
-        exit_code, ret = shell_command("ps ax | grep %s | grep -v grep" % stub_app)
-        if len(ret) < 1:
-            LOGGER.info("[ launch stub process: %s ]" % stub_app)
-            cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
-            exit_code, ret = shell_command(cmdline)
-            time.sleep(2)
+        timecnt = 0
+        blaunched = False
+        while timecnt < 3:
+            exit_code, ret = shell_command("ps ax | grep %s | grep -v grep" % stub_app)
+            if len(ret) < 1:
+                LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
+                cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
+                exit_code, ret = shell_command(cmdline)
+                time.sleep(2)
+            else:
+                blaunched = True
+                break
+
+        if not blaunched:
+            LOGGER.info("[ init test stub failed, please check target! ]")
+            return None
+
         self.__server_url = "http://%s:%s" % (HOST_NS, stub_port)
 
         timecnt = 0
         blaunched = False
-        while timecnt < 10:
+        while timecnt < CNT_RETRY:
             ret = http_request(get_url(self.__server_url,
                                        "/check_server_status"), "GET", {})
             if ret is None:
