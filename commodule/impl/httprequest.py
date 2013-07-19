@@ -18,7 +18,7 @@
 # Boston, MA  02110-1301, USA.
 #
 # Authors:
-#              Liu ChengTao <liux.chengtao@intel.com>
+#           Liu,chengtao <chengtaox.liu@intel.com>
 """ The http request process module"""
 
 import requests
@@ -30,7 +30,7 @@ def get_url(baseurl, api):
     return "%s%s" % (baseurl, api)
 
 
-def http_request(url, rtype="POST", data=None):
+def http_request(url, rtype="POST", data=None, time_out=10):
     """
     http request to the device http server
     """
@@ -39,7 +39,7 @@ def http_request(url, rtype="POST", data=None):
         headers = {'content-type': 'application/json'}
         try:
             ret = requests.post(url, data=json.dumps(
-                data), headers=headers, timeout=10)
+                data), headers=headers, timeout=time_out)
 
             if ret:
                 result = ret.json()
@@ -47,7 +47,7 @@ def http_request(url, rtype="POST", data=None):
             pass
     elif rtype == "GET":
         try:
-            ret = requests.get(url, params=data, timeout=10)
+            ret = requests.get(url, params=data, timeout=time_out)
             if ret:
                 result = ret.json()
         except Exception as error:

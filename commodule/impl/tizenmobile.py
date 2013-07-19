@@ -18,7 +18,7 @@
 # MA  02110-1301, USA.
 #
 # Authors:
-#              Liu ChengTao <liux.chengtao@intel.com>
+#           Chengtao,Liu  <chengtaox.liu@intel.com>
 """ The implementation for HD (host device) test mode"""
 
 import os
@@ -35,6 +35,7 @@ from .httprequest import get_url, http_request
 from .autoexec import shell_command, shell_command_ext
 
 LOCAL_HOST_NS = "127.0.0.1"
+CNT_RETRY = 10
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 APP_QUERY_STR = "sdb -s %s shell ps aux | grep %s"
 APP_KILL_STR = "sdb -s %s shell killall %s "
@@ -125,6 +126,9 @@ def _set_result(suite_name, result_data):
         for case_it in cases_list:
             LOGGER.info("execute case: %s # %s...(%s)" % (
                 suite_name, case_it['case_id'], case_it['result']))
+            if case_it['result'].lower() == 'fail' or \
+               case_it['result'].lower() == 'block':
+                LOGGER.info(case_it['stdout'])
 
 
 class DlogThread(threading.Thread):
@@ -341,7 +345,7 @@ class WebTestExecThread(threading.Thread):
         LOCK_OBJ.release()
         for test_block in self.data_queue:
             ret = http_request(get_url(
-                self.server_url, "/set_testcase"), "POST", test_block)
+                self.server_url, "/set_testcase"), "POST", test_block, 30)
             if ret is None or "error_code" in ret:
                 LOGGER.error(
                     "[ set testcases time out,"
@@ -358,7 +362,7 @@ class WebTestExecThread(threading.Thread):
 
                 if ret is None or "error_code" in ret:
                     err_cnt += 1
-                    if err_cnt >= 3:
+                    if err_cnt >= CNT_RETRY:
                         LOGGER.error(
                             "[ check status time out,"
                             "please confirm target is available ]")
@@ -670,21 +674,31 @@ class TizenMobile:
             return session_id
 
         # init testkit-stub deamon process
-        exit_code, ret = shell_command(
-            APP_QUERY_STR % (deviceid, stub_app))
-        if len(ret) < 1:
-            LOGGER.info("[ launch stub process: %s ]" % stub_app)
-            cmdline = "sdb -s %s shell %s --port:%s %s &" \
-                % (deviceid, stub_app, stub_port, debug_opt)
-            exit_code, ret = shell_command(cmdline)
-            time.sleep(2)
+        timecnt = 0
+        blaunched = False
+        while timecnt < 3:
+            exit_code, ret = shell_command(
+                APP_QUERY_STR % (deviceid, stub_app))
+            if len(ret) < 1:
+                LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
+                cmdline = "sdb -s %s shell %s --port:%s %s &" \
+                    % (deviceid, stub_app, stub_port, debug_opt)
+                exit_code, ret = shell_command(cmdline)
+                time.sleep(2)
+            else:
+                blaunched = True
+                break
+
+        if not blaunched:
+            LOGGER.info("[ init test stub failed, please check target! ]")
+            return None
 
         if self.__st['server_url'] is None:
             self.__st['server_url'] = _get_forward_connect(deviceid, stub_port)
 
         timecnt = 0
-        blauched = False
-        while timecnt < 3:
+        blaunched = False
+        while timecnt < CNT_RETRY:
             ret = http_request(get_url(
                 self.__st['server_url'], "/check_server_status"), "GET", {})
             if ret is None:
@@ -697,10 +711,10 @@ class TizenMobile:
                             "get error code %d ! ]" % ret["error_code"])
                 return None
             else:
-                blauched = True
+                blaunched = True
                 break
 
-        if blauched:
+        if blaunched:
             ret = http_request(get_url(
                 self.__st['server_url'], "/init_test"), "POST", test_opt)
             if ret is None:
