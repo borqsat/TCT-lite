@@ -41,6 +41,7 @@ os.environ["no_proxy"] = HOST_NS
 LOCK_OBJ = threading.Lock()
 TEST_SERVER_RESULT = []
 TEST_SERVER_STATUS = {}
+TEST_FLAG = 0
 
 
 def _get_test_options(test_launcher, test_suite):
@@ -110,12 +111,14 @@ class CoreTestExecThread(threading.Thread):
         manual_skip_all = False
         result_list = []
 
-        global TEST_SERVER_STATUS, TEST_SERVER_RESULT
+        global TEST_SERVER_STATUS, TEST_SERVER_RESULT, TEST_FLAG
         LOCK_OBJ.acquire()
         TEST_SERVER_RESULT = {"cases": []}
         TEST_SERVER_STATUS = {"finished": 0}
         LOCK_OBJ.release()
         for test_case in self.cases_queue:
+            if TEST_FLAG == 1:
+                break
             current_idx += 1
             expected_result = "0"
             core_cmd = ""
@@ -258,7 +261,7 @@ class WebTestExecThread(threading.Thread):
 
         test_set_finished = False
         err_cnt = 0
-        global TEST_SERVER_RESULT, TEST_SERVER_STATUS
+        global TEST_SERVER_RESULT, TEST_SERVER_STATUS, TEST_FLAG
         LOCK_OBJ.acquire()
         TEST_SERVER_RESULT = {"cases": []}
         LOCK_OBJ.release()
@@ -278,6 +281,10 @@ class WebTestExecThread(threading.Thread):
                 ret = http_request(
                     get_url(self.server_url, "/check_server_status"),
                     "GET", {})
+
+                if TEST_FLAG == 1:
+                    test_set_finished = True
+                    break
 
                 if ret is None or "error_code" in ret:
                     err_cnt += 1
@@ -482,6 +489,10 @@ class HostCon:
         """init the test envrionment"""
         self.__device_id = deviceid
         self.__test_set_name = ""
+        global TEST_FLAG
+        LOCK_OBJ.acquire()
+        TEST_FLAG = 0
+        LOCK_OBJ.release()
         if "testset-name" in params:
             self.__test_set_name = params["testset-name"]
         if "client-command" in params and params['client-command'] is not None:
@@ -589,6 +600,12 @@ class HostCon:
         """clear the related resources"""
         if sessionid is None:
             return False
+
+        global TEST_FLAG
+        LOCK_OBJ.acquire()
+        TEST_FLAG = 1
+        LOCK_OBJ.release()
+
         return True
 
 

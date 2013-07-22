@@ -185,7 +185,7 @@ class CoreTestExecThread(threading.Thread):
         total_count = len(self.cases_queue)
         current_idx = 0
         manual_skip_all = False
-        global TEST_SERVER_STATUS, TEST_SERVER_RESULT
+        global TEST_SERVER_STATUS, TEST_SERVER_RESULT, TEST_FLAG
         LOCK_OBJ.acquire()
         TEST_SERVER_RESULT = {"cases": []}
         TEST_SERVER_STATUS = {"finished": 0}
@@ -193,6 +193,8 @@ class CoreTestExecThread(threading.Thread):
 
         LOCK_OBJ.release()
         for test_case in self.cases_queue:
+            if TEST_FLAG == 1:
+                break
             current_idx += 1
             expected_result = "0"
             core_cmd = ""
@@ -342,7 +344,7 @@ class WebTestExecThread(threading.Thread):
         test_set_finished = False
         err_cnt = 0
         exetype = self.test_type.lower()
-        global TEST_SERVER_RESULT, TEST_SERVER_STATUS
+        global TEST_SERVER_RESULT, TEST_SERVER_STATUS, TEST_FLAG
         LOCK_OBJ.acquire()
         TEST_SERVER_RESULT = {"cases": []}
         LOCK_OBJ.release()
@@ -359,6 +361,10 @@ class WebTestExecThread(threading.Thread):
                 break
 
             while True:
+                if TEST_FLAG == 1:
+                    test_set_finished = True
+                    break
+
                 ret = http_request(
                     get_url(self.server_url, "/check_server_status"),
                     "GET", {})
