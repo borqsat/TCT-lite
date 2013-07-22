@@ -111,6 +111,7 @@ def _upload_file(deviceid, remote_path, local_path):
 LOCK_OBJ = threading.Lock()
 TEST_SERVER_RESULT = []
 TEST_SERVER_STATUS = {}
+TEST_FLAG = 0
 
 
 def _set_result(suite_name, result_data):
@@ -126,8 +127,8 @@ def _set_result(suite_name, result_data):
         for case_it in cases_list:
             LOGGER.info("execute case: %s # %s...(%s)" % (
                 suite_name, case_it['case_id'], case_it['result']))
-            if case_it['result'].lower() == 'fail' or \
-               case_it['result'].lower() == 'block':
+            if case_it['result'].lower() in ['fail', 'block'] and \
+                    'stdout' in case_it:
                 LOGGER.info(case_it['stdout'])
 
 
@@ -326,11 +327,12 @@ class WebTestExecThread(threading.Thread):
 
     """execute web test in async mode"""
 
-    def __init__(self, server_url, test_suite_name, test_data_queue):
+    def __init__(self, server_url, test_suite_name, test_data_queue, exetype):
         super(WebTestExecThread, self).__init__()
         self.server_url = server_url
         self.test_suite_name = test_suite_name
         self.data_queue = test_data_queue
+        self.test_type = exetype
 
     def run(self):
         """run web tests"""
@@ -339,6 +341,7 @@ class WebTestExecThread(threading.Thread):
 
         test_set_finished = False
         err_cnt = 0
+        exetype = self.test_type.lower()
         global TEST_SERVER_RESULT, TEST_SERVER_STATUS
         LOCK_OBJ.acquire()
         TEST_SERVER_RESULT = {"cases": []}
@@ -365,16 +368,24 @@ class WebTestExecThread(threading.Thread):
                     if err_cnt >= CNT_RETRY:
                         LOGGER.error(
                             "[ check status time out,"
-                            "please confirm target is available ]")
+                            "please confirm device is available ]")
                         LOCK_OBJ.acquire()
                         TEST_SERVER_STATUS = {"finished": 1}
                         LOCK_OBJ.release()
                         break
                 elif "finished" in ret:
                     err_cnt = 0
+                    cases = None
                     # check if cases delivered
                     if 'cases' in ret:
-                        _set_result(self.test_suite_name, ret["cases"])
+                        cases = ret['cases']
+
+                    if cases is not None and len(cases):
+                        _set_result(self.test_suite_name, cases)
+                    elif exetype == 'manual':
+                        LOGGER.info(
+                            "[ executing manual cases,"
+                            " please take care of device ]\r\n")
 
                     # check if current test set is finished
                     if ret["finished"] == 1:
@@ -685,6 +696,7 @@ class TizenMobile:
                     % (deviceid, stub_app, stub_port, debug_opt)
                 exit_code, ret = shell_command(cmdline)
                 time.sleep(2)
+                timecnt += 1
             else:
                 blaunched = True
                 break
@@ -706,7 +718,8 @@ class TizenMobile:
                 timecnt += 1
                 time.sleep(1)
                 continue
-            elif "error_code" in ret:
+
+            if "error_code" in ret:
                 LOGGER.info("[ check server status, "
                             "get error code %d ! ]" % ret["error_code"])
                 return None
@@ -738,6 +751,11 @@ class TizenMobile:
         """init the test envrionment"""
         self.__st['device_id'] = deviceid
         self.__test_set_name = ""
+
+        global TEST_FLAG
+        LOCK_OBJ.acquire()
+        TEST_FLAG = 0
+        LOCK_OBJ.release()
 
         if "testset-name" in params:
             self.__test_set_name = params["testset-name"]
@@ -836,7 +854,7 @@ class TizenMobile:
             idx += 1
         self.__st['async_http'] = WebTestExecThread(
             self.__st['server_url'], self.__st['testsuite_name'],
-            test_set_blocks)
+            test_set_blocks, exetype)
         self.__st['async_http'].start()
         return True
 
@@ -909,6 +927,11 @@ class TizenMobile:
         """clear the test stub and related resources"""
         if sessionid is None:
             return False
+
+        global TEST_FLAG
+        LOCK_OBJ.acquire()
+        TEST_FLAG = 1
+        LOCK_OBJ.release()
 
         # clear dlog hang processes
         exit_code, ret = shell_command(KILL_DLOGS)

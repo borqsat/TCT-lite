@@ -85,6 +85,9 @@ def _set_result(suite_name, result_data):
         for case_it in cases_list:
             LOGGER.info("execute case: %s # %s...(%s)" % (
                 suite_name, case_it['case_id'], case_it['result']))
+            if case_it['result'].lower() in ['fail', 'block'] and \
+                    'stdout' in case_it:
+                LOGGER.info(case_it['stdout'])
 
 
 class CoreTestExecThread(threading.Thread):
@@ -419,11 +422,13 @@ class HostCon:
         timecnt = 0
         blaunched = False
         while timecnt < 3:
-            exit_code, ret = shell_command("ps ax | grep %s | grep -v grep" % stub_app)
+            exit_code, ret = shell_command(
+                "ps ax | grep %s | grep -v grep" % stub_app)
             if len(ret) < 1:
                 LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
                 cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
                 exit_code, ret = shell_command(cmdline)
+                timecnt += 1
                 time.sleep(2)
             else:
                 blaunched = True
