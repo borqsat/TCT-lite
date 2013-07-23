@@ -109,27 +109,40 @@ def _upload_file(deviceid, remote_path, local_path):
         return True
 
 LOCK_OBJ = threading.Lock()
-TEST_SERVER_RESULT = []
+TEST_SERVER_RESULT = {}
 TEST_SERVER_STATUS = {}
 TEST_FLAG = 0
 
 
-def _set_result(suite_name, result_data):
+def _set_result(cases_list=None):
     """set cases result to the global result buffer"""
     global TEST_SERVER_RESULT
-    if not result_data is None:
+    if not cases_list is None:
         LOCK_OBJ.acquire()
-        cases_list = result_data
-        TEST_SERVER_RESULT["cases"].extend(result_data)
+        TEST_SERVER_RESULT["cases"].extend(cases_list)
         LOCK_OBJ.release()
-        if suite_name is None:
-            return
-        for case_it in cases_list:
-            LOGGER.info("execute case: %s # %s...(%s)" % (
-                suite_name, case_it['case_id'], case_it['result']))
-            if case_it['result'].lower() in ['fail', 'block'] and \
-                    'stdout' in case_it:
-                LOGGER.info(case_it['stdout'])
+    else:
+        LOCK_OBJ.acquire()
+        TEST_SERVER_RESULT["cases"] = []
+        LOCK_OBJ.release()
+
+
+def _print_result(suite_name, cases_list):
+    if suite_name is None:
+        suite_name = ""
+    for case_it in cases_list:
+        LOGGER.info("execute case: %s # %s...(%s)" % (
+            suite_name, case_it['case_id'], case_it['result']))
+        if case_it['result'].lower() in ['fail', 'block'] and \
+                'stdout' in case_it:
+            LOGGER.info(case_it['stdout'])
+
+
+def _set_finished(flag=0):
+    global TEST_SERVER_STATUS
+    LOCK_OBJ.acquire()
+    TEST_SERVER_STATUS = {"finished": flag}
+    LOCK_OBJ.release()
 
 
 class DlogThread(threading.Thread):
@@ -185,13 +198,10 @@ class CoreTestExecThread(threading.Thread):
         total_count = len(self.cases_queue)
         current_idx = 0
         manual_skip_all = False
-        global TEST_SERVER_STATUS, TEST_SERVER_RESULT, TEST_FLAG
-        LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT = {"cases": []}
-        TEST_SERVER_STATUS = {"finished": 0}
+        global TEST_FLAG
         result_list = []
-
-        LOCK_OBJ.release()
+        _set_result()
+        _set_finished()
         for test_case in self.cases_queue:
             if TEST_FLAG == 1:
                 break
@@ -319,10 +329,8 @@ class CoreTestExecThread(threading.Thread):
             LOGGER.info("Case Result: %s" % test_case["result"])
             result_list.append(test_case)
 
-        _set_result(None, result_list)
-        LOCK_OBJ.acquire()
-        TEST_SERVER_STATUS = {"finished": 1}
-        LOCK_OBJ.release()
+        _set_result(result_list)
+        _set_finished(1)
 
 
 class WebTestExecThread(threading.Thread):
@@ -344,10 +352,9 @@ class WebTestExecThread(threading.Thread):
         test_set_finished = False
         err_cnt = 0
         exetype = self.test_type.lower()
-        global TEST_SERVER_RESULT, TEST_SERVER_STATUS, TEST_FLAG
-        LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT = {"cases": []}
-        LOCK_OBJ.release()
+        global TEST_FLAG
+        _set_result()
+        _set_finished()
         for test_block in self.data_queue:
             ret = http_request(get_url(
                 self.server_url, "/set_testcase"), "POST", test_block, 30)
@@ -355,9 +362,7 @@ class WebTestExecThread(threading.Thread):
                 LOGGER.error(
                     "[ set testcases time out,"
                     "please confirm target is available ]")
-                LOCK_OBJ.acquire()
-                TEST_SERVER_STATUS = {"finished": 1}
-                LOCK_OBJ.release()
+                _set_finished(1)
                 break
 
             while True:
@@ -374,47 +379,38 @@ class WebTestExecThread(threading.Thread):
                     if err_cnt >= CNT_RETRY:
                         LOGGER.error(
                             "[ check status time out,"
-                            "please confirm device is available ]")
-                        LOCK_OBJ.acquire()
-                        TEST_SERVER_STATUS = {"finished": 1}
-                        LOCK_OBJ.release()
+                            " please confirm device is available ]")
+                        _set_finished(1)
                         break
                 elif "finished" in ret:
                     err_cnt = 0
-                    cases = None
-                    # check if cases delivered
-                    if 'cases' in ret:
-                        cases = ret['cases']
 
-                    if cases is not None and len(cases):
-                        _set_result(self.test_suite_name, cases)
+                    if 'cases' in ret and ret["cases"] is not None and len(ret["cases"]):
+                        _set_result(ret["cases"])
+                        _print_result(self.test_suite_name, ret["cases"])
                     elif exetype == 'manual':
                         LOGGER.info(
                             "[ executing manual cases,"
                             " please take care of device ]\r\n")
 
-                    # check if current test set is finished
                     if ret["finished"] == 1:
                         test_set_finished = True
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        if 'cases' in ret:
-                            _set_result(self.test_suite_name, ret["cases"])
-                        LOCK_OBJ.acquire()
-                        TEST_SERVER_STATUS = {"finished": 1}
-                        LOCK_OBJ.release()
+                        if 'cases' in ret and ret["cases"] is not None:
+                            _set_result(ret["cases"])
+                            _print_result(self.test_suite_name, ret["cases"])
+
+                        _set_finished(1)
                         break
-                    # check if current block is finished
                     elif ret["block_finished"] == 1:
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        if 'cases' in ret:
-                            _set_result(self.test_suite_name, ret["cases"])
-                        LOCK_OBJ.acquire()
-                        TEST_SERVER_STATUS = {"finished": 0}
-                        LOCK_OBJ.release()
+                        if 'cases' in ret and ret["cases"] is not None:
+                            _set_result(ret["cases"])
+                            _print_result(self.test_suite_name, ret["cases"])
                         break
 
                 time.sleep(2)
@@ -785,6 +781,7 @@ class TizenMobile:
         """
             process the execution for Qunit testing
         """
+        global TEST_SERVER_RESULT, TEST_SERVER_STATUS
         cmdline = ""
         blauched = False
         timecnt = 0
@@ -796,21 +793,24 @@ class TizenMobile:
                 if len(ret) > 0 and ret[0].find('launched') != -1:
                     blauched = True
                     break
+                timecnt += 1
                 time.sleep(3)
-            if not blauched:
+
+            if blauched:
+                self.__st['async_shell'] = QUTestExecThread(
+                    deviceid=self.__st['device_id'],
+                    sessionid=sessionid,
+                    test_set=test_set_name,
+                    cases=cases)
+                self.__st['async_shell'].start()
+            else:
                 LOGGER.info(
                     "[ launch widget \"%s\" failed! ]" % self.__st['test_wgt'])
-
-            self.__st['async_shell'] = QUTestExecThread(
-                deviceid=self.__st['device_id'],
-                sessionid=sessionid,
-                test_set=test_set_name,
-                cases=cases)
-            self.__st['async_shell'].start()
+                TEST_SERVER_STATUS = {"finished": 1}
+                TEST_SERVER_RESULT = {"resultfile": ""}
             return True
 
         if self.__st['self_repeat']:
-            global TEST_SERVER_RESULT, TEST_SERVER_STATUS
             result_file = os.path.expanduser(
                 "~") + os.sep + sessionid + "_uifw.xml"
             b_ok = _download_file(self.__st['device_id'],

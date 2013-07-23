@@ -39,9 +39,40 @@ CNT_RETRY = 10
 os.environ["no_proxy"] = HOST_NS
 
 LOCK_OBJ = threading.Lock()
-TEST_SERVER_RESULT = []
+TEST_SERVER_RESULT = {}
 TEST_SERVER_STATUS = {}
 TEST_FLAG = 0
+
+
+def _set_result(cases_list=None):
+    """set cases result to the global result buffer"""
+    global TEST_SERVER_RESULT
+    if not cases_list is None:
+        LOCK_OBJ.acquire()
+        TEST_SERVER_RESULT["cases"].extend(cases_list)
+        LOCK_OBJ.release()
+    else:
+        LOCK_OBJ.acquire()
+        TEST_SERVER_RESULT["cases"] = []
+        LOCK_OBJ.release()
+
+
+def _print_result(suite_name, cases_list):
+    if suite_name is None:
+        suite_name = ""
+    for case_it in cases_list:
+        LOGGER.info("execute case: %s # %s...(%s)" % (
+            suite_name, case_it['case_id'], case_it['result']))
+        if case_it['result'].lower() in ['fail', 'block'] and \
+                'stdout' in case_it:
+            LOGGER.info(case_it['stdout'])
+
+
+def _set_finished(flag=0):
+    global TEST_SERVER_STATUS
+    LOCK_OBJ.acquire()
+    TEST_SERVER_STATUS = {"finished": flag}
+    LOCK_OBJ.release()
 
 
 def _get_test_options(test_launcher, test_suite):
@@ -73,24 +104,6 @@ def _get_test_options(test_launcher, test_suite):
     return test_opt
 
 
-def _set_result(suite_name, result_data):
-    """set cases result to the global result buffer"""
-    global TEST_SERVER_RESULT
-    if not result_data is None:
-        LOCK_OBJ.acquire()
-        cases_list = result_data
-        TEST_SERVER_RESULT["cases"].extend(result_data)
-        LOCK_OBJ.release()
-        if suite_name is None:
-            return
-        for case_it in cases_list:
-            LOGGER.info("execute case: %s # %s...(%s)" % (
-                suite_name, case_it['case_id'], case_it['result']))
-            if case_it['result'].lower() in ['fail', 'block'] and \
-                    'stdout' in case_it:
-                LOGGER.info(case_it['stdout'])
-
-
 class CoreTestExecThread(threading.Thread):
 
     """sdb communication for serve_forever app in async mode"""
@@ -110,12 +123,9 @@ class CoreTestExecThread(threading.Thread):
         current_idx = 0
         manual_skip_all = False
         result_list = []
-
-        global TEST_SERVER_STATUS, TEST_SERVER_RESULT, TEST_FLAG
-        LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT = {"cases": []}
-        TEST_SERVER_STATUS = {"finished": 0}
-        LOCK_OBJ.release()
+        _set_result()
+        _set_finished()
+        global TEST_FLAG
         for test_case in self.cases_queue:
             if TEST_FLAG == 1:
                 break
@@ -238,10 +248,8 @@ class CoreTestExecThread(threading.Thread):
             LOGGER.info("Case Result: %s" % test_case["result"])
             result_list.append(test_case)
 
-        _set_result(None, result_list)
-        LOCK_OBJ.acquire()
-        TEST_SERVER_STATUS = {"finished": 1}
-        LOCK_OBJ.release()
+        _set_result(result_list)
+        _set_finished(1)
 
 
 class WebTestExecThread(threading.Thread):
@@ -261,10 +269,9 @@ class WebTestExecThread(threading.Thread):
 
         test_set_finished = False
         err_cnt = 0
-        global TEST_SERVER_RESULT, TEST_SERVER_STATUS, TEST_FLAG
-        LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT = {"cases": []}
-        LOCK_OBJ.release()
+        _set_result()
+        _set_finished()
+        global TEST_FLAG
         for test_block in self.data_queue:
             ret = http_request(get_url(
                 self.server_url, "/set_testcase"), "POST", test_block, 30)
@@ -292,15 +299,14 @@ class WebTestExecThread(threading.Thread):
                         LOGGER.error(
                             "[ check status time out,"
                             "please confirm target is available ]")
-                        LOCK_OBJ.acquire()
-                        TEST_SERVER_STATUS = {"finished": 1}
-                        LOCK_OBJ.release()
+                        _set_finished(1)
                         break
                 elif "finished" in ret:
                     err_cnt = 0
                     # check if cases delivered
-                    if 'cases' in ret:
-                        _set_result(self.test_suite_name, ret["cases"])
+                    if 'cases' in ret and ret['cases'] is not None:
+                        _set_result(ret["cases"])
+                        _print_result(self.test_suite_name, ret["cases"])
 
                     # check if current test set is finished
                     if ret["finished"] == 1:
@@ -308,22 +314,19 @@ class WebTestExecThread(threading.Thread):
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        if 'cases' in ret:
-                            _set_result(self.test_suite_name, ret["cases"])
-                        LOCK_OBJ.acquire()
-                        TEST_SERVER_STATUS = {"finished": 1}
-                        LOCK_OBJ.release()
+                        if 'cases' in ret and ret['cases'] is not None:
+                            _set_result(ret["cases"])
+                            _print_result(self.test_suite_name, ret["cases"])
+                        _set_finished(1)
                         break
                     # check if current block is finished
                     elif ret["block_finished"] == 1:
                         ret = http_request(
                             get_url(self.server_url, "/get_test_result"),
                             "GET", {})
-                        if 'cases' in ret:
-                            _set_result(self.test_suite_name, ret["cases"])
-                        LOCK_OBJ.acquire()
-                        TEST_SERVER_STATUS = {"finished": 0}
-                        LOCK_OBJ.release()
+                        if 'cases' in ret and ret['cases'] is not None:
+                            _set_result(ret["cases"])
+                            _print_result(self.test_suite_name, ret["cases"])
                         break
 
                 time.sleep(2)
