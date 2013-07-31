@@ -47,7 +47,7 @@ WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
 WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
 PMG_START = "sdb -s %s shell pmctrl start"
 PMG_STOP = "sdb -s %s shell pmctrl stop"
-KILL_DLOGS = "kill -9 `ps aux|grep 'dlog -v time'|awk '{print $2}'`"
+KILL_DLOGS = "kill -9 `ps aux|grep 'dlog WRT:D -v time'|awk '{print $2}'`"
 UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
 
 
@@ -123,7 +123,7 @@ def _set_result(cases_list=None):
         LOCK_OBJ.release()
     else:
         LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT["cases"] = []
+        TEST_SERVER_RESULT = {'cases': []}
         LOCK_OBJ.release()
 
 
@@ -136,6 +136,16 @@ def _print_result(suite_name, cases_list):
         if case_it['result'].lower() in ['fail', 'block'] and \
                 'stdout' in case_it:
             LOGGER.info(case_it['stdout'])
+
+
+def _print_dlog(dlog_file):
+    if not os.path.exists(dlog_file):
+        return
+    LOGGER.info('[ start of dlog message ]')
+    rbuffile1 = file(dlog_file, "r")
+    for line in rbuffile1.readlines():
+        LOGGER.info(line.strip('\n'))
+    LOGGER.info('[ end of dlog message ]')
 
 
 def _set_finished(flag=0):
@@ -385,7 +395,8 @@ class WebTestExecThread(threading.Thread):
                 elif "finished" in ret:
                     err_cnt = 0
 
-                    if 'cases' in ret and ret["cases"] is not None and len(ret["cases"]):
+                    if 'cases' in ret and ret["cases"] is not None\
+                            and len(ret["cases"]):
                         _set_result(ret["cases"])
                         _print_result(self.test_suite_name, ret["cases"])
                     elif exetype == 'manual':
@@ -432,18 +443,21 @@ class QUTestExecThread(threading.Thread):
 
     def run(self):
         """run Qunit tests"""
-        global TEST_SERVER_RESULT, TEST_SERVER_STATUS
+        global TEST_SERVER_RESULT, TEST_FLAG
         LOCK_OBJ.acquire()
         TEST_SERVER_RESULT = {"resultfile": ""}
-        TEST_SERVER_STATUS = {"finished": 0}
         LOCK_OBJ.release()
+        _set_finished()
         ls_cmd = "sdb -s %s shell ls -l %s" % (self.device_id, UIFW_RESULT)
         time_stamp = ""
         prev_stamp = ""
-        LOGGER.info('[ web uifw start execution... ]')
+        LOGGER.info('[webuifw] start test execution...')
         time_out = 600
         status_cnt = 0
         while time_out > 0:
+            if TEST_FLAG == 1:
+                break
+            LOGGER.info('[webuifw] test is running')
             time.sleep(2)
             time_out -= 2
             exit_code, ret = shell_command(ls_cmd)
@@ -459,7 +473,7 @@ class QUTestExecThread(threading.Thread):
 
             if status_cnt == 1:
                 for test_case in self.test_cases:
-                    LOGGER.info("[uifw] execute case: %s # %s"
+                    LOGGER.info("[webuifw] execute case: %s # %s"
                                 % (self.test_set, test_case['case_id']))
                 self.test_cases = []
             elif status_cnt >= 2:
@@ -473,10 +487,8 @@ class QUTestExecThread(threading.Thread):
                     TEST_SERVER_RESULT = {"resultfile": result_file}
                     LOCK_OBJ.release()
                 break
-        LOGGER.info('[ web uifw end execution... ]')
-        LOCK_OBJ.acquire()
-        TEST_SERVER_STATUS = {"finished": 1}
-        LOCK_OBJ.release()
+        LOGGER.info('[webuifw] end test execution...')
+        _set_finished(1)
 
 
 class TizenMobile:
@@ -499,6 +511,7 @@ class TizenMobile:
                           'fuzzy_match': False,
                           'self_exec': False,
                           'self_repeat': False,
+                          'debug_mode': False,
                           'test_wgt': None})
 
     def get_device_ids(self):
@@ -661,6 +674,7 @@ class TizenMobile:
 
         if "debug" in params and params["debug"]:
             debug_opt = "--debug"
+            self.__st['debug_mode'] = True
 
         if "capability" in params:
             capability_opt = params["capability"]
@@ -694,7 +708,7 @@ class TizenMobile:
                 APP_QUERY_STR % (deviceid, stub_app))
             if len(ret) < 1:
                 LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
-                cmdline = "sdb -s %s shell %s --port:%s %s &" \
+                cmdline = "sdb -s %s shell '%s --port:%s %s; sleep 2s' " \
                     % (deviceid, stub_app, stub_port, debug_opt)
                 exit_code, ret = shell_command(cmdline)
                 time.sleep(2)
@@ -875,9 +889,9 @@ class TizenMobile:
 
         cmdline = 'sdb -s %s dlog -c' % self.__st['device_id']
         exit_code, ret = shell_command(cmdline)
-        cmdline = 'sdb -s %s dlog -v time' % self.__st['device_id']
-        test_set_log = test_set['current_set_name'].replace('.xml', '.dlog')
-        self.__st['dlog_shell'] = DlogThread(cmdline, test_set_log)
+        cmdline = 'sdb -s %s dlog WRT:D -v time' % self.__st['device_id']
+        self.__st['dlog_file'] = test_set['current_set_name'].replace('.xml', '.dlog')
+        self.__st['dlog_shell'] = DlogThread(cmdline, self.__st['dlog_file'])
         self.__st['dlog_shell'].start()
         time.sleep(0.5)
 
@@ -941,6 +955,10 @@ class TizenMobile:
 
         # clear dlog hang processes
         exit_code, ret = shell_command(KILL_DLOGS)
+
+        # add dlog output for debug
+        if self.__st['debug_mode']:
+            _print_dlog(self.__st['dlog_file'])
 
         # uninstall widget
         if self.__st['test_type'] == "webapi" and self.__st['auto_iu']:

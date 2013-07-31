@@ -53,7 +53,7 @@ def _set_result(cases_list=None):
         LOCK_OBJ.release()
     else:
         LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT["cases"] = []
+        TEST_SERVER_RESULT = {'cases': []}
         LOCK_OBJ.release()
 
 
