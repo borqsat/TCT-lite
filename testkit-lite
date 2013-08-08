@@ -333,9 +333,23 @@ default.runner', \
         OPTIONS.testxml = LOCALARRY
     else:
         if len(OPTIONS.testxml) == 1:
-            LOCAL_TESTLISTS = OPTIONS.testxml[0]
-            TESTLISTARRARY = LOCAL_TESTLISTS.split(' ')
-            OPTIONS.testxml = TESTLISTARRARY
+            i = 0
+            start = 0
+            end = 0
+            LOCAL_TESTLISTS= []
+            temp_xml = OPTIONS.testxml[0]
+            while(i < len(temp_xml)):
+                tmp = temp_xml[i:len(temp_xml)]
+                if ".xml" in tmp :
+                    index = tmp.index(".xml")+4+i
+                    end = index
+                    i=index+1
+                    LOCAL_TESTLISTS.append(temp_xml[start:end])
+                    start = index+1
+                else:
+                    print 'no xml found'
+                    break
+            OPTIONS.testxml = LOCAL_TESTLISTS
 
     # apply filter
     WFILTERS = {}
