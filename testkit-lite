@@ -18,8 +18,7 @@
 # USA.
 #
 # Authors:
-#              Zhang, Huihui <huihuix.zhang@intel.com>
-#              Wendong,Sui  <weidongx.sun@intel.com>
+#              Jing,Wang  <jing.j.wang@intel.com>
 #              Yuanyuan,Zou  <zouyuanx@intel.com>
 """ testkit lite tools"""
 
@@ -334,9 +333,23 @@ default.runner', \
         OPTIONS.testxml = LOCALARRY
     else:
         if len(OPTIONS.testxml) == 1:
-            LOCAL_TESTLISTS = OPTIONS.testxml[0]
-            TESTLISTARRARY = LOCAL_TESTLISTS.split(' ')
-            OPTIONS.testxml = TESTLISTARRARY
+            i = 0
+            start = 0
+            end = 0
+            LOCAL_TESTLISTS= []
+            temp_xml = OPTIONS.testxml[0]
+            while(i < len(temp_xml)):
+                tmp = temp_xml[i:len(temp_xml)]
+                if ".xml" in tmp :
+                    index = tmp.index(".xml")+4+i
+                    end = index
+                    i=index+1
+                    LOCAL_TESTLISTS.append(temp_xml[start:end])
+                    start = index+1
+                else:
+                    print 'no xml found'
+                    break
+            OPTIONS.testxml = LOCAL_TESTLISTS
 
     # apply filter
     WFILTERS = {}
@@ -498,6 +511,8 @@ except KeyboardInterrupt, err:
     LOGGER.info("\n[ exiting testkit-lite on user cancel ]\n")
     sys.exit(1)
 except Exception, err:
+    if RUNNER.session_id:
+        RUNNER.connector.finalize_test(RUNNER.session_id)
     if can_merge_result:
         RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
     if down_status:

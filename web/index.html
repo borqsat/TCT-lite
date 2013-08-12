@@ -987,20 +987,28 @@ table#results td {\
 						break;
 					}
 				} else {
-					var i;
-					for (i = 0; i < fails.length; i++) {
-						var desccell = fails[i].childNodes[1];
-						if (desccell) {
-							case_msg += "\n###Test Start###\n" + desccell.textContent
-									+ "\n###Test End###\n";
-						}
-						var msgcell = fails[i].childNodes[2];
-						if (msgcell) {
-							case_msg += "###Error1 Start###\n"
-									+ msgcell.textContent + "\n###Error1 End###";
-						}
+					if (need_check_block == 'yes') {
+						next_sleep_time = sleep_time + 1;
+						check_block_result_again(next_sleep_time);
+						return;
 					}
-					result = "FAIL";
+					else{
+						var i;
+						for (i = 0; i < fails.length; i++) {
+							var desccell = fails[i].childNodes[1];
+							if (desccell) {
+								case_msg += "\n###Test Start###\n" + desccell.textContent
+										+ "\n###Test End###\n";
+							}
+							var msgcell = fails[i].childNodes[2];
+							if (msgcell) {
+								case_msg += "###Error1 Start###\n"
+										+ msgcell.textContent + "\n###Error1 End###";
+							}
+						}
+						result = "FAIL";
+					}
+
 				}
 			}
 		} else if (oPass.length > 0 && oFail.length == 0) {
