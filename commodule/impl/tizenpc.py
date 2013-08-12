@@ -19,7 +19,7 @@
 #
 # Authors:
 #           Chengtao,Liu  <chengtaox.liu@intel.com>
-""" The implementation for HD (host device) test mode"""
+""" The implementation for Tizen PC mode"""
 
 import os
 import time
@@ -34,78 +34,20 @@ from commodule.log import LOGGER
 from .httprequest import get_url, http_request
 from .autoexec import shell_command, shell_command_ext
 
-LOCAL_HOST_NS = "127.0.0.1"
+HOST_NS = "127.0.0.1"
 CNT_RETRY = 10
 LOCK_OBJ = threading.Lock()
 TEST_SERVER_RESULT = {}
 TEST_SERVER_STATUS = {}
 TEST_FLAG = 0
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
-APP_QUERY_STR = "sdb -s %s shell ps aux | grep %s"
-WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i /opt/%s/%s.wgt"
-WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l " \
-                "|grep '%s'|awk '{print $2\":\"$NF}'"
-WRT_START_STR = "sdb -s %s shell wrt-launcher -s %s"
-WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
-WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
+APP_QUERY_STR = "ps aux | grep %s"
+WRT_INSTALL_STR = "wrt-installer -i /opt/%s/%s.wgt"
+WRT_QUERY_STR = "wrt-launcher -l|grep '%s'|grep -v grep" \
+                "|awk '{print $2\":\"$NF}'"
+WRT_START_STR = "wrt-launcher -s %s"
+WRT_UNINSTL_STR = "wrt-installer -un %s"
 UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
-
-
-def _get_forward_connect(deviceid, remote_port=None):
-    """forward request a host tcp port to targe tcp port"""
-    if remote_port is None:
-        return None
-    os.environ['no_proxy'] = LOCAL_HOST_NS
-    host = LOCAL_HOST_NS
-    inner_port = 9000
-    time_out = 2
-    bflag = False
-    while True:
-        sock_inner = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock_inner.settimeout(time_out)
-        try:
-            sock_inner.bind((host, inner_port))
-            sock_inner.close()
-            bflag = False
-        except socket.error as error:
-            if error.errno == 98 or error.errno == 13:
-                bflag = True
-        if bflag:
-            inner_port += 1
-        else:
-            break
-    host_port = str(inner_port)
-    cmd = "sdb -s %s forward tcp:%s tcp:%s" % \
-        (deviceid, host_port, remote_port)
-    exit_code, ret = shell_command(cmd)
-    url_forward = "http://%s:%s" % (host, host_port)
-    return url_forward
-
-
-def _download_file(deviceid, remote_path, local_path):
-    """download file from device"""
-    cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
-    exit_code, ret = shell_command(cmd)
-    if exit_code != 0:
-        error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
-        LOGGER.info("[ Download file \"%s\" from target failed, error: %s ]"
-                    % (remote_path, error))
-        return False
-    else:
-        return True
-
-
-def _upload_file(deviceid, remote_path, local_path):
-    """upload file to device"""
-    cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
-    exit_code, ret = shell_command(cmd)
-    if exit_code != 0:
-        error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
-        LOGGER.info("[ Upload file \"%s\" failed,"
-                    " get error: %s ]" % (local_path, error))
-        return False
-    else:
-        return True
 
 
 def _set_result(cases_list=None):
@@ -212,8 +154,7 @@ class CoreTestExecThread(threading.Thread):
             current_idx += 1
             core_cmd = ""
             if "entry" in test_case:
-                core_cmd = "sdb -s %s shell '%s ;  echo returncode=$?'" % (
-                    self.device_id, test_case["entry"])
+                core_cmd = test_case["entry"]
             else:
                 LOGGER.info(
                     "[ Warnning: test script is empty,"
@@ -244,19 +185,15 @@ class CoreTestExecThread(threading.Thread):
                         fname = item['file']
                         if fname is None:
                             continue
-                        tmpname = os.path.expanduser(
-                            "~") + os.sep + "measure_tmp"
-                        if _download_file(self.device_id, fname, tmpname):
-                            try:
-                                config = ConfigParser.ConfigParser()
-                                config.read(tmpname)
-                                item['value'] = config.get(ind, 'value')
-                                retmeasures.append(item)
-                                os.remove(tmpname)
-                            except IOError as error:
-                                LOGGER.error(
-                                    "[ Error: fail to parse value,"
-                                    " error:%s ]\n" % error)
+                        try:
+                            config = ConfigParser.ConfigParser()
+                            config.read(fname)
+                            item['value'] = config.get(ind, 'value')
+                            retmeasures.append(item)
+                        except IOError as error:
+                            LOGGER.error(
+                                "[ Error: fail to parse value,"
+                                " error:%s ]\n" % error)
                     test_case["measures"] = retmeasures
                 else:
                     test_case["result"] = "BLOCK"
@@ -365,9 +302,8 @@ class WebTestExecThread(threading.Thread):
                     err_cnt += 1
                     if err_cnt >= CNT_RETRY:
                         LOGGER.error(
-                            "[ check server status time out,"
+                            "[ check status time out,"
                             " please confirm device is available ]")
-                        test_set_finished = True
                         _set_finished(1)
                         break
 
@@ -413,7 +349,7 @@ class QUTestExecThread(threading.Thread):
         TEST_SERVER_RESULT = {"resultfile": ""}
         LOCK_OBJ.release()
         _set_finished()
-        ls_cmd = "sdb -s %s shell ls -l %s" % (self.device_id, UIFW_RESULT)
+        ls_cmd = "ls -l %s" % (UIFW_RESULT)
         time_stamp = ""
         prev_stamp = ""
         LOGGER.info('[webuifw] start test execution...')
@@ -438,26 +374,18 @@ class QUTestExecThread(threading.Thread):
                                 % (self.test_set, test_case['case_id']))
                 self.test_cases = []
             elif status_cnt >= 2:
-                result_file = os.path.expanduser(
-                    "~") + os.sep + self.test_session + "_uifw.xml"
-                b_ok = _download_file(self.device_id,
-                                      UIFW_RESULT,
-                                      result_file)
-                if b_ok:
-                    LOCK_OBJ.acquire()
-                    TEST_SERVER_RESULT = {"resultfile": result_file}
-                    LOCK_OBJ.release()
+                LOCK_OBJ.acquire()
+                TEST_SERVER_RESULT = {"resultfile": UIFW_RESULT}
+                LOCK_OBJ.release()
                 break
         LOGGER.info('[webuifw] end test execution...')
         _set_finished(1)
 
 
-class TizenMobile:
-
+class TizenPC:
     """ Implementation for transfer data
         between Host and Tizen Mobile Device
     """
-
     def __init__(self):
         self.__st = dict({'server_url': None,
                           'async_stub': None,
@@ -476,16 +404,15 @@ class TizenMobile:
                           'test_wgt': None})
 
     def get_device_ids(self):
-        """get tizen deivce list of ids"""
-        result = []
-        exit_code, ret = shell_command("sdb devices")
-        for line in ret:
-            if str.find(line, "\tdevice\t") != -1:
-                result.append(line.split("\t")[0])
-        return result
+        """
+            get deivce list of ids
+        """
+        return ['localhost']
 
     def get_device_info(self, deviceid=None):
-        """get tizen deivce inforamtion"""
+        """
+            get tizen deivce inforamtion
+        """
         device_info = {}
         resolution_str = ""
         screen_size_str = ""
@@ -495,7 +422,7 @@ class TizenMobile:
         os_version_str = ""
 
         # get resolution and screen size
-        exit_code, ret = shell_command("sdb -s %s shell xrandr" % deviceid)
+        exit_code, ret = shell_command("xrandr")
         pattern = re.compile("connected (\d+)x(\d+).* (\d+mm) x (\d+mm)")
         for line in ret:
             match = pattern.search(line)
@@ -504,25 +431,25 @@ class TizenMobile:
                 screen_size_str = "%s x %s" % (match.group(3), match.group(4))
 
         # get architecture
-        exit_code, ret = shell_command("sdb -s %s shell uname -m" % deviceid)
+        exit_code, ret = shell_command("uname -m")
         if len(ret) > 0:
             device_model_str = ret[0]
 
         # get hostname
-        exit_code, ret = shell_command("sdb -s %s shell uname -n" % deviceid)
+        exit_code, ret = shell_command("uname -n")
         if len(ret) > 0:
             device_name_str = ret[0]
 
         # get os version
         exit_code, ret = shell_command(
-            "sdb -s %s shell cat /etc/issue" % deviceid)
+            "cat /etc/issue")
         for line in ret:
             if len(line) > 1:
                 os_version_str = "%s %s" % (os_version_str, line)
 
         # get build id
         exit_code, ret = shell_command(
-            "sdb -s %s shell cat /etc/os-release" % deviceid)
+            "cat /etc/os-release")
         for line in ret:
             if line.find("BUILD_ID=") != -1:
                 build_id_str = line.split('=')[1].strip('\"\r\n')
@@ -538,30 +465,18 @@ class TizenMobile:
         return device_info
 
     def install_package(self, deviceid, pkgpath):
-        """install a package on tizen device:
-        push package and install with shell command
         """
-        filename = os.path.split(pkgpath)[1]
-        devpath = "/tmp/%s" % filename
-        cmd = "sdb -s %s push %s %s" % (deviceid, pkgpath, devpath)
-        exit_code, ret = shell_command(cmd)
-        cmd = "sdb shell rpm -ivh %s" % devpath
+           install a package on tizen device
+        """
+        cmd = "rpm -ivh %s" % pkgpath
         exit_code, ret = shell_command(cmd)
         return ret
 
     def get_installed_package(self, deviceid):
         """get list of installed package from device"""
-        cmd = "sdb -s %s shell rpm -qa | grep tct" % (deviceid)
+        cmd = "rpm -qa | grep tct"
         exit_code, ret = shell_command(cmd)
         return ret
-
-    def download_file(self, deviceid, remote_path, local_path):
-        """download file from device"""
-        return _download_file(deviceid, remote_path, local_path)
-
-    def upload_file(self, deviceid, remote_path, local_path):
-        """upload file to device"""
-        return _upload_file(deviceid, remote_path, local_path)
 
     def __get_test_options(self, deviceid, test_launcher, test_suite,
                            test_set):
@@ -575,7 +490,7 @@ class TizenMobile:
             # test suite need to be installed by commodule
             if self.__st['auto_iu']:
                 test_wgt = test_set
-                cmd = WRT_INSTALL_STR % (deviceid, test_suite, test_wgt)
+                cmd = WRT_INSTALL_STR % (test_suite, test_wgt)
                 exit_code, ret = shell_command(cmd)
                 if exit_code == -1:
                     LOGGER.info("[ failed to install widget \"%s\" in target ]"
@@ -585,7 +500,7 @@ class TizenMobile:
                 test_wgt = test_suite
 
             # query the whether test widget is installed ok
-            cmd = WRT_QUERY_STR % (deviceid, test_wgt)
+            cmd = WRT_QUERY_STR % test_wgt
             exit_code, ret = shell_command(cmd)
             if exit_code == -1:
                 return None
@@ -618,11 +533,11 @@ class TizenMobile:
         session_id = str(uuid.uuid1())
         cmdline = ""
         debug_opt = ""
-        stub_app = params.get('stub-name', 'testkit-stub')
-        stub_port = params.get('stub-port', '8000')
+        stub_app = params["stub-name"]
+        stub_port = "8000"
         test_launcher = params.get('external-test', '')
-        testsuite_name = params.get('testsuite-name', '')
         testset_name = params.get('testset-name', '')
+        testsuite_name = params.get('testsuite-name', '')
         capability_opt = params.get("capability", None)
         client_cmds = params.get('client-command', '').strip().split()
         wrt_tag = client_cmds[1] if len(client_cmds) > 1 else ""
@@ -653,7 +568,6 @@ class TizenMobile:
         if self.__st['self_exec']:
             return session_id
 
-        # enable debug information
         if self.__st['debug_mode']:
             debug_opt = '--debug'
 
@@ -662,11 +576,11 @@ class TizenMobile:
         blaunched = False
         while timecnt < 3:
             exit_code, ret = shell_command(
-                APP_QUERY_STR % (deviceid, stub_app))
+                APP_QUERY_STR % (stub_app))
             if len(ret) < 1:
                 LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
-                cmdline = "sdb -s %s shell '%s --port:%s %s; sleep 2s' " \
-                    % (deviceid, stub_app, stub_port, debug_opt)
+                cmdline = "'%s --port:%s %s; sleep 2s' " \
+                    % (stub_app, stub_port, debug_opt)
                 exit_code, ret = shell_command(cmdline)
                 time.sleep(2)
                 timecnt += 1
@@ -678,8 +592,7 @@ class TizenMobile:
             LOGGER.info("[ init test stub failed, please check target! ]")
             return None
 
-        if self.__st['server_url'] is None:
-            self.__st['server_url'] = _get_forward_connect(deviceid, stub_port)
+        self.__st['server_url'] = "http://%s:%s" % (HOST_NS, stub_port)
 
         timecnt = 0
         blaunched = False
@@ -757,8 +670,7 @@ class TizenMobile:
         blauched = False
         timecnt = 0
         if self.__st['self_exec']:
-            cmdline = WRT_START_STR % (
-                self.__st['device_id'], self.__st['test_wgt'])
+            cmdline = WRT_START_STR % self.__st['test_wgt']
             while timecnt < 3:
                 exit_code, ret = shell_command(cmdline)
                 if len(ret) > 0 and ret[0].find('launched') != -1:
@@ -784,19 +696,11 @@ class TizenMobile:
         if self.__st['self_repeat']:
             result_file = os.path.expanduser(
                 "~") + os.sep + sessionid + "_uifw.xml"
-            b_ok = _download_file(self.__st['device_id'],
-                                  UIFW_RESULT,
-                                  result_file)
             for test_case in cases:
                 LOGGER.info("[uifw] execute case: %s # %s"
                             % (test_set_name, test_case['case_id']))
-
-            if b_ok:
-                TEST_SERVER_RESULT = {"resultfile": result_file}
-                TEST_SERVER_STATUS = {"finished": 1}
-            else:
-                TEST_SERVER_RESULT = {"resultfile": ""}
-                TEST_SERVER_STATUS = {"finished": 1}
+            TEST_SERVER_RESULT = {"resultfile": UIFW_RESULT}
+            TEST_SERVER_STATUS = {"finished": 1}
             return True
 
     def __run_web_test(self, test_set_name, exetype, ctype, cases):
@@ -844,9 +748,9 @@ class TizenMobile:
         if not "cases" in test_set:
             return False
 
-        cmdline = 'sdb -s %s dlog -c' % self.__st['device_id']
+        cmdline = 'dlogutil -c'
         exit_code, ret = shell_command(cmdline)
-        cmdline = 'sdb -s %s dlog WRT:D -v time' % self.__st['device_id']
+        cmdline = 'dlogutil WRT:D -v time'
         dlogfile = test_set['current_set_name'].replace('.xml', '.dlog')
         self.__st['dlog_file'] = dlogfile
         self.__st['dlog_shell'] = DlogThread(cmdline, dlogfile)
@@ -917,12 +821,11 @@ class TizenMobile:
 
         # uninstall widget
         if self.__st['test_type'] == "webapi" and self.__st['auto_iu']:
-            cmd = WRT_UNINSTL_STR % (self.__st[
-                                     'device_id'], self.__st['test_wgt'])
+            cmd = WRT_UNINSTL_STR % self.__st['test_wgt']
             exit_code, ret = shell_command(cmd)
         return True
 
 
 def get_target_conn():
     """ Get connection for Test Target"""
-    return TizenMobile()
+    return TizenPC()

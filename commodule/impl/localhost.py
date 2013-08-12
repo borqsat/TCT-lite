@@ -130,11 +130,7 @@ class CoreTestExecThread(threading.Thread):
             if TEST_FLAG == 1:
                 break
             current_idx += 1
-            expected_result = "0"
             core_cmd = ""
-            time_out = 90
-            measures = []
-            retmeasures = []
             if "entry" in test_case:
                 core_cmd = test_case["entry"]
             else:
@@ -142,13 +138,10 @@ class CoreTestExecThread(threading.Thread):
                     "[ Warnning: test script is empty,"
                     " please check your test xml file ]")
                 continue
-            if "expected_result" in test_case:
-                expected_result = test_case["expected_result"]
-            if "timeout" in test_case:
-                time_out = int(test_case["timeout"])
-            if "measures" in test_case:
-                measures = test_case["measures"]
-
+            expected_result = test_case.get('expected_result', '0')
+            time_out = int(test_case.get('timeout', '90'))
+            measures = test_case.get('measures', [])
+            retmeasures = []
             LOGGER.info("\n[case] execute case:\nTestCase: %s\nTestEntry: %s\n"
                         "Expected Result: %s\nTotal: %s, Current: %s" % (
                         test_case['case_id'], test_case['entry'],
@@ -161,38 +154,29 @@ class CoreTestExecThread(threading.Thread):
             if self.exetype == 'auto':
                 return_code, stdout, stderr = shell_command_ext(
                     cmd=core_cmd, timeout=time_out, boutput=False)
-                if return_code is not None:
+                if return_code is not None and return_code != "timeout":
                     actual_result = str(return_code)
-                    if actual_result == "timeout":
-                        test_case["result"] = "BLOCK"
-                        test_case["stdout"] = "none"
-                        test_case["stderr"] = "none"
-                    else:
-                        if actual_result == expected_result:
-                            test_case["result"] = "pass"
-                        else:
-                            test_case["result"] = "fail"
-                        test_case["stdout"] = stdout
-                        test_case["stderr"] = stderr
-
-                        for item in measures:
-                            ind = item['name']
-                            fname = item['file']
-                            if fname and os.path.exists(fname):
-                                try:
-                                    config = ConfigParser.ConfigParser()
-                                    config.read(fname)
-                                    item['value'] = config.get(ind, 'value')
-                                    retmeasures.append(item)
-                                except IOError as error:
-                                    LOGGER.error(
-                                        "[ Error: failed to parse value,"
-                                        " error: %s ]\n" % error)
-                        test_case["measures"] = retmeasures
+                    test_case["result"] = "pass" if actual_result == expected_result else "fail"
+                    test_case["stdout"] = stdout
+                    test_case["stderr"] = stderr
+                    for item in measures:
+                        ind = item['name']
+                        fname = item['file']
+                        if fname and os.path.exists(fname):
+                            try:
+                                config = ConfigParser.ConfigParser()
+                                config.read(fname)
+                                item['value'] = config.get(ind, 'value')
+                                retmeasures.append(item)
+                            except IOError as error:
+                                LOGGER.error(
+                                    "[ Error: failed to parse value,"
+                                    " error: %s ]\n" % error)
+                    test_case["measures"] = retmeasures
                 else:
                     test_case["result"] = "BLOCK"
-                    test_case["stdout"] = "none"
-                    test_case["stderr"] = "none"
+                    test_case["stdout"] = stdout
+                    test_case["stderr"] = stderr
             elif self.exetype == 'manual':
                 # handle manual core cases
                 try:
@@ -299,34 +283,21 @@ class WebTestExecThread(threading.Thread):
                         LOGGER.error(
                             "[ check status time out,"
                             "please confirm target is available ]")
+                        test_set_finished = True
                         _set_finished(1)
                         break
-                elif "finished" in ret:
+
+                if "finished" in ret:
                     err_cnt = 0
-                    # check if cases delivered
                     if 'cases' in ret and ret['cases'] is not None:
                         _set_result(ret["cases"])
                         _print_result(self.test_suite_name, ret["cases"])
 
-                    # check if current test set is finished
                     if ret["finished"] == 1:
                         test_set_finished = True
-                        ret = http_request(
-                            get_url(self.server_url, "/get_test_result"),
-                            "GET", {})
-                        if 'cases' in ret and ret['cases'] is not None:
-                            _set_result(ret["cases"])
-                            _print_result(self.test_suite_name, ret["cases"])
                         _set_finished(1)
                         break
-                    # check if current block is finished
                     elif ret["block_finished"] == 1:
-                        ret = http_request(
-                            get_url(self.server_url, "/get_test_result"),
-                            "GET", {})
-                        if 'cases' in ret and ret['cases'] is not None:
-                            _set_result(ret["cases"])
-                            _print_result(self.test_suite_name, ret["cases"])
                         break
 
                 time.sleep(2)
@@ -349,7 +320,7 @@ class HostCon:
         self.__test_type = None
 
     def get_device_ids(self):
-        """get tizen deivce list of ids"""
+        """get deivce list of ids"""
         return ['localhost']
 
     def get_device_info(self, deviceid=None):
@@ -609,6 +580,11 @@ class HostCon:
         TEST_FLAG = 1
         LOCK_OBJ.release()
 
+        # uninstall widget
+        if self.__st['test_type'] == "webapi" and self.__st['auto_iu']:
+            cmd = WRT_UNINSTL_STR % (self.__st[
+                                     'device_id'], self.__st['test_wgt'])
+            exit_code, ret = shell_command(cmd)
         return True
 
 
