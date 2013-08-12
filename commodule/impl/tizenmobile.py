@@ -235,8 +235,7 @@ class CoreTestExecThread(threading.Thread):
                 return_code, stdout, stderr = shell_command_ext(
                     core_cmd, time_out, False)
                 if return_code is not None and return_code != "timeout":
-                    actual_result = str(return_code)
-                    test_case["result"] = "pass" if actual_result == expected_result else "fail"
+                    test_case["result"] = "pass" if str(return_code) == expected_result else "fail"
                     test_case["stdout"] = stdout
                     test_case["stderr"] = stderr
                     for item in measures:
