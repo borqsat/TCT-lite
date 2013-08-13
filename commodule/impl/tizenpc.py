@@ -33,6 +33,7 @@ from datetime import datetime
 from commodule.log import LOGGER
 from commodule.httprequest import get_url, http_request
 from commodule.autoexec import shell_command, shell_command_ext
+from commodule.killall import killall
 
 HOST_NS = "127.0.0.1"
 CNT_RETRY = 10
@@ -122,7 +123,6 @@ class DlogThread(threading.Thread):
                 break
         wbuffile1.close()
         if exit_code is None:
-            from .killall import killall
             killall(cmd_open.pid)
 
 
