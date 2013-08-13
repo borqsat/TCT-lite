@@ -29,8 +29,8 @@ import uuid
 import ConfigParser
 from datetime import datetime
 from commodule.log import LOGGER
-from .httprequest import get_url, http_request
-from .autoexec import shell_command, shell_command_ext
+from commodule.httprequest import get_url, http_request
+from commodule.autoexec import shell_command, shell_command_ext
 
 
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"

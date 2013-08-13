@@ -31,8 +31,8 @@ import ConfigParser
 
 from datetime import datetime
 from commodule.log import LOGGER
-from .httprequest import get_url, http_request
-from .autoexec import shell_command, shell_command_ext
+from commodule.httprequest import get_url, http_request
+from commodule.autoexec import shell_command, shell_command_ext
 
 LOCAL_HOST_NS = "127.0.0.1"
 CNT_RETRY = 10
