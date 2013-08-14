@@ -65,4 +65,4 @@ def str2number(s):
 
 
 def str2xmlstr(s):
-    return s.replace('\n','\\\n')
+    return s.replace('\n','\\n')
