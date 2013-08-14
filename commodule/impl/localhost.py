@@ -29,8 +29,8 @@ import uuid
 import ConfigParser
 from datetime import datetime
 from commodule.log import LOGGER
-from .httprequest import get_url, http_request
-from .autoexec import shell_command, shell_command_ext
+from commodule.httprequest import get_url, http_request
+from commodule.autoexec import shell_command, shell_command_ext
 
 
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
@@ -155,8 +155,7 @@ class CoreTestExecThread(threading.Thread):
                 return_code, stdout, stderr = shell_command_ext(
                     cmd=core_cmd, timeout=time_out, boutput=False)
                 if return_code is not None and return_code != "timeout":
-                    actual_result = str(return_code)
-                    test_case["result"] = "pass" if actual_result == expected_result else "fail"
+                    test_case["result"] = "pass" if str(return_code) == expected_result else "fail"
                     test_case["stdout"] = stdout
                     test_case["stderr"] = stderr
                     for item in measures:
