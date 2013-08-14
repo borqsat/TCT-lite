@@ -39,8 +39,8 @@ from tempfile import mktemp
 from shutil import move
 from os import remove
 from commodule.log import LOGGER
-from commodule.impl.autoexec import shell_command
-
+from commodule.autoexec import shell_command
+from commodule.str2 import str2xmlstr
 
 JOIN = os.path.join
 DIRNAME = os.path.dirname
@@ -1104,9 +1104,9 @@ def write_json_result(set_result_xml, set_result):
                         if 'end_at' in case_result:
                             end.text = case_result['end_at']
                         if 'stdout' in case_result:
-                            stdout.text = case_result['stdout']
+                            stdout.text = str2xmlstr(case_result['stdout'])
                         if 'stderr' in case_result:
-                            stderr.text = case_result['stderr']
+                            stderr.text = str2xmlstr(case_result['stderr'])
         parse_tree.write(set_result_xml)
 
         LOGGER.info("[ cases result saved to resultfile ]\n")

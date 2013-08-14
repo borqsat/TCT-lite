@@ -62,3 +62,7 @@ def str2number(s):
         return val
     else:
         return None
+
+
+def str2xmlstr(s):
+    return s.replace('\n','\\n')

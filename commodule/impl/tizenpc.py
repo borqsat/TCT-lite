@@ -31,8 +31,9 @@ import ConfigParser
 
 from datetime import datetime
 from commodule.log import LOGGER
-from .httprequest import get_url, http_request
-from .autoexec import shell_command, shell_command_ext
+from commodule.httprequest import get_url, http_request
+from commodule.autoexec import shell_command, shell_command_ext
+from commodule.killall import killall
 
 HOST_NS = "127.0.0.1"
 CNT_RETRY = 10
@@ -122,7 +123,6 @@ class DlogThread(threading.Thread):
                 break
         wbuffile1.close()
         if exit_code is None:
-            from .killall import killall
             killall(cmd_open.pid)
 
 
@@ -176,8 +176,7 @@ class CoreTestExecThread(threading.Thread):
                 return_code, stdout, stderr = shell_command_ext(
                     core_cmd, time_out, False)
                 if return_code is not None and return_code != "timeout":
-                    actual_result = str(return_code)
-                    test_case["result"] = "pass" if actual_result == expected_result else "fail"
+                    test_case["result"] = "pass" if str(return_code) == expected_result else "fail"
                     test_case["stdout"] = stdout
                     test_case["stderr"] = stderr
                     for item in measures:
@@ -200,13 +199,10 @@ class CoreTestExecThread(threading.Thread):
                     test_case["stdout"] = stdout
                     test_case["stderr"] = stderr
             elif self.exetype == 'manual':
-                # handle manual core cases
                 try:
-                    # LOGGER.infopre-condition info
                     if "pre_condition" in test_case:
                         LOGGER.info("\n****\nPre-condition: %s\n ****\n"
                                     % test_case['pre_condition'])
-                    # LOGGER.infostep info
                     if "steps" in test_case:
                         for step in test_case['steps']:
                             LOGGER.info(
