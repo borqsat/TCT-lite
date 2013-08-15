@@ -149,10 +149,7 @@ class TRunner:
             try:
                 filename = testxmlfile
                 filename = os.path.splitext(filename)[0]
-                if platform.system() == "Linux":
-                    filename = filename.split('/')[-2]
-                else:
-                    filename = filename.split('\\')[-2]
+                filename = filename.replace(os.sep,'_')
                 if self.filter_rules["execution_type"] == ["manual"]:
                     resultfile = "%s.manual.xml" % filename
                 else:
@@ -988,12 +985,18 @@ def get_version_info():
     try:
         config = ConfigParser.ConfigParser()
         if platform.system() == "Linux":
-            config.read('/opt/testkit/lite/VERSION')
+            if EXISTS('/opt/testkit/lite/VERSION'):
+                version_file = '/opt/testkit/lite/VERSION'
+            else:
+                version_file = os.path.join(sys.path[0], 'VERSION') 
         else:
-            version_file = os.path.join(sys.path[0], 'VERSION')
+            version_file = os.path.join(sys.path[0], 'VERSION')            
+        if EXISTS(version_file):
             config.read(version_file)
-        version = config.get('public_version', 'version')
-        return version
+            version = config.get('public_version', 'version')
+            return version
+        else:
+            return ""
     except KeyError, error:
         LOGGER.error(
             "[ Error: fail to parse version info, error: %s ]\n" % error)
