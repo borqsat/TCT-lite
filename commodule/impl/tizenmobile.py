@@ -370,7 +370,7 @@ class WebTestExecThread(threading.Thread):
                         _set_finished(1)
                         break
 
-                if "finished" in ret:
+                elif "finished" in ret:
                     err_cnt = 0
                     if 'cases' in ret and ret["cases"] is not None\
                             and len(ret["cases"]):
