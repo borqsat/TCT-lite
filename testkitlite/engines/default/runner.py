@@ -946,6 +946,7 @@ class TRunner:
                                     test_suite.remove(test_set)
                                     test_suite.append(result_set)
                 test_tree.write(set_result_xml)
+                os.remove(result_file)
             LOGGER.info("[ cases result saved to resultfile ]\n")
         except OSError, error:
             traceback.print_exc()
