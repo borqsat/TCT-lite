@@ -408,7 +408,9 @@ default.runner', \
     TESTXMLS = set(OPTIONS.testxml)
     for t in TESTXMLS:
         if EXISTS(t):
-            filename = t
+            filename = t            
+            filename = os.path.realpath(filename)
+            filename = os.path.splitdrive(filename)[1]
             filename = os.path.splitext(filename)[0]
             filename = filename.replace(os.sep,'_')
             filename = "%s.total" % BASENAME(filename)

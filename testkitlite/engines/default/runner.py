@@ -147,7 +147,9 @@ class TRunner:
         ok_prepare = True
         if ok_prepare:
             try:
-                filename = testxmlfile
+                filename = testxmlfile                            
+                filename = os.path.realpath(filename)
+                filename = os.path.splitdrive(filename)[1]
                 filename = os.path.splitext(filename)[0]
                 filename = filename.replace(os.sep,'_')
                 if self.filter_rules["execution_type"] == ["manual"]:
@@ -944,6 +946,7 @@ class TRunner:
                                     test_suite.append(result_set)
                 test_tree.write(set_result_xml)
             LOGGER.info("[ cases result saved to resultfile ]\n")
+            os.remove(result_file)
         except OSError, error:
             traceback.print_exc()
             LOGGER.error(
