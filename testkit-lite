@@ -283,7 +283,7 @@ default.runner', \
     else:
         COMMODULE_TYPE = "tizenmobile"
 
-    CONNECTOR = Connector({"testremote": COMMODULE_TYPE}).get_connector()
+    CONNECTOR = Connector({"testremote": COMMODULE_TYPE, "deviceid":OPTIONS.device_serial}).get_connector()
     if CONNECTOR == None:
         LOGGER.error("[ Error: init commodule error... ]\n")
         sys.exit(1)
@@ -323,8 +323,7 @@ default.runner', \
                 tmp_remote_folder, tmp_remote_file[1])
             local_test_package = JOIN(
                 TEST_PACKAGES_DIR, tmp_remote_test_xml)
-            down_status = RUNNER.connector.download_file(
-                RUNNER.deviceid, remote_file, local_test_package)
+            down_status = RUNNER.connector.download_file(remote_file, local_test_package)
             if not down_status:
                 LOGGER.error('remote file can not find, "\
                     "pls check the install test packages:%s' % remote_file)

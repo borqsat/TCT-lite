@@ -41,6 +41,7 @@ from os import remove
 from commodule.log import LOGGER
 from commodule.autoexec import shell_command
 from commodule.str2 import str2xmlstr
+from commodule.testworker import TestWorker
 
 JOIN = os.path.join
 DIRNAME = os.path.dirname
@@ -84,6 +85,7 @@ class TRunner:
         self.pid_log = None
         self.set_parameters = {}
         self.connector = connector
+        self.testworker = TestWorker(connector)
         self.stub_name = "testkit-stub"
         self.capabilities = {}
         self.has_capability = False
@@ -100,14 +102,6 @@ class TRunner:
         # apply user specify test result file
         if options.resultfile:
             self.resultfile = options.resultfile
-        # set device_id
-        if options.device_serial:
-            self.deviceid = options.device_serial
-        if not options.device_serial:
-            if len(self.connector.get_device_ids()) > 0:
-                self.deviceid = self.connector.get_device_ids()[0]
-            else:
-                raise Exception("[ No devices connected ]")
         # set the external test WRTLauncher
         if options.exttest:
             self.external_test = options.exttest
@@ -344,14 +338,14 @@ class TRunner:
                 if not init_status:
                     continue
                 # send set JSON Data to com_module
-                self.connector.run_test(
+                self.testworker.run_test(
                     self.session_id, self.set_parameters)
                 while True:
                     time.sleep(1)
                     # check the test status ,if the set finished,get
                     # the set_result,and finalize_test
                     if self.__check_test_status():
-                        set_result = self.connector.get_test_result(
+                        set_result = self.testworker.get_test_result(
                             self.session_id)
                         # write_result to set_xml
                         self.__write_set_result(
@@ -558,7 +552,7 @@ class TRunner:
 
     def __get_environment(self):
         """ get environment """
-        device_info = self.connector.get_device_info(self.deviceid)
+        device_info = self.connector.get_device_info()
         # add environment node
         environment = etree.Element('environment')
         environment.attrib['device_id'] = device_info["device_id"]
@@ -819,7 +813,7 @@ class TRunner:
         """
         starup_prms = self.__prepare_starup_parameters(testxml)
         # init stub and get the session_id
-        session_id = self.connector.init_test(self.deviceid, starup_prms)
+        session_id = self.testworker.init_test(starup_prms)
         if session_id == None:
             LOGGER.error("[ Error: Initialization Error]")
             return False
@@ -864,7 +858,7 @@ class TRunner:
         # check test running or end
         # if the status id end return True ,else return False
 
-        session_status = self.connector.get_test_status(self.session_id)
+        session_status = self.testworker.get_test_status(self.session_id)
         # session_status["finished"] == "0" is running
         # session_status["finished"] == "1" is end
         if not session_status == None:
@@ -883,7 +877,7 @@ class TRunner:
     def __shut_down_server(self, sessionid):
         '''shut_down testkit-stub'''
         try:
-            self.connector.finalize_test(sessionid)
+            self.testworker.finalize_test(sessionid)
         except Exception, error:
             LOGGER.error("[ Error: fail to close webapi http server, "
                          "error: %s ]" % error)
