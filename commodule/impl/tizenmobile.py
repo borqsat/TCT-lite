@@ -35,13 +35,6 @@ from commodule.httprequest import get_url, http_request
 from commodule.autoexec import shell_command, shell_command_ext
 from commodule.killall import killall
 
-LOCAL_HOST_NS = "127.0.0.1"
-CNT_RETRY = 10
-LOCK_OBJ = threading.Lock()
-TEST_SERVER_RESULT = {}
-TEST_SERVER_STATUS = {}
-TEST_FLAG = 0
-DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 APP_QUERY_STR = "sdb -s %s shell ps aux | grep '%s' | awk '{print $2}'"
 APP_KILL_STR = "sdb -s %s shell kill -9 %s"
 WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i /opt/%s/%s.wgt"
@@ -52,427 +45,14 @@ WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
 UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
 
 
-def _get_forward_connect(deviceid, remote_port=None):
-    """forward request a host tcp port to targe tcp port"""
-    if remote_port is None:
-        return None
-    os.environ['no_proxy'] = LOCAL_HOST_NS
-    host = LOCAL_HOST_NS
-    inner_port = 9000
-    time_out = 2
-    bflag = False
-    while True:
-        sock_inner = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock_inner.settimeout(time_out)
-        try:
-            sock_inner.bind((host, inner_port))
-            sock_inner.close()
-            bflag = False
-        except socket.error as error:
-            if error.errno == 98 or error.errno == 13:
-                bflag = True
-        if bflag:
-            inner_port += 1
-        else:
-            break
-    host_port = str(inner_port)
-    cmd = "sdb -s %s forward tcp:%s tcp:%s" % \
-        (deviceid, host_port, remote_port)
-    exit_code, ret = shell_command(cmd)
-    url_forward = "http://%s:%s" % (host, host_port)
-    return url_forward
-
-
-def _download_file(deviceid, remote_path, local_path):
-    """download file from device"""
-    cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
-    exit_code, ret = shell_command(cmd)
-    if exit_code != 0:
-        error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
-        LOGGER.info("[ Download file \"%s\" from target failed, error: %s ]"
-                    % (remote_path, error))
-        return False
-    else:
-        return True
-
-
-def _upload_file(deviceid, remote_path, local_path):
-    """upload file to device"""
-    cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
-    exit_code, ret = shell_command(cmd)
-    if exit_code != 0:
-        error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
-        LOGGER.info("[ Upload file \"%s\" failed,"
-                    " get error: %s ]" % (local_path, error))
-        return False
-    else:
-        return True
-
-
-def _set_result(cases_list=None):
-    """set cases result to the global result buffer"""
-    global TEST_SERVER_RESULT
-    if not cases_list is None:
-        LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT["cases"].extend(cases_list)
-        LOCK_OBJ.release()
-    else:
-        LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT = {'cases': []}
-        LOCK_OBJ.release()
-
-
-def _print_result(suite_name, cases_list):
-    if suite_name is None:
-        suite_name = ""
-    for case_it in cases_list:
-        LOGGER.info("execute case: %s # %s...(%s)" % (
-            suite_name, case_it['case_id'], case_it['result']))
-        if case_it['result'].lower() in ['fail', 'block'] and \
-                'stdout' in case_it:
-            LOGGER.info(case_it['stdout'])
-
-
-def _print_dlog(dlog_file):
-    if not os.path.exists(dlog_file):
-        return
-    LOGGER.info('[ start of dlog message ]')
-    rbuffile1 = file(dlog_file, "r")
-    for line in rbuffile1.readlines():
-        LOGGER.info(line.strip('\n'))
-    LOGGER.info('[ end of dlog message ]')
-
-
-def _set_finished(flag=0):
-    global TEST_SERVER_STATUS
-    LOCK_OBJ.acquire()
-    TEST_SERVER_STATUS = {"finished": flag}
-    LOCK_OBJ.release()
-
-
-class DlogThread(threading.Thread):
-
-    """stub instance serve_forever in async mode"""
-
-    def __init__(self, cmd=None, logfile=None):
-        super(DlogThread, self).__init__()
-        self.cmdline = cmd
-        self.logfile = logfile
-
-    def run(self):
-        buffer_1 = self.logfile
-        wbuffile1 = file(buffer_1, "w")
-        exit_code = None
-        import subprocess
-        cmd_open = subprocess.Popen(args=self.cmdline,
-                                    shell=True,
-                                    stdout=wbuffile1,
-                                    stderr=None)
-        global TEST_SERVER_STATUS, TEST_FLAG
-        while True:
-            exit_code = cmd_open.poll()
-            if exit_code is not None:
-                break
-            time.sleep(0.5)
-            LOCK_OBJ.acquire()
-            set_status = TEST_SERVER_STATUS
-            LOCK_OBJ.release()
-            if TEST_FLAG == 1 or set_status.get('finished', 0) == 1:
-                break
-        wbuffile1.close()
-        if exit_code is None:
-            killall(cmd_open.pid)
-
-
-class CoreTestExecThread(threading.Thread):
-
-    """ execute core test in async mode """
-
-    def __init__(self, device_id, test_set_name, exetype, test_cases):
-        super(CoreTestExecThread, self).__init__()
-        self.test_set_name = test_set_name
-        self.cases_queue = test_cases
-        self.device_id = device_id
-        self.exetype = exetype
-
-    def run(self):
-        """run core tests"""
-        if self.cases_queue is None:
-            return
-        total_count = len(self.cases_queue)
-        current_idx = 0
-        manual_skip_all = False
-        global TEST_FLAG
-        result_list = []
-        _set_result()
-        _set_finished()
-        for test_case in self.cases_queue:
-            if TEST_FLAG == 1:
-                break
-            current_idx += 1
-            core_cmd = ""
-            if "entry" in test_case:
-                core_cmd = "sdb -s %s shell '%s ;  echo returncode=$?'" % (
-                    self.device_id, test_case["entry"])
-            else:
-                LOGGER.info(
-                    "[ Warnning: test script is empty,"
-                    " please check your test xml file ]")
-                continue
-            expected_result = test_case.get('expected_result', '0')
-            time_out = int(test_case.get('timeout', '90'))
-            measures = test_case.get('measures', [])
-            retmeasures = []
-            LOGGER.info("\n[core test] execute case:\nTestCase: %s\n"
-                        "TestEntry: %s\nExpected: %s\nTotal: %s, Current: %s"
-                        % (test_case['case_id'], test_case['entry'],
-                        expected_result, total_count, current_idx))
-            LOGGER.info("[ execute core test script, please wait ! ]")
-            strtime = datetime.now().strftime(DATE_FORMAT_STR)
-            LOGGER.info("start time: %s" % strtime)
-            test_case["start_at"] = strtime
-            if self.exetype == 'auto':
-                return_code, stdout, stderr = shell_command_ext(
-                    core_cmd, time_out, False)
-                if return_code is not None and return_code != "timeout":
-                    test_case["result"] = "pass" if str(return_code) == expected_result else "fail"
-                    test_case["stdout"] = stdout
-                    test_case["stderr"] = stderr
-                    for item in measures:
-                        ind = item['name']
-                        fname = item['file']
-                        if fname is None:
-                            continue
-                        tmpname = os.path.expanduser(
-                            "~") + os.sep + "measure_tmp"
-                        if _download_file(self.device_id, fname, tmpname):
-                            try:
-                                config = ConfigParser.ConfigParser()
-                                config.read(tmpname)
-                                item['value'] = config.get(ind, 'value')
-                                retmeasures.append(item)
-                                os.remove(tmpname)
-                            except IOError as error:
-                                LOGGER.error(
-                                    "[ Error: fail to parse value,"
-                                    " error:%s ]\n" % error)
-                    test_case["measures"] = retmeasures
-                else:
-                    test_case["result"] = "BLOCK"
-                    test_case["stdout"] = stdout
-                    test_case["stderr"] = stderr
-            elif self.exetype == 'manual':
-                # handle manual core cases
-                try:
-                    # LOGGER.infopre-condition info
-                    if "pre_condition" in test_case:
-                        LOGGER.info("\n****\nPre-condition: %s\n ****\n"
-                                    % test_case['pre_condition'])
-                    # LOGGER.infostep info
-                    if "steps" in test_case:
-                        for step in test_case['steps']:
-                            LOGGER.info(
-                                "********************\n"
-                                "Step Order: %s" % step['order'])
-                            LOGGER.info("Step Desc: %s" % step['step_desc'])
-                            LOGGER.info(
-                                "Expected: %s\n********************\n"
-                                % step['expected'])
-                    if manual_skip_all:
-                        test_case["result"] = "N/A"
-                    else:
-                        while True:
-                            test_result = raw_input(
-                                '[ please input case result ]'
-                                ' (p^PASS, f^FAIL, b^BLOCK, n^Next, d^Done):')
-                            if test_result.lower() == 'p':
-                                test_case["result"] = "PASS"
-                                break
-                            elif test_result.lower() == 'f':
-                                test_case["result"] = "FAIL"
-                                break
-                            elif test_result.lower() == 'b':
-                                test_case["result"] = "BLOCK"
-                                break
-                            elif test_result.lower() == 'n':
-                                test_case["result"] = "N/A"
-                                break
-                            elif test_result.lower() == 'd':
-                                manual_skip_all = True
-                                test_case["result"] = "N/A"
-                                break
-                            else:
-                                LOGGER.info(
-                                    "[ Warnning: you input: '%s' is invalid,"
-                                    " please try again ]" % test_result)
-                except IOError as error:
-                    LOGGER.info(
-                        "[ Error: fail to get core manual test step,"
-                        " error: %s ]\n" % error)
-            strtime = datetime.now().strftime(DATE_FORMAT_STR)
-            LOGGER.info("end time: %s" % strtime)
-            test_case["end_at"] = strtime
-            LOGGER.info("Case Result: %s" % test_case["result"])
-            result_list.append(test_case)
-
-        _set_result(result_list)
-        _set_finished(1)
-
-
-class WebTestExecThread(threading.Thread):
-
-    """execute web test in async mode"""
-
-    def __init__(self, server_url, test_suite_name, test_data_queue, exetype):
-        super(WebTestExecThread, self).__init__()
-        self.server_url = server_url
-        self.test_suite_name = test_suite_name
-        self.data_queue = test_data_queue
-        self.test_type = exetype
-
-    def run(self):
-        """run web tests"""
-        if self.data_queue is None:
-            return
-
-        test_set_finished = False
-        err_cnt = 0
-        exetype = self.test_type.lower()
-        global TEST_FLAG
-        _set_result()
-        _set_finished()
-        for test_block in self.data_queue:
-            ret = http_request(get_url(
-                self.server_url, "/set_testcase"), "POST", test_block, 30)
-            if ret is None or "error_code" in ret:
-                LOGGER.error(
-                    "[ set testcases time out,"
-                    "please confirm target is available ]")
-                _set_finished(1)
-                break
-
-            while True:
-                if TEST_FLAG == 1:
-                    test_set_finished = True
-                    break
-
-                ret = http_request(
-                    get_url(self.server_url, "/check_server_status"),
-                    "GET", {})
-
-                if ret is None or "error_code" in ret:
-                    err_cnt += 1
-                    if err_cnt >= CNT_RETRY:
-                        LOGGER.error(
-                            "[ check server status time out,"
-                            " please confirm device is available ]")
-                        test_set_finished = True
-                        _set_finished(1)
-                        break
-
-                elif "finished" in ret:
-                    err_cnt = 0
-                    if 'cases' in ret and ret["cases"] is not None\
-                            and len(ret["cases"]):
-                        _set_result(ret["cases"])
-                        _print_result(self.test_suite_name, ret["cases"])
-                    elif exetype == 'manual':
-                        LOGGER.info(
-                            "[ executing manual cases,"
-                            " please take care of device ]\r\n")
-
-                    if ret["finished"] == 1:
-                        test_set_finished = True
-                        _set_finished(1)
-                        break
-                    elif ret["block_finished"] == 1:
-                        break
-
-                time.sleep(2)
-
-            if test_set_finished:
-                break
-
-
-class QUTestExecThread(threading.Thread):
-
-    """execute Jquery Unit test suite """
-
-    def __init__(self, deviceid="", sessionid="", test_set="", cases=None):
-        super(QUTestExecThread, self).__init__()
-        self.device_id = deviceid
-        self.test_session = sessionid
-        self.test_set = test_set
-        self.test_cases = cases
-
-    def run(self):
-        """run Qunit tests"""
-        global TEST_SERVER_RESULT, TEST_FLAG
-        LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT = {"resultfile": ""}
-        LOCK_OBJ.release()
-        _set_finished()
-        ls_cmd = "sdb -s %s shell ls -l %s" % (self.device_id, UIFW_RESULT)
-        time_stamp = ""
-        prev_stamp = ""
-        LOGGER.info('[webuifw] start test execution...')
-        time_out = 600
-        status_cnt = 0
-        while time_out > 0:
-            if TEST_FLAG == 1:
-                break
-            LOGGER.info('[webuifw] test is running')
-            time.sleep(2)
-            time_out -= 2
-            exit_code, ret = shell_command(ls_cmd)
-            time_stamp = ret[0] if len(ret) > 0 else ""
-            if time_stamp == prev_stamp:
-                continue
-            prev_stamp = time_stamp
-            status_cnt += 1
-
-            if status_cnt == 1:
-                for test_case in self.test_cases:
-                    LOGGER.info("[webuifw] execute case: %s # %s"
-                                % (self.test_set, test_case['case_id']))
-                self.test_cases = []
-            elif status_cnt >= 2:
-                result_file = os.path.expanduser(
-                    "~") + os.sep + self.test_session + "_uifw.xml"
-                b_ok = _download_file(self.device_id,
-                                      UIFW_RESULT,
-                                      result_file)
-                if b_ok:
-                    LOCK_OBJ.acquire()
-                    TEST_SERVER_RESULT = {"resultfile": result_file}
-                    LOCK_OBJ.release()
-                break
-        LOGGER.info('[webuifw] end test execution...')
-        _set_finished(1)
-
-
 class TizenMobile:
 
     """ Implementation for transfer data
         between Host and Tizen Mobile Device
     """
 
-    def __init__(self):
-        self.__st = dict({'server_url': None,
-                          'async_stub': None,
-                          'async_shell': None,
-                          'async_http': None,
-                          'async_core': None,
-                          'dlog_shell': None,
-                          'block_size': 300,
-                          'device_id': None,
-                          'test_type': None,
-                          'auto_iu': False,
-                          'fuzzy_match': False,
-                          'self_exec': False,
-                          'self_repeat': False,
-                          'debug_mode': False,
-                          'test_wgt': None})
+    def __init__(self, deviceid=None):
+        self._device_id = deviceid
 
     def get_device_ids(self):
         """get tizen deivce list of ids"""
@@ -483,7 +63,7 @@ class TizenMobile:
                 result.append(line.split("\t")[0])
         return result
 
-    def get_device_info(self, deviceid=None):
+    def get_device_info(self):
         """get tizen deivce inforamtion"""
         device_info = {}
         resolution_str = ""
@@ -535,6 +115,64 @@ class TizenMobile:
         device_info["os_version"] = os_version_str
         device_info["build_id"] = build_id_str
         return device_info
+
+
+    def get_forward_connect(remote_port=None):
+        """forward request a host tcp port to targe tcp port"""
+        if remote_port is None:
+            return None
+
+        os.environ['no_proxy'] = LOCAL_HOST_NS
+        host = LOCAL_HOST_NS
+        inner_port = 9000
+        time_out = 2
+        bflag = False
+        while True:
+            sock_inner = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock_inner.settimeout(time_out)
+            try:
+                sock_inner.bind((host, inner_port))
+                sock_inner.close()
+                bflag = False
+            except socket.error as error:
+                if error.errno == 98 or error.errno == 13:
+                    bflag = True
+            if bflag:
+                inner_port += 1
+            else:
+                break
+        host_port = str(inner_port)
+        cmd = "sdb -s %s forward tcp:%s tcp:%s" % \
+            (deviceid, host_port, remote_port)
+        exit_code, ret = shell_command(cmd)
+        url_forward = "http://%s:%s" % (host, host_port)
+        return url_forward
+
+
+    def download_file(remote_path, local_path):
+        """download file from device"""
+        cmd = "sdb -s %s pull %s %s" % (deviceid, remote_path, local_path)
+        exit_code, ret = shell_command(cmd)
+        if exit_code != 0:
+            error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
+            LOGGER.info("[ Download file \"%s\" from target failed, error: %s ]"
+                        % (remote_path, error))
+            return False
+        else:
+            return True
+
+
+    def upload_file(remote_path, local_path):
+        """upload file to device"""
+        cmd = "sdb -s %s push %s %s" % (deviceid, local_path, remote_path)
+        exit_code, ret = shell_command(cmd)
+        if exit_code != 0:
+            error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
+            LOGGER.info("[ Upload file \"%s\" failed,"
+                        " get error: %s ]" % (local_path, error))
+            return False
+        else:
+            return True
 
     def install_package(self, deviceid, pkgpath):
         """install a package on tizen device:
