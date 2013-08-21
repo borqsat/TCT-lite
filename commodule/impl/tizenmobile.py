@@ -42,10 +42,10 @@ TEST_SERVER_RESULT = {}
 TEST_SERVER_STATUS = {}
 TEST_FLAG = 0
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
-APP_QUERY_STR = "sdb -s %s shell ps aux | grep %s"
+APP_QUERY_STR = "sdb -s %s shell ps aux | grep '%s' | awk '{print $2}'"
+APP_KILL_STR = "sdb -s %s shell kill -9 %s"
 WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i /opt/%s/%s.wgt"
-WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l " \
-                "|grep '%s'|awk '{print $2\":\"$NF}'"
+WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l | grep '%s'|awk '{print $2\":\"$NF}'"
 WRT_START_STR = "sdb -s %s shell wrt-launcher -s %s"
 WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
 WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
@@ -479,7 +479,7 @@ class TizenMobile:
         result = []
         exit_code, ret = shell_command("sdb devices")
         for line in ret:
-            if str.find(line, "\tdevice\t") != -1:
+            if str.find(line, "\tdevice") != -1:
                 result.append(line.split("\t")[0])
         return result
 
@@ -540,11 +540,7 @@ class TizenMobile:
         """install a package on tizen device:
         push package and install with shell command
         """
-        filename = os.path.split(pkgpath)[1]
-        devpath = "/tmp/%s" % filename
-        cmd = "sdb -s %s push %s %s" % (deviceid, pkgpath, devpath)
-        exit_code, ret = shell_command(cmd)
-        cmd = "sdb shell rpm -ivh %s" % devpath
+        cmd = "sdb -s %s shell rpm -ivh %s" % (deviceid, pkgpath)
         exit_code, ret = shell_command(cmd)
         return ret
 
@@ -566,8 +562,9 @@ class TizenMobile:
                            test_set):
         """get test option dict """
         test_opt = {}
-        test_opt["suite_name"] = test_suite
         cmd = ""
+        test_opt["suite_name"] = test_suite
+        test_opt["launcher"] = test_launcher
         suite_id = None
         if test_launcher.find('WRTLauncher') != -1:
             test_opt["launcher"] = "wrt-launcher"
@@ -579,6 +576,11 @@ class TizenMobile:
                 if exit_code == -1:
                     LOGGER.info("[ failed to install widget \"%s\" in target ]"
                                 % test_wgt)
+                    cmd = APP_QUERY_STR % (deviceid, "wrt-installer -i")
+                    exit_code, ret = shell_command(cmd)
+                    for line in ret:
+                        cmd = APP_KILL_STR % (deviceid, line.strip('\r\n'))
+                        exit_code, ret = shell_command(cmd)
                     return None
             else:
                 test_wgt = test_suite
@@ -604,8 +606,6 @@ class TizenMobile:
             else:
                 test_opt["suite_id"] = suite_id
                 self.__st['test_wgt'] = suite_id
-        else:
-            test_opt["launcher"] = test_launcher
 
         return test_opt
 
@@ -900,6 +900,11 @@ class TizenMobile:
                 "[ Error: failed to get test result, error:%s ]\n" % error)
         return result
 
+    def uninstall_widget(self, wgt_name):
+        cmd = WRT_UNINSTL_STR % (self.__st['device_id'], wgt_name)
+        exit_code, ret = shell_command(cmd)
+        return True
+
     def finalize_test(self, sessionid):
         """clear the test stub and related resources"""
         if sessionid is None:
@@ -916,9 +921,7 @@ class TizenMobile:
 
         # uninstall widget
         if self.__st['test_type'] == "webapi" and self.__st['auto_iu']:
-            cmd = WRT_UNINSTL_STR % (self.__st[
-                                     'device_id'], self.__st['test_wgt'])
-            exit_code, ret = shell_command(cmd)
+            self.uninstall_widget(self.__st['test_wgt'])
         return True
 
 
