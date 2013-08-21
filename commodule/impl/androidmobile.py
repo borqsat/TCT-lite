@@ -19,7 +19,7 @@
 #
 # Authors:
 #           Chengtao,Liu  <chengtaox.liu@intel.com>
-""" The implementation for Tizen PC mode"""
+""" The implementation for HD (host device) test mode"""
 
 import os
 import time
@@ -35,20 +35,74 @@ from commodule.httprequest import get_url, http_request
 from commodule.autoexec import shell_command, shell_command_ext
 from commodule.killall import killall
 
-HOST_NS = "127.0.0.1"
+LOCAL_HOST_NS = "127.0.0.1"
 CNT_RETRY = 10
 LOCK_OBJ = threading.Lock()
 TEST_SERVER_RESULT = {}
 TEST_SERVER_STATUS = {}
 TEST_FLAG = 0
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
-APP_QUERY_STR = "ps aux | grep %s"
-WRT_INSTALL_STR = "wrt-installer -i /opt/%s/%s.wgt"
-WRT_QUERY_STR = "wrt-launcher -l|grep '%s'|grep -v grep" \
-                "|awk '{print $2\":\"$NF}'"
-WRT_START_STR = "wrt-launcher -s %s"
-WRT_UNINSTL_STR = "wrt-installer -un %s"
-UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
+APP_QUERY_STR = "adb -s %s shell ps | grep %s | awk '{print $2}' "
+WRT_INSTALL_STR = "adb -s %s shell pm install /opt/%s/%s.apk"
+WRT_QUERY_STR = "adb -s %s shell pm list packages |grep '%s'|cut -d ':' -f2"
+WRT_UNINSTL_STR = "adb -s %s shell pm uninstall %s"
+
+
+def _get_forward_connect(deviceid, remote_port=None):
+    """forward request a host tcp port to targe tcp port"""
+    if remote_port is None:
+        return None
+    os.environ['no_proxy'] = LOCAL_HOST_NS
+    host = LOCAL_HOST_NS
+    inner_port = 9000
+    time_out = 2
+    bflag = False
+    while True:
+        sock_inner = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock_inner.settimeout(time_out)
+        try:
+            sock_inner.bind((host, inner_port))
+            sock_inner.close()
+            bflag = False
+        except socket.error as error:
+            if error.errno == 98 or error.errno == 13:
+                bflag = True
+        if bflag:
+            inner_port += 1
+        else:
+            break
+    host_port = str(inner_port)
+    cmd = "adb -s %s forward tcp:%s tcp:%s" % \
+        (deviceid, host_port, remote_port)
+    exit_code, ret = shell_command(cmd)
+    url_forward = "http://%s:%s" % (host, host_port)
+    return url_forward
+
+
+def _download_file(deviceid, remote_path, local_path):
+    """download file from device"""
+    cmd = "adb -s %s pull %s %s" % (deviceid, remote_path, local_path)
+    exit_code, ret = shell_command(cmd)
+    if exit_code != 0:
+        error = ret[0].strip('\r\n') if len(ret) else "adb shell timeout"
+        LOGGER.info("[ Download file \"%s\" from target failed, error: %s ]"
+                    % (remote_path, error))
+        return False
+    else:
+        return True
+
+
+def _upload_file(deviceid, remote_path, local_path):
+    """upload file to device"""
+    cmd = "adb -s %s push %s %s" % (deviceid, local_path, remote_path)
+    exit_code, ret = shell_command(cmd)
+    if exit_code != 0:
+        error = ret[0].strip('\r\n') if len(ret) else "adb shell timeout"
+        LOGGER.info("[ Upload file \"%s\" failed,"
+                    " get error: %s ]" % (local_path, error))
+        return False
+    else:
+        return True
 
 
 def _set_result(cases_list=None):
@@ -154,7 +208,8 @@ class CoreTestExecThread(threading.Thread):
             current_idx += 1
             core_cmd = ""
             if "entry" in test_case:
-                core_cmd = test_case["entry"]
+                core_cmd = "adb -s %s shell '%s ;  echo returncode=$?'" % (
+                    self.device_id, test_case["entry"])
             else:
                 LOGGER.info(
                     "[ Warnning: test script is empty,"
@@ -184,25 +239,32 @@ class CoreTestExecThread(threading.Thread):
                         fname = item['file']
                         if fname is None:
                             continue
-                        try:
-                            config = ConfigParser.ConfigParser()
-                            config.read(fname)
-                            item['value'] = config.get(ind, 'value')
-                            retmeasures.append(item)
-                        except IOError as error:
-                            LOGGER.error(
-                                "[ Error: fail to parse value,"
-                                " error:%s ]\n" % error)
+                        tmpname = os.path.expanduser(
+                            "~") + os.sep + "measure_tmp"
+                        if _download_file(self.device_id, fname, tmpname):
+                            try:
+                                config = ConfigParser.ConfigParser()
+                                config.read(tmpname)
+                                item['value'] = config.get(ind, 'value')
+                                retmeasures.append(item)
+                                os.remove(tmpname)
+                            except IOError as error:
+                                LOGGER.error(
+                                    "[ Error: fail to parse value,"
+                                    " error:%s ]\n" % error)
                     test_case["measures"] = retmeasures
                 else:
                     test_case["result"] = "BLOCK"
                     test_case["stdout"] = stdout
                     test_case["stderr"] = stderr
             elif self.exetype == 'manual':
+                # handle manual core cases
                 try:
+                    # LOGGER.infopre-condition info
                     if "pre_condition" in test_case:
                         LOGGER.info("\n****\nPre-condition: %s\n ****\n"
                                     % test_case['pre_condition'])
+                    # LOGGER.infostep info
                     if "steps" in test_case:
                         for step in test_case['steps']:
                             LOGGER.info(
@@ -298,8 +360,9 @@ class WebTestExecThread(threading.Thread):
                     err_cnt += 1
                     if err_cnt >= CNT_RETRY:
                         LOGGER.error(
-                            "[ check status time out,"
+                            "[ check server status time out,"
                             " please confirm device is available ]")
+                        test_set_finished = True
                         _set_finished(1)
                         break
 
@@ -327,61 +390,12 @@ class WebTestExecThread(threading.Thread):
                 break
 
 
-class QUTestExecThread(threading.Thread):
+class AndroidMobile:
 
-    """execute Jquery Unit test suite """
-
-    def __init__(self, deviceid="", sessionid="", test_set="", cases=None):
-        super(QUTestExecThread, self).__init__()
-        self.device_id = deviceid
-        self.test_session = sessionid
-        self.test_set = test_set
-        self.test_cases = cases
-
-    def run(self):
-        """run Qunit tests"""
-        global TEST_SERVER_RESULT, TEST_FLAG
-        LOCK_OBJ.acquire()
-        TEST_SERVER_RESULT = {"resultfile": ""}
-        LOCK_OBJ.release()
-        _set_finished()
-        ls_cmd = "ls -l %s" % (UIFW_RESULT)
-        time_stamp = ""
-        prev_stamp = ""
-        LOGGER.info('[webuifw] start test execution...')
-        time_out = 600
-        status_cnt = 0
-        while time_out > 0:
-            if TEST_FLAG == 1:
-                break
-            LOGGER.info('[webuifw] test is running')
-            time.sleep(2)
-            time_out -= 2
-            exit_code, ret = shell_command(ls_cmd)
-            time_stamp = ret[0] if len(ret) > 0 else ""
-            if time_stamp == prev_stamp:
-                continue
-            prev_stamp = time_stamp
-            status_cnt += 1
-
-            if status_cnt == 1:
-                for test_case in self.test_cases:
-                    LOGGER.info("[webuifw] execute case: %s # %s"
-                                % (self.test_set, test_case['case_id']))
-                self.test_cases = []
-            elif status_cnt >= 2:
-                LOCK_OBJ.acquire()
-                TEST_SERVER_RESULT = {"resultfile": UIFW_RESULT}
-                LOCK_OBJ.release()
-                break
-        LOGGER.info('[webuifw] end test execution...')
-        _set_finished(1)
-
-
-class TizenPC:
     """ Implementation for transfer data
-        between Host and Tizen Mobile Device
+        between Host and Android Mobile Device
     """
+
     def __init__(self):
         self.__st = dict({'server_url': None,
                           'async_stub': None,
@@ -400,15 +414,16 @@ class TizenPC:
                           'test_wgt': None})
 
     def get_device_ids(self):
-        """
-            get deivce list of ids
-        """
-        return ['localhost']
+        """get android deivce list of ids"""
+        result = []
+        exit_code, ret = shell_command("adb devices")
+        for line in ret:
+            if str.find(line, "\tdevice") != -1:
+                result.append(line.split("\t")[0])
+        return result
 
     def get_device_info(self, deviceid=None):
-        """
-            get tizen deivce inforamtion
-        """
+        """get android deivce inforamtion"""
         device_info = {}
         resolution_str = ""
         screen_size_str = ""
@@ -418,7 +433,7 @@ class TizenPC:
         os_version_str = ""
 
         # get resolution and screen size
-        exit_code, ret = shell_command("xrandr")
+        exit_code, ret = shell_command("adb -s %s shell xrandr" % deviceid)
         pattern = re.compile("connected (\d+)x(\d+).* (\d+mm) x (\d+mm)")
         for line in ret:
             match = pattern.search(line)
@@ -427,25 +442,25 @@ class TizenPC:
                 screen_size_str = "%s x %s" % (match.group(3), match.group(4))
 
         # get architecture
-        exit_code, ret = shell_command("uname -m")
+        exit_code, ret = shell_command("adb -s %s shell uname -m" % deviceid)
         if len(ret) > 0:
             device_model_str = ret[0]
 
         # get hostname
-        exit_code, ret = shell_command("uname -n")
+        exit_code, ret = shell_command("adb -s %s shell uname -n" % deviceid)
         if len(ret) > 0:
             device_name_str = ret[0]
 
         # get os version
         exit_code, ret = shell_command(
-            "cat /etc/issue")
+            "adb -s %s shell cat /etc/issue" % deviceid)
         for line in ret:
             if len(line) > 1:
                 os_version_str = "%s %s" % (os_version_str, line)
 
         # get build id
         exit_code, ret = shell_command(
-            "cat /etc/os-release")
+            "adb -s %s shell cat /etc/os-release" % deviceid)
         for line in ret:
             if line.find("BUILD_ID=") != -1:
                 build_id_str = line.split('=')[1].strip('\"\r\n')
@@ -461,18 +476,30 @@ class TizenPC:
         return device_info
 
     def install_package(self, deviceid, pkgpath):
+        """install a package on android device:
+        push package and install with shell command
         """
-           install a package on tizen device
-        """
-        cmd = "rpm -ivh %s" % pkgpath
+        filename = os.path.split(pkgpath)[1]
+        devpath = "/tmp/%s" % filename
+        cmd = "adb -s %s push %s %s" % (deviceid, pkgpath, devpath)
+        exit_code, ret = shell_command(cmd)
+        cmd = "adb shell rpm -ivh %s" % devpath
         exit_code, ret = shell_command(cmd)
         return ret
 
     def get_installed_package(self, deviceid):
         """get list of installed package from device"""
-        cmd = "rpm -qa | grep tct"
+        cmd = "adb -s %s shell pm list packages| grep tct" % (deviceid)
         exit_code, ret = shell_command(cmd)
         return ret
+
+    def download_file(self, deviceid, remote_path, local_path):
+        """download file from device"""
+        return _download_file(deviceid, remote_path, local_path)
+
+    def upload_file(self, deviceid, remote_path, local_path):
+        """upload file to device"""
+        return _upload_file(deviceid, remote_path, local_path)
 
     def __get_test_options(self, deviceid, test_launcher, test_suite,
                            test_set):
@@ -480,14 +507,14 @@ class TizenPC:
         test_opt = {}
         cmd = ""
         test_opt["suite_name"] = test_suite
-        test_opt["launcher"] = test_launcher
+        test_opt["launcher"] =  test_launcher
         suite_id = None
-        if test_launcher.find('WRTLauncher') != -1:
+        if test_launcher.startswith('WRTLauncher'):
             test_opt["launcher"] = "wrt-launcher"
             # test suite need to be installed by commodule
             if self.__st['auto_iu']:
                 test_wgt = test_set
-                cmd = WRT_INSTALL_STR % (test_suite, test_wgt)
+                cmd = WRT_INSTALL_STR % (deviceid, test_suite, test_wgt)
                 exit_code, ret = shell_command(cmd)
                 if exit_code == -1:
                     LOGGER.info("[ failed to install widget \"%s\" in target ]"
@@ -497,18 +524,13 @@ class TizenPC:
                 test_wgt = test_suite
 
             # query the whether test widget is installed ok
-            cmd = WRT_QUERY_STR % test_wgt
+            cmd = WRT_QUERY_STR % (deviceid, test_wgt)
             exit_code, ret = shell_command(cmd)
             if exit_code == -1:
                 return None
-            for line in ret:
-                items = line.split(':')
-                if len(items) < 1:
-                    continue
-                if (self.__st['fuzzy_match'] and
-                        items[0].find(test_wgt) != -1) or items[0] == test_wgt:
-                    suite_id = items[1].strip('\r\n')
-                    break
+
+            if len(ret) > 0:
+                suite_id = ret[0].strip('\r\n')
 
             if suite_id is None:
                 LOGGER.info("[ test widget \"%s\" not found in target ]"
@@ -517,22 +539,25 @@ class TizenPC:
             else:
                 test_opt["suite_id"] = suite_id
                 self.__st['test_wgt'] = suite_id
+        elif test_launcher.startswith('xwalk'):
+            test_opt["suite_id"] = 'org.xwalk.app.template'
 
         return test_opt
 
     def __init_webtest_opt(self, deviceid, params):
         """init the test runtime, mainly process the star up of test stub"""
+
         if params is None:
             return None
 
         session_id = str(uuid.uuid1())
         cmdline = ""
         debug_opt = ""
-        stub_app = params["stub-name"]
-        stub_port = "8000"
+        stub_app = params.get('stub-name', 'testkit-stub')
+        stub_port = params.get('stub-port', '8000')
         test_launcher = params.get('external-test', '')
-        testset_name = params.get('testset-name', '')
         testsuite_name = params.get('testsuite-name', '')
+        testset_name = params.get('testset-name', '')
         capability_opt = params.get("capability", None)
         client_cmds = params.get('client-command', '').strip().split()
         wrt_tag = client_cmds[1] if len(client_cmds) > 1 else ""
@@ -542,15 +567,6 @@ class TizenPC:
         self.__st['self_repeat'] = wrt_tag.find('r') != -1
         self.__st['testsuite_name'] = testsuite_name
         self.__st['debug_mode'] = params.get("debug", False)
-
-        # uifw, this suite is duplicated
-        if self.__st['self_repeat']:
-            self.__st['test_type'] = "jqunit"
-            return session_id
-
-        # uifw, this suite is self execution
-        if self.__st['self_exec']:
-            self.__st['test_type'] = "jqunit"
 
         test_opt = self.__get_test_options(
             deviceid, test_launcher, testsuite_name, testset_name)
@@ -563,6 +579,7 @@ class TizenPC:
         if self.__st['self_exec']:
             return session_id
 
+        # enable debug information
         if self.__st['debug_mode']:
             debug_opt = '--debug'
 
@@ -571,11 +588,11 @@ class TizenPC:
         blaunched = False
         while timecnt < 3:
             exit_code, ret = shell_command(
-                APP_QUERY_STR % (stub_app))
+                APP_QUERY_STR % (deviceid, stub_app))
             if len(ret) < 1:
                 LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
-                cmdline = "'%s --port:%s %s; sleep 2s' " \
-                    % (stub_app, stub_port, debug_opt)
+                cmdline = "adb -s %s shell %s --port:%s %s" \
+                    % (deviceid, stub_app, stub_port, debug_opt)
                 exit_code, ret = shell_command(cmdline)
                 time.sleep(2)
                 timecnt += 1
@@ -587,13 +604,13 @@ class TizenPC:
             LOGGER.info("[ init test stub failed, please check target! ]")
             return None
 
-        self.__st['server_url'] = "http://%s:%s" % (HOST_NS, stub_port)
+        if self.__st['server_url'] is None:
+            self.__st['server_url'] = _get_forward_connect(deviceid, stub_port)
 
         timecnt = 0
         blaunched = False
         while timecnt < CNT_RETRY:
-            ret = http_request(get_url(
-                self.__st['server_url'], "/check_server_status"), "GET", {})
+            ret = http_request(get_url(self.__st['server_url'], "/check_server_status"), "GET", {})
             if ret is None:
                 LOGGER.info("[ check server status, not ready yet! ]")
                 timecnt += 1
@@ -609,8 +626,7 @@ class TizenPC:
                 break
 
         if blaunched:
-            ret = http_request(get_url(
-                self.__st['server_url'], "/init_test"), "POST", test_opt)
+            ret = http_request(get_url(self.__st['server_url'], "/init_test"), "POST", test_opt)
             if ret is None:
                 LOGGER.info("[ init test suite failed! ]")
                 return None
@@ -655,48 +671,6 @@ class TizenPC:
             self.__st['device_id'], test_set_name, exetype, cases)
         self.__st['async_core'].start()
         return True
-
-    def __run_jqt_test(self, sessionid, test_set_name, exetype, cases):
-        """
-            process the execution for Qunit testing
-        """
-        global TEST_SERVER_RESULT, TEST_SERVER_STATUS
-        cmdline = ""
-        blauched = False
-        timecnt = 0
-        if self.__st['self_exec']:
-            cmdline = WRT_START_STR % self.__st['test_wgt']
-            while timecnt < 3:
-                exit_code, ret = shell_command(cmdline)
-                if len(ret) > 0 and ret[0].find('launched') != -1:
-                    blauched = True
-                    break
-                timecnt += 1
-                time.sleep(3)
-
-            if blauched:
-                self.__st['async_shell'] = QUTestExecThread(
-                    deviceid=self.__st['device_id'],
-                    sessionid=sessionid,
-                    test_set=test_set_name,
-                    cases=cases)
-                self.__st['async_shell'].start()
-            else:
-                LOGGER.info(
-                    "[ launch widget \"%s\" failed! ]" % self.__st['test_wgt'])
-                TEST_SERVER_STATUS = {"finished": 1}
-                TEST_SERVER_RESULT = {"resultfile": ""}
-            return True
-
-        if self.__st['self_repeat']:
-            result_file = os.path.expanduser(
-                "~") + os.sep + sessionid + "_uifw.xml"
-            for test_case in cases:
-                LOGGER.info("[uifw] execute case: %s # %s"
-                            % (test_set_name, test_case['case_id']))
-            TEST_SERVER_RESULT = {"resultfile": UIFW_RESULT}
-            TEST_SERVER_STATUS = {"finished": 1}
-            return True
 
     def __run_web_test(self, test_set_name, exetype, ctype, cases):
         """
@@ -743,9 +717,9 @@ class TizenPC:
         if not "cases" in test_set:
             return False
 
-        cmdline = 'dlogutil -c'
+        cmdline = 'adb -s %s logcat -c' % self.__st['device_id']
         exit_code, ret = shell_command(cmdline)
-        cmdline = 'dlogutil WRT:D -v time'
+        cmdline = 'adb -s %s logcat WRT:D -v time' % self.__st['device_id']
         dlogfile = test_set['current_set_name'].replace('.xml', '.dlog')
         self.__st['dlog_file'] = dlogfile
         self.__st['dlog_shell'] = DlogThread(cmdline, dlogfile)
@@ -758,9 +732,6 @@ class TizenPC:
         if self.__st['test_type'] == "webapi":
             return self.__run_web_test(self.__test_set_name,
                                        exetype, ctype, cases)
-        elif self.__st['test_type'] == "jqunit":
-            return self.__run_jqt_test(sessionid, self.__test_set_name,
-                                       exetype, cases)
         elif self.__st['test_type'] == "coreapi":
             return self.__run_core_test(sessionid, self.__test_set_name,
                                         exetype, cases)
@@ -816,11 +787,12 @@ class TizenPC:
 
         # uninstall widget
         if self.__st['test_type'] == "webapi" and self.__st['auto_iu']:
-            cmd = WRT_UNINSTL_STR % self.__st['test_wgt']
+            cmd = WRT_UNINSTL_STR % (self.__st[
+                                     'device_id'], self.__st['test_wgt'])
             exit_code, ret = shell_command(cmd)
         return True
 
 
 def get_target_conn():
     """ Get connection for Test Target"""
-    return TizenPC()
+    return AndroidMobile()
