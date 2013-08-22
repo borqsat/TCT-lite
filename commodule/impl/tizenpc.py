@@ -42,7 +42,7 @@ WRT_INSTALL_STR = "wrt-installer -i %s"
 WRT_UNINSTL_STR = "wrt-installer -un %s"
 
 
-def _debug_trace(cmdline, logfile):
+def debug_trace(cmdline, logfile):
     global debug_flag, metux
     wbuffile = file(logfile, "w")
     import subprocess
@@ -64,35 +64,6 @@ def _debug_trace(cmdline, logfile):
     wbuffile.close()
     if exit_code is None:
         killall(proc.pid)
-
-
-
-class DebugTraceThread(threading.Thread):
-
-    """stub instance serve_forever in async mode"""
-
-    def __init__(self, cmd=None, logfile=None):
-        super(DebugTraceThread, self).__init__()
-        self.cmdline = cmd
-        self.logfile = logfile
-
-    def run(self):
-        buffer_1 = self.logfile
-        wbuffile1 = file(buffer_1, "w")
-        exit_code = None
-        import subprocess
-        cmd_open = subprocess.Popen(args=self.cmdline,
-                                    shell=True,
-                                    stdout=wbuffile1,
-                                    stderr=None)
-        while True:
-            exit_code = cmd_open.poll()
-            if exit_code is not None:
-                break
-            time.sleep(0.5)
-        wbuffile1.close()
-        if exit_code is None:
-            killall(cmd_open.pid)
 
 
 class TizenPC:
@@ -267,7 +238,7 @@ class TizenPC:
         cmdline = "dlogutil -c"
         exit_code, ret = shell_command(cmdline)
         cmdline = "dlogutil WRT:D -v time"
-        threading.Thread(target=_debug_trace, args=(cmdline, dlogfile)).start()
+        threading.Thread(target=debug_trace, args=(cmdline, dlogfile)).start()
 
     def stop_debug(self):
         global debug_flag, metux

@@ -110,7 +110,7 @@ class LocalHost:
         copyfile(local_path, remote_path)
         return True
 
-    def get_launcher_opt(self, deviceid, test_launcher, test_suite, test_set, auto_iu, fuzzy_match):
+    def get_launcher_opt(self, test_launcher, test_suite, test_set, auto_iu, fuzzy_match):
         """get test option dict """
         test_opt = {}
         test_opt["suite_name"] = test_suite
