@@ -19,7 +19,8 @@
 #
 # Authors:
 #           Chengtao,Liu  <chengtaox.liu@intel.com>
-""" The implementation for HD (host device) test mode"""
+
+""" The implementation of Android communication driver"""
 
 import os
 import time

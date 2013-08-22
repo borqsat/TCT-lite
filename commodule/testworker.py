@@ -83,46 +83,12 @@ def _set_finished(flag=0):
     LOCK_OBJ.release()
 
 
-
 def _set_finished(flag=0):
     global TEST_SERVER_STATUS
     LOCK_OBJ.acquire()
     TEST_SERVER_STATUS = {"finished": flag}
     LOCK_OBJ.release()
 
-
-class DlogThread(threading.Thread):
-
-    """stub instance serve_forever in async mode"""
-
-    def __init__(self, cmd=None, logfile=None):
-        super(DlogThread, self).__init__()
-        self.cmdline = cmd
-        self.logfile = logfile
-
-    def run(self):
-        buffer_1 = self.logfile
-        wbuffile1 = file(buffer_1, "w")
-        exit_code = None
-        import subprocess
-        cmd_open = subprocess.Popen(args=self.cmdline,
-                                    shell=True,
-                                    stdout=wbuffile1,
-                                    stderr=None)
-        global TEST_SERVER_STATUS, TEST_FLAG
-        while True:
-            exit_code = cmd_open.poll()
-            if exit_code is not None:
-                break
-            time.sleep(0.5)
-            LOCK_OBJ.acquire()
-            set_status = TEST_SERVER_STATUS
-            LOCK_OBJ.release()
-            if TEST_FLAG == 1 or set_status.get('finished', 0) == 1:
-                break
-        wbuffile1.close()
-        if exit_code is None:
-            killall(cmd_open.pid)
 
 class CoreTestWorker(threading.Thread):
 
@@ -330,11 +296,11 @@ class WebTestWorker(threading.Thread):
             if test_set_finished:
                 break
 
+UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
+
 
 class QUTestWorker(threading.Thread):
-
     """execute Jquery Unit test suite """
-    UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
 
     def __init__(self, testclient, sessionid="", test_set="", cases=None):
         super(QUTestWorker, self).__init__()
@@ -350,7 +316,7 @@ class QUTestWorker(threading.Thread):
         TEST_SERVER_RESULT = {"resultfile": ""}
         LOCK_OBJ.release()
         _set_finished()
-        ls_cmd = "ls -l %s" % self.UIFW_RESULT
+        ls_cmd = "ls -l %s" % UIFW_RESULT
         time_stamp = ""
         prev_stamp = ""
         LOGGER.info('[webuifw] start test execution...')
@@ -377,7 +343,7 @@ class QUTestWorker(threading.Thread):
             elif status_cnt >= 2:
                 result_file = os.path.expanduser(
                     "~") + os.sep + self.test_session + "_uifw.xml"
-                b_ok = _download_file(self.UIFW_RESULT, result_file)
+                b_ok = self.conn.download_file(UIFW_RESULT, result_file)
                 if b_ok:
                     LOCK_OBJ.acquire()
                     TEST_SERVER_RESULT = {"resultfile": result_file}
@@ -394,7 +360,7 @@ class TestWorker(object):
         super(TestWorker, self).__init__()
         self.conn = client
         self.server_url = None
-        self.tsop = dict({'async_stub': None,
+        self.opts = dict({'async_stub': None,
                           'async_shell': None,
                           'async_http': None,
                           'async_core': None,
@@ -408,6 +374,45 @@ class TestWorker(object):
                           'self_repeat': False,
                           'debug_mode': False,
                           'test_wgt': None})
+
+    def __init_test_stub(self, stub_app, stub_port, debug_opt):
+        # init testkit-stub deamon process
+        timecnt = 0
+        blaunched = False
+        while timecnt < 3:
+            if not self.conn.check_process(stub_app):
+                LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
+                cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
+                exit_code, ret = self.conn.shell_cmd(cmdline)
+                time.sleep(2)
+                timecnt += 1
+            else:
+                blaunched = True
+                break
+
+        if not blaunched:
+            LOGGER.info("[ init test stub failed, please check target! ]")
+            return blaunched
+
+        if self.server_url is None:
+            self.server_url = self.conn.get_server_url(stub_port)
+
+        timecnt = 0
+        while timecnt < CNT_RETRY:
+            ret = http_request(get_url(
+                self.server_url, "/check_server_status"), "GET", {})
+            if ret is None:
+                LOGGER.info("[ check server status, not ready yet! ]")
+                timecnt += 1
+                time.sleep(1)
+                continue
+            if "error_code" in ret:
+                LOGGER.info("[ check server status, get error code %d ! ]" % ret["error_code"])
+                return False
+            else:
+                blaunched = True
+                break
+        return blaunched
 
     def __init_webtest_opt(self, params):
         """init the test runtime, mainly process the star up of test stub"""
@@ -426,79 +431,38 @@ class TestWorker(object):
         client_cmds = params.get('client-command', '').strip().split()
 
         wrt_tag = client_cmds[1] if len(client_cmds) > 1 else ""
-        self.tsop['auto_iu'] = auto_iu = wrt_tag.find('iu') != -1
-        self.tsop['self_exec'] = wrt_tag.find('a') != -1
-        self.tsop['self_repeat'] = wrt_tag.find('r') != -1
-        self.tsop['testsuite_name'] = testsuite_name
-        self.tsop['debug_mode'] = params.get("debug", False)
+        self.opts['auto_iu'] = auto_iu = wrt_tag.find('iu') != -1
+        self.opts['self_exec'] = wrt_tag.find('a') != -1
+        self.opts['self_repeat'] = wrt_tag.find('r') != -1
+        self.opts['testsuite_name'] = testsuite_name
+        self.opts['debug_mode'] = params.get("debug", False)
         fuzzy_match = wrt_tag.find('z') != -1
 
         # uifw, this suite is duplicated
-        if self.tsop['self_repeat']:
-            self.tsop['test_type'] = "jqunit"
+        if self.opts['self_repeat']:
+            self.opts['test_type'] = "jqunit"
             return session_id
 
         # uifw, this suite is self execution
-        if self.tsop['self_exec']:
-            self.tsop['test_type'] = "jqunit"
+        if self.opts['self_exec']:
+            self.opts['test_type'] = "jqunit"
 
         test_opt = self.conn.get_launcher_opt(test_launcher, testsuite_name, testset_name, fuzzy_match, auto_iu)
-
         if test_opt is None:
             LOGGER.info("[ init the test options, get failed ]")
             return None
 
-        self.tsop['test_wgt'] = test_opt['suite_id']
+        self.opts['test_wgt'] = test_opt['suite_id']
 
         # self executed test suite don't need stub server
-        if self.tsop['self_exec']:
+        if self.opts['self_exec']:
             return session_id
 
         # enable debug information
-        if self.tsop['debug_mode']:
+        if self.opts['debug_mode']:
             debug_opt = '--debug'
 
-        # init testkit-stub deamon process
-        timecnt = 0
-        blaunched = False
-        while timecnt < 3:
-            if not self.conn.check_process(stub_app):
-                LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
-                cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
-                exit_code, ret = self.conn.shell_cmd(cmdline)
-                time.sleep(2)
-                timecnt += 1
-            else:
-                blaunched = True
-                break
-
-        if not blaunched:
-            LOGGER.info("[ init test stub failed, please check target! ]")
-            return None
-
-        if self.server_url is None:
-            self.server_url = self.conn.get_server_url(stub_port)
-
-        timecnt = 0
-        blaunched = False
-        while timecnt < CNT_RETRY:
-            ret = http_request(get_url(
-                self.server_url, "/check_server_status"), "GET", {})
-            if ret is None:
-                LOGGER.info("[ check server status, not ready yet! ]")
-                timecnt += 1
-                time.sleep(1)
-                continue
-
-            if "error_code" in ret:
-                LOGGER.info("[ check server status, "
-                            "get error code %d ! ]" % ret["error_code"])
-                return None
-            else:
-                blaunched = True
-                break
-
-        if blaunched:
+        if self.__init_test_stub(stub_app, stub_port, debug_opt):
             ret = http_request(get_url(
                 self.server_url, "/init_test"), "POST", test_opt)
             if ret is None:
@@ -515,7 +479,7 @@ class TestWorker(object):
                                    "POST", capability_opt)
             return session_id
         else:
-            LOGGER.info("[ connect to server timeout! ]")
+            LOGGER.info("[ Init test stub failed ! ]")
             return None
 
     def init_test(self, params):
@@ -530,18 +494,18 @@ class TestWorker(object):
         if "testset-name" in params:
             self.__test_set_name = params["testset-name"]
         if "client-command" in params and params['client-command'] is not None:
-            self.tsop['test_type'] = "webapi"
+            self.opts['test_type'] = "webapi"
             return self.__init_webtest_opt(params)
         else:
-            self.tsop['test_type'] = "coreapi"
+            self.opts['test_type'] = "coreapi"
             return str(uuid.uuid1())
 
     def __run_core_test(self, sessionid, test_set_name, exetype, cases):
         """
             process the execution for core api test
         """
-        self.tsop['async_core'] = CoreTestWorker(self.conn, test_set_name, exetype, cases)
-        self.tsop['async_core'].start()
+        self.opts['async_core'] = CoreTestWorker(self.conn, test_set_name, exetype, cases)
+        self.opts['async_core'].start()
         return True
 
     def __run_jqt_test(self, sessionid, test_set_name, exetype, cases):
@@ -549,37 +513,24 @@ class TestWorker(object):
             process the execution for Qunit testing
         """
         global TEST_SERVER_RESULT, TEST_SERVER_STATUS
-        cmdline = ""
-        blauched = False
-        timecnt = 0
-        if self.tsop['self_exec']:
-            cmdline = WRT_START_STR % self.tsop['test_wgt']
-            while timecnt < 3:
-                exit_code, ret = self.conn.shell_cmd(cmdline)
-                if len(ret) > 0 and ret[0].find('launched') != -1:
-                    blauched = True
-                    break
-                timecnt += 1
-                time.sleep(3)
-
-            if blauched:
-                self.tsop['async_shell'] = QUTestExecThread(
-                    sessionid=sessionid,
-                    test_set=test_set_name,
-                    cases=cases)
-                self.tsop['async_shell'].start()
+        if self.opts['self_exec']:
+            if self.conn.check_widget_process(self.opts['test_wgt']):
+                self.opts['async_shell'] = QUTestWorker(self.conn,
+                                                        sessionid,
+                                                        test_set_name,
+                                                        cases)
+                self.opts['async_shell'].start()
             else:
                 LOGGER.info(
-                    "[ launch widget \"%s\" failed! ]" % self.tsop['test_wgt'])
+                    "[ launch widget \"%s\" failed! ]" % self.opts['test_wgt'])
                 TEST_SERVER_STATUS = {"finished": 1}
                 TEST_SERVER_RESULT = {"resultfile": ""}
             return True
 
-        if self.tsop['self_repeat']:
+        if self.opts['self_repeat']:
             result_file = os.path.expanduser(
                 "~") + os.sep + sessionid + "_uifw.xml"
-            b_ok = self.conn.download_file(UIFW_RESULT,
-                                  result_file)
+            b_ok = self.conn.download_file(UIFW_RESULT, result_file)
             for test_case in cases:
                 LOGGER.info("[uifw] execute case: %s # %s"
                             % (test_set_name, test_case['case_id']))
@@ -600,10 +551,10 @@ class TestWorker(object):
         """
         case_count = len(cases)
         blknum = 0
-        if case_count % self.tsop['block_size'] == 0:
-            blknum = case_count / self.tsop['block_size']
+        if case_count % self.opts['block_size'] == 0:
+            blknum = case_count / self.opts['block_size']
         else:
-            blknum = case_count / self.tsop['block_size'] + 1
+            blknum = case_count / self.opts['block_size'] + 1
 
         idx = 1
         test_set_blocks = []
@@ -614,18 +565,18 @@ class TestWorker(object):
             block_data["totalBlk"] = str(blknum)
             block_data["currentBlk"] = str(idx)
             block_data["casecount"] = str(case_count)
-            start = (idx - 1) * self.tsop['block_size']
+            start = (idx - 1) * self.opts['block_size']
             if idx == blknum:
                 end = case_count
             else:
-                end = idx * self.tsop['block_size']
+                end = idx * self.opts['block_size']
             block_data["cases"] = cases[start:end]
             test_set_blocks.append(block_data)
             idx += 1
-        self.tsop['async_http'] = WebTestWorker(
-            self.server_url, self.tsop['testsuite_name'],
-            test_set_blocks, exetype)
-        self.tsop['async_http'].start()
+        self.opts['async_http'] = WebTestWorker(self.server_url, 
+                                                self.opts['testsuite_name'],
+                                                test_set_blocks, exetype)
+        self.opts['async_http'].start()
         return True
 
     def run_test(self, sessionid, test_set):
@@ -637,15 +588,18 @@ class TestWorker(object):
         if not "cases" in test_set:
             return False
 
-        self.conn.download_debug()
+        # start debug thread
+        dlogfile = test_set['current_set_name'].replace('.xml', '.dlog')
+        self.opts['dlog_file'] = dlogfile
+        self.conn.start_debug(self.opts['dlog_file'])
         time.sleep(0.5)
 
         cases, exetype, ctype = test_set["cases"], test_set["exetype"], test_set["type"]
-        if self.tsop['test_type'] == "webapi":
+        if self.opts['test_type'] == "webapi":
             return self.__run_web_test(self.__test_set_name,exetype, ctype, cases)
-        elif self.tsop['test_type'] == "coreapi":
+        elif self.opts['test_type'] == "coreapi":
             return self.__run_core_test(sessionid, self.__test_set_name, exetype, cases)
-        elif self.tsop['test_type'] == "jqunit":
+        elif self.opts['test_type'] == "jqunit":
             return self.__run_jqt_test(sessionid, self.__test_set_name, exetype, cases)
         else:
             LOGGER.info("[ unsupported test suite type ! ]")
@@ -693,11 +647,15 @@ class TestWorker(object):
         TEST_FLAG = 1
         LOCK_OBJ.release()
 
-        # add dlog output for debug
-        if self.tsop['debug_mode']:
-            _print_dlog(self.tsop['dlog_file'])
-
         # uninstall widget
-        if self.tsop['test_type'] == "webapi" and self.tsop['auto_iu']:
-            self.conn.uninstall_widget(self.tsop['test_wgt'])
+        if self.opts['test_type'] == "webapi" and self.opts['auto_iu']:
+            self.conn.uninstall_widget(self.opts['test_wgt'])
+
+        # stop debug thread
+        self.conn.stop_debug()
+
+        # add dlog output for debug
+        if self.opts['debug_mode']:
+            _print_dlog(self.opts['dlog_file'])
+
         return True
