@@ -351,7 +351,7 @@ class TRunner:
                         self.__write_set_result(
                             test_xml_set, set_result)
                         # shut down server
-                        self.__shut_down_server(self.session_id)
+                        self.finalize_test(self.session_id)
                         break
         except IOError, error:
             LOGGER.error(
@@ -874,7 +874,7 @@ class TRunner:
             # return True to finished this set  ,becasue server error
             return True
 
-    def __shut_down_server(self, sessionid):
+    def finalize_test(self, sessionid):
         '''shut_down testkit-stub'''
         try:
             self.testworker.finalize_test(sessionid)
