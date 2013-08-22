@@ -35,7 +35,11 @@ from commodule.log import LOGGER
 from commodule.autoexec import shell_command, shell_command_ext
 from commodule.killall import killall
 
+
 LOCAL_HOST_NS = "127.0.0.1"
+RPM_INSTALL = "sdb -s %s shell rpm -ivh %s"
+RPM_UNINSTALL = "sdb -s %s shell rpm -e %s"
+RPM_LIST = "sdb -s %s shell rpm -qa | grep tct"
 APP_QUERY_STR = "sdb -s %s shell ps aux | grep '%s' | awk '{print $2}'"
 APP_KILL_STR = "sdb -s %s shell kill -9 %s"
 WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l | grep '%s'|awk '{print $2\":\"$NF}'"
@@ -43,9 +47,11 @@ WRT_START_STR = "sdb -s %s shell wrt-launcher -s %s"
 WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
 WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i %s"
 WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
+DLOG_CLEAR = "sdb -s %s shell dlogutil -c"
+DLOG_WRT = "sdb -s %s shell dlogutil WRT:D -v time"
 
 
-def _debug_trace(cmdline, logfile):
+def debug_trace(cmdline, logfile):
     global debug_flag, metux
     wbuffile = file(logfile, "w")
     import subprocess
@@ -84,7 +90,6 @@ class TizenMobile:
     Implementation for transfer data
     between Host and Tizen Mobile Device
     """
-
     get_device_ids = _get_device_ids
 
     def __init__(self, device_id=None):
@@ -276,13 +281,21 @@ class TizenMobile:
         """install a package on tizen device:
         push package and install with shell command
         """
-        cmd = "sdb -s %s shell rpm -ivh %s" % (self.deviceid, pkgpath)
+        cmd = RPM_INSTALL % (self.deviceid, pkgpath)
+        exit_code, ret = shell_command(cmd)
+        return ret
+
+    def uninstall_package(self, pkgname):
+        """install a package on tizen device:
+        push package and install with shell command
+        """
+        cmd = RPM_UNINSTALL % (self.deviceid, pkgname)
         exit_code, ret = shell_command(cmd)
         return ret
 
     def get_installed_package(self):
         """get list of installed package from device"""
-        cmd = "sdb -s %s shell rpm -qa | grep tct" % (self.deviceid)
+        cmd = RPM_LIST % self.deviceid
         exit_code, ret = shell_command(cmd)
         return ret
 
@@ -290,10 +303,10 @@ class TizenMobile:
         global debug_flag, metux
         debug_flag = True
         metux = threading.Lock()
-        cmdline = "sdb -s %s shell dlogutil -c" % (self.deviceid)
+        cmdline = DLOG_CLEAR % self.deviceid
         exit_code, ret = shell_command(cmdline)
-        cmdline = "sdb -s %s shell dlogutil WRT:D -v time" % (self.deviceid)
-        threading.Thread(target=_debug_trace, args=(cmdline, dlogfile)).start()
+        cmdline = DLOG_WRT % self.deviceid
+        threading.Thread(target=debug_trace, args=(cmdline, dlogfile)).start()
 
     def stop_debug(self):
         global debug_flag, metux

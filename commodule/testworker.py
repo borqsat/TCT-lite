@@ -83,13 +83,6 @@ def _set_finished(flag=0):
     LOCK_OBJ.release()
 
 
-def _set_finished(flag=0):
-    global TEST_SERVER_STATUS
-    LOCK_OBJ.acquire()
-    TEST_SERVER_STATUS = {"finished": flag}
-    LOCK_OBJ.release()
-
-
 class CoreTestWorker(threading.Thread):
 
     """ execute core test in async mode """
@@ -149,7 +142,7 @@ class CoreTestWorker(threading.Thread):
                             continue
                         tmpname = os.path.expanduser(
                             "~") + os.sep + "measure_tmp"
-                        if _download_file(self.device_id, fname, tmpname):
+                        if self.conn.download_file(fname, tmpname):
                             try:
                                 config = ConfigParser.ConfigParser()
                                 config.read(tmpname)
@@ -282,8 +275,7 @@ class WebTestWorker(threading.Thread):
                         _print_result(self.test_suite_name, ret["cases"])
                     elif exetype == 'manual':
                         LOGGER.info(
-                            "[ executing manual cases,"
-                            " please take care of device ]\r\n")
+                            "[ executing manual cases, please check device ! ]\r\n")
 
                     if ret["finished"] == 1:
                         test_set_finished = True
@@ -364,9 +356,7 @@ class TestWorker(object):
                           'async_shell': None,
                           'async_http': None,
                           'async_core': None,
-                          'dlog_shell': None,
                           'block_size': 300,
-                          'device_id': None,
                           'test_type': None,
                           'auto_iu': False,
                           'fuzzy_match': False,
@@ -527,7 +517,7 @@ class TestWorker(object):
                 TEST_SERVER_RESULT = {"resultfile": ""}
             return True
 
-        if self.opts['self_repeat']:
+        elif self.opts['self_repeat']:
             result_file = os.path.expanduser(
                 "~") + os.sep + sessionid + "_uifw.xml"
             b_ok = self.conn.download_file(UIFW_RESULT, result_file)
@@ -592,7 +582,7 @@ class TestWorker(object):
         dlogfile = test_set['current_set_name'].replace('.xml', '.dlog')
         self.opts['dlog_file'] = dlogfile
         self.conn.start_debug(self.opts['dlog_file'])
-        time.sleep(0.5)
+        time.sleep(1)
 
         cases, exetype, ctype = test_set["cases"], test_set["exetype"], test_set["type"]
         if self.opts['test_type'] == "webapi":
