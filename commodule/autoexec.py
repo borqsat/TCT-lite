@@ -18,8 +18,6 @@
 # Boston, MA  02110-1301, USA.
 #
 # Authors:
-#              Zhang, Huihui <huihuix.zhang@intel.com>
-#              Wendong, Sui  <weidongx.sun@intel.com>
 #              Liu,chengtao <chengtaox.liu@intel.com>
 """ The shell command executor module"""
 
@@ -48,6 +46,7 @@ def shell_command(cmd, timeout=15):
         time.sleep(0.2)
 
     if exit_code is None:
+        killall(proc.pid)
         exit_code = -1
         result = []
     else:

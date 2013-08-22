@@ -19,7 +19,8 @@
 #
 # Authors:
 #           Chengtao,Liu  <chengtaox.liu@intel.com>
-""" The implementation for HD (host device) test mode"""
+
+""" The implementation of TIZEN mobile communication"""
 
 import os
 import time
@@ -32,16 +33,40 @@ import ConfigParser
 from datetime import datetime
 from commodule.log import LOGGER
 from commodule.autoexec import shell_command, shell_command_ext
-
+from commodule.killall import killall
 
 LOCAL_HOST_NS = "127.0.0.1"
 APP_QUERY_STR = "sdb -s %s shell ps aux | grep '%s' | awk '{print $2}'"
 APP_KILL_STR = "sdb -s %s shell kill -9 %s"
-WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i /opt/%s/%s.wgt"
 WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l | grep '%s'|awk '{print $2\":\"$NF}'"
 WRT_START_STR = "sdb -s %s shell wrt-launcher -s %s"
 WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
+WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i %s"
 WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
+
+
+def _debug_trace(cmdline, logfile):
+    global debug_flag, metux
+    wbuffile = file(logfile, "w")
+    import subprocess
+    exit_code = None
+    proc = subprocess.Popen(args=cmdline,
+                            shell=True,
+                            stdout=wbuffile,
+                            stderr=None)
+    while True:
+        exit_code = proc.poll()
+        if exit_code is not None:
+            break
+        time.sleep(0.5)
+        metux.acquire()
+        proc_flag = debug_flag
+        metux.release()
+        if not proc_flag:
+            break
+    wbuffile.close()
+    if exit_code is None:
+        killall(proc.pid)
 
 
 def _get_device_ids():
@@ -73,6 +98,19 @@ class TizenMobile:
         exit_code, ret = shell_command(APP_QUERY_STR % (self.deviceid, process_name))
         return len(ret)
 
+    def check_widget_process(self, wgt_name):
+        timecnt = 0
+        blauched = False
+        cmdline = WRT_START_STR % (self.deviceid, wgt_name)
+        while timecnt < 3:
+            exit_code, ret = shell_command(cmdline)
+            if len(ret) > 0 and ret[0].find('launched') != -1:
+                blauched = True
+                break
+            timecnt += 1
+            time.sleep(3)
+        return blauched
+
     def shell_cmd_ext(self,
                       cmd="",
                       timeout=None,
@@ -80,7 +118,7 @@ class TizenMobile:
                       stdout_file=None,
                       stderr_file=None):
         cmdline = "sdb -s %s shell '%s; echo returncode=$?'" % (self.deviceid, cmd)
-        return shell_command_ext(cmd, timeout, boutput, stdout_file, stderr_file)
+        return shell_command_ext(cmdline, timeout, boutput, stdout_file, stderr_file)
 
     def get_device_info(self):
         """get tizen deivce inforamtion"""
@@ -205,16 +243,10 @@ class TizenMobile:
             # test suite need to be installed by commodule
             if auto_iu:
                 test_wgt = test_set
-                cmd = WRT_INSTALL_STR % (self.deviceid, test_suite, test_wgt)
-                exit_code, ret = shell_command(cmd)
-                if exit_code == -1:
+                test_wgt_path = "/opt/%s/%s.wgt" % (test_suite, test_wgt)
+                if not self.install_widget(test_wgt_path):
                     LOGGER.info("[ failed to install widget \"%s\" in target ]"
                                 % test_wgt)
-                    cmd = APP_QUERY_STR % (self.deviceid, "wrt-installer -i")
-                    exit_code, ret = shell_command(cmd)
-                    for line in ret:
-                        cmd = APP_KILL_STR % (self.deviceid, line.strip('\r\n'))
-                        exit_code, ret = shell_command(cmd)
                     return None
             else:
                 test_wgt = test_suite
@@ -254,13 +286,34 @@ class TizenMobile:
         exit_code, ret = shell_command(cmd)
         return ret
 
-    def download_debug(self, dlogfile):
-        cmdline = 'dlog -c'
-        exit_code, ret = shell_cmd(cmdline)
-        cmdline = 'dlog WRT:D -v time'
-        self.tsop['dlog_file'] = dlogfile
-        self.tsop['dlog_shell'] = DlogThread(cmdline, dlogfile)
-        self.tsop['dlog_shell'].start()
+    def start_debug(self, dlogfile):
+        global debug_flag, metux
+        debug_flag = True
+        metux = threading.Lock()
+        cmdline = "sdb -s %s shell dlogutil -c" % (self.deviceid)
+        exit_code, ret = shell_command(cmdline)
+        cmdline = "sdb -s %s shell dlogutil WRT:D -v time" % (self.deviceid)
+        threading.Thread(target=_debug_trace, args=(cmdline, dlogfile)).start()
+
+    def stop_debug(self):
+        global debug_flag, metux
+        metux.acquire()
+        debug_flag = False
+        metux.release()
+
+    def install_widget(self, wgt_path):
+        cmd = WRT_INSTALL_STR % (self.deviceid, wgt_path)
+        exit_code, ret = shell_command(cmd)
+        if exit_code == -1:
+            cmd = APP_QUERY_STR % (self.deviceid, "wrt-installer -i")
+            exit_code, ret = shell_command(cmd, 90)
+            for line in ret:
+                print line
+                cmd = APP_KILL_STR % (self.deviceid, line.strip('\r\n'))
+                exit_code, ret = shell_command(cmd)
+            return False
+        else:
+            return True
 
     def uninstall_widget(self, wgt_name):
         cmd = WRT_UNINSTL_STR % (self.deviceid, wgt_name)

@@ -502,7 +502,7 @@ default.runner', \
 
 except KeyboardInterrupt, err:
     if RUNNER.session_id:
-        RUNNER.connector.finalize_test(RUNNER.session_id)
+        RUNNER.finalize_test(RUNNER.session_id)
     if can_merge_result:
         RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
     if down_status:
@@ -511,7 +511,7 @@ except KeyboardInterrupt, err:
     sys.exit(1)
 except Exception, err:
     if RUNNER.session_id:
-        RUNNER.connector.finalize_test(RUNNER.session_id)
+        RUNNER.finalize_test(RUNNER.session_id)
     if can_merge_result:
         RUNNER.merge_resultfile(START_TIME, CURRENT_LOG_DIR)
     if down_status:
