@@ -27,16 +27,20 @@ class Connector:
 
     """Communication module for test host and test remote"""
     def __init__(self, config):
-        self.__handler = None
+        self.conn = None
         if "testremote" in config:
             try:
                 exec "from impl.%s import get_target_conn" % config[
                     "testremote"]
-                self.__handler = get_target_conn()
+                device_no = config.get('deviceid', None)
+                if device_no is not None:
+                    self.conn = get_target_conn(device_no)
+                else:
+                    self.conn = get_target_conn()
             except Exception, error:
-                LOGGER.error("[Error: Failed to initilize connector,"
+                LOGGER.error("[Error: Failed to initilize com-module,"
                              " exception: % s]\n" % error)
 
     def get_connector(self):
         """list the handler instance"""
-        return self.__handler
+        return self.conn
