@@ -419,14 +419,13 @@ class TestWorker(object):
         testset_name = params.get('testset-name', '')
         capability_opt = params.get("capability", None)
         client_cmds = params.get('client-command', '').strip().split()
-
         wrt_tag = client_cmds[1] if len(client_cmds) > 1 else ""
+        fuzzy_match = wrt_tag.find('z') != -1
         self.opts['auto_iu'] = auto_iu = wrt_tag.find('iu') != -1
         self.opts['self_exec'] = wrt_tag.find('a') != -1
         self.opts['self_repeat'] = wrt_tag.find('r') != -1
         self.opts['testsuite_name'] = testsuite_name
         self.opts['debug_mode'] = params.get("debug", False)
-        fuzzy_match = wrt_tag.find('z') != -1
 
         # uifw, this suite is duplicated
         if self.opts['self_repeat']:
@@ -474,16 +473,13 @@ class TestWorker(object):
 
     def init_test(self, params):
         """init the test envrionment"""
-        self.__test_set_name = ""
-
         global TEST_FLAG
         LOCK_OBJ.acquire()
         TEST_FLAG = 0
         LOCK_OBJ.release()
 
-        if "testset-name" in params:
-            self.__test_set_name = params["testset-name"]
-        if "client-command" in params and params['client-command'] is not None:
+        self.opts['testset_name'] = params.get('testset-name', '')
+        if params.get('client-command') is not None:
             self.opts['test_type'] = "webapi"
             return self.__init_webtest_opt(params)
         else:
@@ -581,16 +577,16 @@ class TestWorker(object):
         # start debug thread
         dlogfile = test_set['current_set_name'].replace('.xml', '.dlog')
         self.opts['dlog_file'] = dlogfile
-        self.conn.start_debug(self.opts['dlog_file'])
+        self.conn.start_debug(dlogfile)
         time.sleep(1)
 
         cases, exetype, ctype = test_set["cases"], test_set["exetype"], test_set["type"]
         if self.opts['test_type'] == "webapi":
-            return self.__run_web_test(self.__test_set_name,exetype, ctype, cases)
+            return self.__run_web_test(self.opts['testset_name'], exetype, ctype, cases)
         elif self.opts['test_type'] == "coreapi":
-            return self.__run_core_test(sessionid, self.__test_set_name, exetype, cases)
+            return self.__run_core_test(sessionid, self.opts['testset_name'], exetype, cases)
         elif self.opts['test_type'] == "jqunit":
-            return self.__run_jqt_test(sessionid, self.__test_set_name, exetype, cases)
+            return self.__run_jqt_test(sessionid, self.opts['testset_name'], exetype, cases)
         else:
             LOGGER.info("[ unsupported test suite type ! ]")
             return False
