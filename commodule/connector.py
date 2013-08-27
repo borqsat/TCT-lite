@@ -26,18 +26,19 @@ from .log import LOGGER
 class Connector:
 
     """Communication module for test host and test remote"""
+
     def __init__(self, config):
         self.conn = None
-        if "testremote" in config:
+        if "testmode" in config:
             try:
                 exec "from impl.%s import get_target_conn" % config[
-                    "testremote"]
+                    "testmode"]
                 device_no = config.get('deviceid', None)
                 if device_no is not None:
                     self.conn = get_target_conn(device_no)
                 else:
                     self.conn = get_target_conn()
-            except Exception, error:
+            except Exception as error:
                 LOGGER.error("[Error: Failed to initilize com-module,"
                              " exception: % s]\n" % error)
 

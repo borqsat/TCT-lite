@@ -94,7 +94,8 @@ class AndroidMobile:
         return shell_command(cmdline, timeout)
 
     def check_process(self, process_name):
-        exit_code, ret = shell_command(APP_QUERY_STR % (self.deviceid, process_name))
+        exit_code, ret = shell_command(
+            APP_QUERY_STR % (self.deviceid, process_name))
         return len(ret)
 
     def shell_cmd_ext(self,
@@ -103,7 +104,8 @@ class AndroidMobile:
                       boutput=False,
                       stdout_file=None,
                       stderr_file=None):
-        cmdline = "adb -s %s shell '%s; echo returncode=$?'" % (self.deviceid, cmd)
+        cmdline = "adb -s %s shell '%s; echo returncode=$?'" % (
+            self.deviceid, cmd)
         return shell_command_ext(cmdline, timeout, boutput, stdout_file, stderr_file)
 
     def get_device_info(self):
@@ -142,7 +144,7 @@ class AndroidMobile:
         else:
             return True
 
-    def get_launcher_opt(self, test_launcher, test_suite, test_set, auto_iu, fuzzy_match):
+    def get_launcher_opt(self, test_launcher, test_suite, test_set, fuzzy_match, auto_iu):
         """get test option dict """
         test_opt = {}
         test_opt["suite_name"] = test_suite

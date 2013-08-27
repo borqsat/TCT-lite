@@ -37,9 +37,11 @@ APP_QUERY_STR = "ps aux | grep %s | grep -v grep"
 
 
 class LocalHost:
+
     """ Implementation for transfer data
         between Host and Tizen PC
     """
+
     def __init__(self):
         self.deviceid = "localhost"
 
@@ -110,7 +112,7 @@ class LocalHost:
         copyfile(local_path, remote_path)
         return True
 
-    def get_launcher_opt(self, test_launcher, test_suite, test_set, auto_iu, fuzzy_match):
+    def get_launcher_opt(self, test_launcher, test_suite, test_set, fuzzy_match, auto_iu):
         """get test option dict """
         test_opt = {}
         test_opt["suite_name"] = test_suite
