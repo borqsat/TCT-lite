@@ -59,6 +59,7 @@ class TRunner:
     Apply filter for each run.
     Conduct tests execution.
     """
+
     def __init__(self, connector):
         """ init all self parameters here """
         # dryrun
@@ -159,7 +160,7 @@ class TRunner:
                 LOGGER.info("[ analysis test xml file: %s ]" % resultfile)
                 self.__prepare_result_file(testxmlfile, resultfile)
                 self.__split_test_xml(resultfile, resultdir)
-            except IOError, error:
+            except IOError as error:
                 LOGGER.error(error)
                 ok_prepare &= False
         return ok_prepare
@@ -199,7 +200,7 @@ class TRunner:
                 with open(suitefilename, 'w') as output:
                     tree = etree.ElementTree(element=root)
                     tree.write(output)
-            except IOError, error:
+            except IOError as error:
                 LOGGER.error("[ Error: create filtered result file: %s failed,\
                  error: %s ]" % (suitefilename, error))
             case_suite_find = etree.parse(
@@ -243,10 +244,10 @@ class TRunner:
                 with open(resultfile, 'w') as output:
                     tree = etree.ElementTree(element=suiteparent)
                     tree.write(output)
-            except IOError, error:
+            except IOError as error:
                 LOGGER.error("[ Error: create filtered result file: %s failed,\
                     error: %s ]" % (resultfile, error))
-        except IOError, error:
+        except IOError as error:
             LOGGER.error(error)
             return False
 
@@ -355,7 +356,7 @@ class TRunner:
                         # shut down server
                         self.finalize_test(self.session_id)
                         break
-        except IOError, error:
+        except IOError as error:
             LOGGER.error(
                 "[ Error: fail to run webapi test xml, error: %s ]" % error)
 
@@ -452,7 +453,7 @@ class TRunner:
                 output.write(declaration_text)
                 tree = etree.ElementTree(element=root)
                 tree.write(output, xml_declaration=False, encoding='utf-8')
-        except IOError, error:
+        except IOError as error:
             LOGGER.error(
                 "[ Error: merge result file failed, error: %s ]" % error)
         # change &lt;![CDATA[]]&gt; to <![CDATA[]]>
@@ -462,7 +463,7 @@ class TRunner:
             if self.resultfile:
                 if os.path.splitext(self.resultfile)[-1] == '.xml':
                     if not os.path.exists(os.path.dirname(self.resultfile)):
-                        if len(os.path.dirname(self.resultfile))>0:
+                        if len(os.path.dirname(self.resultfile)) > 0:
                             os.makedirs(os.path.dirname(self.resultfile))
                     LOGGER.info("[ copy result xml to output file:"
                                 " %s ]" % self.resultfile)
@@ -471,10 +472,10 @@ class TRunner:
                     LOGGER.info(
                         "[ Please specify and xml file for result output,"
                         " not:%s ]" % self.resultfile)
-        except IOError, error:
+        except IOError as error:
             LOGGER.error("[ Error: fail to copy the result file to: %s,"
-                      " please check if you have created its parent directory,"
-                      " error: %s ]" % (self.resultfile, error))
+                         " please check if you have created its parent directory,"
+                         " error: %s ]" % (self.resultfile, error))
 
     def __merge_result(self, setresultfiles, totals):
         """ merge set result to total"""
@@ -495,7 +496,7 @@ class TRunner:
                             # when total xml and result xml have same suite
                             # name and set name
                             self.__merge_result_by_name(
-                              result_set, total_set, result_suite, total_suite)
+                                result_set, total_set, result_suite, total_suite)
             total_xml.write(totalfile)
             totals.add(totalfile)
         return totals
@@ -506,7 +507,7 @@ class TRunner:
         if result_set.get('name') == total_set.get('name') \
                 and result_suite.get('name') == total_suite.get('name'):
             if result_set.get('set_debug_msg'):
-                total_set.set("set_debug_msg",result_set.get('set_debug_msg'))
+                total_set.set("set_debug_msg", result_set.get('set_debug_msg'))
             # set cases that doesn't have result in result \
             # set to N/A
             # append cases from result set to total set
@@ -520,7 +521,7 @@ class TRunner:
                     try:
                         self.__count_result(result_case)
                         total_set.append(result_case)
-                    except IOError, error:
+                    except IOError as error:
                         LOGGER.error("[ Error: fail to append %s, error: %s ]"
                                      % (result_case.get('id'), error))
 
@@ -586,7 +587,7 @@ class TRunner:
                         "if it's not right, please check the test xml files, "
                         "or the filter values ]")
         else:
-            LOGGER.info("  [ pass rate: %.2f%% ]" % (int(
+            LOGGER.info("  [ pass rate: %.2f%% ]" % (float(
                 self.testresult_dict["pass"]) * 100 / int(total_case_number)))
             LOGGER.info("  [ PASS case number: %s ]" %
                         self.testresult_dict["pass"])
@@ -691,7 +692,7 @@ class TRunner:
                 parameters.setdefault("dryrun", True)
             self.set_parameters = parameters
 
-        except IOError, error:
+        except IOError as error:
             LOGGER.error("[ Error: fail to prepare cases parameters, "
                          "error: %s ]\n" % error)
             return False
@@ -782,10 +783,10 @@ class TRunner:
     def __extract_measures(self, buf, pattern):
         """
         This function extracts lines from <buf> containing the defined
-        <pattern>. For each line containing the pattern, it extracts the 
-        string to the end of line Then it splits the content in multiple 
-        fields using the defined separator <field_sep> and maps the fields 
-        to measurement attributes defined in xsd. Finally, a list containing 
+        <pattern>. For each line containing the pattern, it extracts the
+        string to the end of line Then it splits the content in multiple
+        fields using the defined separator <field_sep> and maps the fields
+        to measurement attributes defined in xsd. Finally, a list containing
         all measurement objects found in input buffer is returned
         """
         out = []
@@ -846,7 +847,7 @@ class TRunner:
                 starup_parameters['rerun'] = self.rerun
             if len(self.capabilities) > 0:
                 starup_parameters['capability'] = self.capabilities
-        except IOError, error:
+        except IOError as error:
             LOGGER.error(
                 "[ Error: prepare starup parameters, error: %s ]" % error)
         return starup_parameters
@@ -880,7 +881,7 @@ class TRunner:
         '''shut_down testkit-stub'''
         try:
             self.testworker.finalize_test(sessionid)
-        except Exception, error:
+        except Exception as error:
             LOGGER.error("[ Error: fail to close webapi http server, "
                          "error: %s ]" % error)
 
@@ -898,7 +899,7 @@ class TRunner:
 
             self.set_capability(capabilities)
             return True
-        except IOError, error:
+        except IOError as error:
             LOGGER.error(
                 "[ Error: fail to parse capability xml, error: %s ]" % error)
             return False
@@ -931,20 +932,20 @@ class TRunner:
                 result_tree = etree.parse(result_file)
                 result_em = result_tree.getroot()
                 dubug_file = os.path.basename(set_result_xml)
-                dubug_file = os.path.splitext(dubug_file)[0]+'.dlog'
+                dubug_file = os.path.splitext(dubug_file)[0] + '.dlog'
                 for result_suite in result_em.getiterator('suite'):
                     for result_set in result_suite.getiterator('set'):
                         for test_suite in test_em.getiterator('suite'):
                             for test_set in test_suite.getiterator('set'):
                                 if result_set.get('name') == \
-                                             test_set.get('name'):
-                                    result_set.set("set_debug_msg",dubug_file)
+                                        test_set.get('name'):
+                                    result_set.set("set_debug_msg", dubug_file)
                                     test_suite.remove(test_set)
                                     test_suite.append(result_set)
                 test_tree.write(set_result_xml)
                 os.remove(result_file)
             LOGGER.info("[ cases result saved to resultfile ]\n")
-        except OSError, error:
+        except OSError as error:
             traceback.print_exc()
             LOGGER.error(
                 "[ Error: fail to write cases result, error: %s ]\n" % error)
@@ -991,7 +992,7 @@ def get_version_info():
             config.read(version_file)
         version = config.get('public_version', 'version')
         return version
-    except KeyError, error:
+    except KeyError as error:
         LOGGER.error(
             "[ Error: fail to parse version info, error: %s ]\n" % error)
         return ""
@@ -1010,7 +1011,7 @@ def replace_cdata(file_name):
         old_file.close()
         remove(file_name)
         move(abs_path, file_name)
-    except IOError, error:
+    except IOError as error:
         LOGGER.error("[ Error: fail to replace cdata in the result file, "
                      "error: %s ]\n" % error)
 
@@ -1066,9 +1067,9 @@ def write_json_result(set_result_xml, set_result):
         parse_tree = etree.parse(set_result_xml)
         root_em = parse_tree.getroot()
         dubug_file = os.path.basename(set_result_xml)
-        dubug_file = os.path.splitext(dubug_file)[0]+'.dlog'
+        dubug_file = os.path.splitext(dubug_file)[0] + '.dlog'
         for tset in root_em.getiterator('set'):
-            tset.set("set_debug_msg",dubug_file)
+            tset.set("set_debug_msg", dubug_file)
             for tcase in tset.getiterator('testcase'):
                 for case_result in case_results:
                     if tcase.get("id") == case_result['case_id']:
@@ -1081,7 +1082,7 @@ def write_json_result(set_result_xml, set_result):
                                     m_results = case_result['measures']
                                     for m_result in m_results:
                                         if measurement.get('name') == \
-                                  m_result['name'] and 'value' in m_result:
+                                                m_result['name'] and 'value' in m_result:
                                             measurement.set(
                                                 'value', m_result[
                                                     'value'])
@@ -1107,10 +1108,11 @@ def write_json_result(set_result_xml, set_result):
         parse_tree.write(set_result_xml)
 
         LOGGER.info("[ cases result saved to resultfile ]\n")
-    except IOError, error:
+    except IOError as error:
         traceback.print_exc()
         LOGGER.error(
             "[ Error: fail to write cases result, error: %s ]\n" % error)
+
 
 def get_buildinfo():
     """ get builf info"""
@@ -1122,9 +1124,8 @@ def get_buildinfo():
         root = etree.parse(builfinfo_file).getroot()
         for element in root.findall("buildinfo"):
             if element is not None:
-                if element.get("name").lower()=='buildversion':
+                if element.get("name").lower() == 'buildversion':
                     child = etree.Element.getchildren(element)
                     if child and child[0].text:
                         buildid = child[0].text
     return buildid
-
