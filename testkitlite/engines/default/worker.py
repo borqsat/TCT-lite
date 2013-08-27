@@ -485,7 +485,7 @@ class TestWorker(object):
             result_file = os.path.expanduser(
                 "~") + os.sep + sessionid + "_uifw.xml"
             for test_case in cases:
-                LOGGER.info("[uifw] execute case: %s # %s"
+                LOGGER.info("[webuifw] execute case: %s # %s"
                             % (test_set_name, test_case['case_id']))
 
             if not self.conn.download_file(UIFW_RESULT, result_file):

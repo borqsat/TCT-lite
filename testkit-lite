@@ -284,7 +284,7 @@ default.runner', \
     else:
         COMMODULE_TYPE = "tizenmobile"
 
-    CONNECTOR = Connector({"testremote": COMMODULE_TYPE, "deviceid":OPTIONS.device_serial}).get_connector()
+    CONNECTOR = Connector({"testmode": COMMODULE_TYPE, "deviceid":OPTIONS.device_serial}).get_connector()
     if CONNECTOR == None:
         LOGGER.error("[ Error: init commodule error... ]\n")
         sys.exit(1)
