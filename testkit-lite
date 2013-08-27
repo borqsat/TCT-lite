@@ -80,11 +80,12 @@ COMMON_FILTERS = {
 down_status = False
 remote_test = False
 can_merge_result = False
-
+# get platform version info
+os_ver = platform.system()
 # start testkit-lite in Singleton mode
 kill_testkit_lite(PID_FILE)
 
-if not platform.system() == "Linux":
+if not os_ver == "Linux" and not not os_ver == "Darwin":
     try:
         if not EXISTS(LOG_DIR):
             os.makedirs(LOG_DIR)
@@ -362,7 +363,7 @@ default.runner', \
         sys.exit(1)
 
     # 1) prepare log dir
-    if platform.system() == "Linux":
+    if os_ver == "Linux" or os_ver == "Darwin":
         SESSION = datetime.today().isoformat('-')
     else:
         SESSION = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
@@ -389,7 +390,7 @@ default.runner', \
         if EXISTS(t):
             filename = t
             filename = os.path.splitext(filename)[0]
-            if platform.system() == "Linux":
+            if os_ver == "Linux" or os_ver == "Darwin":
                 if not filename.startswith('/'):
                     LOGGER.error("[ Error:"
                           " xml file %s should start with '/' ]" % filename)

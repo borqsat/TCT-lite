@@ -42,7 +42,7 @@ APK_INSTALL = "adb -s %s shell pm install %s"
 APK_UNINSTALL = "adb -s %s shell pm uninstall %s"
 APK_LIST = "adb -s %s shell pm list packages |grep '%s'|cut -d ':' -f2"
 DLOG_CLEAR = "adb -s %s shell logcat -c"
-DLOG_WRT = "adb -s %s shell logcat -c"
+DLOG_WRT = "adb -s %s shell logcat -v time"
 
 
 def debug_trace(cmdline, logfile):
@@ -90,7 +90,7 @@ class AndroidMobile:
         self.deviceid = device_id
 
     def shell_cmd(self, cmd="", timeout=15):
-        cmdline = "sdb -s %s shell %s" % (self.deviceid, cmd)
+        cmdline = "adb -s %s shell %s" % (self.deviceid, cmd)
         return shell_command(cmdline, timeout)
 
     def check_process(self, process_name):
@@ -103,7 +103,7 @@ class AndroidMobile:
                       boutput=False,
                       stdout_file=None,
                       stderr_file=None):
-        cmdline = "sdb -s %s shell '%s; echo returncode=$?'" % (self.deviceid, cmd)
+        cmdline = "adb -s %s shell '%s; echo returncode=$?'" % (self.deviceid, cmd)
         return shell_command_ext(cmdline, timeout, boutput, stdout_file, stderr_file)
 
     def get_device_info(self):
@@ -124,7 +124,7 @@ class AndroidMobile:
         exit_code, ret = shell_command(cmd)
         if exit_code != 0:
             error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
-            LOGGER.info("[ Download file \"%s\" from target failed, error: %s ]"
+            LOGGER.info("[ Download file \"%s\" failed, error: %s ]"
                         % (remote_path, error))
             return False
         else:
