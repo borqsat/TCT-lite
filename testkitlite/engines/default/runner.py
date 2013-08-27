@@ -41,7 +41,9 @@ from os import remove
 from commodule.log import LOGGER
 from commodule.autoexec import shell_command
 from commodule.str2 import str2xmlstr
-from commodule.testworker import TestWorker
+
+
+from .worker import TestWorker
 
 JOIN = os.path.join
 DIRNAME = os.path.dirname
@@ -831,9 +833,9 @@ class TRunner:
             tsuite = parse_tree.getroot().getiterator('suite')[0]
             tset = parse_tree.getroot().getiterator('set')[0]
             if tset.get("launcher") is not None:
-                starup_parameters['client-command'] = tset.get("launcher")
+                starup_parameters['test-launcher'] = tset.get("launcher")
             else:
-                starup_parameters['client-command'] = tsuite.get("launcher")
+                starup_parameters['test-launcher'] = tsuite.get("launcher")
             starup_parameters['testsuite-name'] = tsuite.get("name")
             starup_parameters['testset-name'] = tset.get("name")
             starup_parameters['stub-name'] = self.stub_name

@@ -33,7 +33,7 @@ def killall(ppid):
     """Kill all children process by parent process ID"""
     os_ver = platform.system()
     try:
-        if os_ver == "Linux":
+        if os_ver == "Linux" or os_ver == "Darwin":
             ppid = str(ppid)
             pidgrp = []
 
