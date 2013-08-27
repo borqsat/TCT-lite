@@ -20,7 +20,7 @@
 # Authors:
 #           Chengtao,Liu  <chengtaox.liu@intel.com>
 
-""" The implementation of Tizen PC communication"""
+""" The implementation of tizenpc PC communication"""
 
 import os
 import time
@@ -33,13 +33,17 @@ from commodule.autoexec import shell_command, shell_command_ext
 
 
 HOST_NS = "127.0.0.1"
-CNT_RETRY = 10
-DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
-APP_QUERY_STR = "ps aux | grep %s"
+RPM_INSTALL = "rpm -ivh %s"
+RPM_UNINSTALL = "rpm -e %s"
+RPM_LIST = "sdb -s %s shell rpm -qa | grep tct"
+APP_QUERY_STR = "ps aux |grep '%s'|grep -v grep|awk '{print $2}'"
+APP_KILL_STR = "kill -9 %s"
 WRT_QUERY_STR = "wrt-launcher -l|grep '%s'|grep -v grep|awk '{print $2\":\"$NF}'"
 WRT_START_STR = "wrt-launcher -s %s"
 WRT_INSTALL_STR = "wrt-installer -i %s"
 WRT_UNINSTL_STR = "wrt-installer -un %s"
+DLOG_CLEAR = "dlogutil -c"
+DLOG_WRT = "dlogutil WRT:D -v time"
 
 
 def debug_trace(cmdline, logfile):
@@ -66,9 +70,9 @@ def debug_trace(cmdline, logfile):
         killall(proc.pid)
 
 
-class TizenPC:
+class tizenpcPC:
     """ Implementation for transfer data
-        between Host and Tizen PC
+        between Host and tizenpc PC
     """
     def __init__(self):
         self.deviceid = "localhost"
@@ -109,7 +113,7 @@ class TizenPC:
 
     def get_device_info(self):
         """
-            get tizen deivce inforamtion
+            get tizenpc deivce inforamtion
         """
         device_info = {}
         resolution_str = ""
@@ -167,15 +171,23 @@ class TizenPC:
 
     def install_package(self, pkgpath):
         """
-           install a package on tizen device
+           install a package on tizenpc device
         """
-        cmd = "rpm -ivh %s" % pkgpath
+        cmd = RPM_INSTALL % pkgpath
+        exit_code, ret = shell_command(cmd)
+        return ret
+
+    def install_package(self, pkgname):
+        """
+           install a package on tizenpc device
+        """
+        cmd = RPM_UNINSTALL % pkgname
         exit_code, ret = shell_command(cmd)
         return ret
 
     def get_installed_package(self):
         """get list of installed package from device"""
-        cmd = "rpm -qa | grep tct"
+        cmd = RPM_LIST
         exit_code, ret = shell_command(cmd)
         return ret
 
@@ -235,9 +247,9 @@ class TizenPC:
         global debug_flag, metux
         debug_flag = True
         metux = threading.Lock()
-        cmdline = "dlogutil -c"
+        cmdline = DLOG_CLEAR
         exit_code, ret = shell_command(cmdline)
-        cmdline = "dlogutil WRT:D -v time"
+        cmdline = DLOG_WRT
         threading.Thread(target=debug_trace, args=(cmdline, dlogfile)).start()
 
     def stop_debug(self):
@@ -246,12 +258,12 @@ class TizenPC:
         debug_flag = False
         metux.release()
 
-    def install_widget(self, wgt_path):
+    def install_widget(self, wgt_path="", timeout=90):
         cmd = WRT_INSTALL_STR % wgt_path
-        exit_code, ret = shell_command(cmd)
+        exit_code, ret = shell_command(cmd, timeout)
         if exit_code == -1:
-            cmd = APP_QUERY_STR % ("wrt-installer -i")
-            exit_code, ret = shell_command(cmd, 90)
+            cmd = APP_QUERY_STR % wgt_path
+            exit_code, ret = shell_command(cmd)
             for line in ret:
                 cmd = APP_KILL_STR % line.strip('\r\n')
                 exit_code, ret = shell_command(cmd)
@@ -267,4 +279,4 @@ class TizenPC:
 
 def get_target_conn():
     """ Get connection for Test Target"""
-    return TizenPC()
+    return tizenpcPC()

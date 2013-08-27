@@ -39,12 +39,11 @@ from commodule.killall import killall
 LOCAL_HOST_NS = "127.0.0.1"
 RPM_INSTALL = "sdb -s %s shell rpm -ivh %s"
 RPM_UNINSTALL = "sdb -s %s shell rpm -e %s"
-RPM_LIST = "sdb -s %s shell rpm -qa | grep tct"
-APP_QUERY_STR = "sdb -s %s shell ps aux | grep '%s' | awk '{print $2}'"
+RPM_LIST = "sdb -s %s shell \"rpm -qa|grep tct\""
+APP_QUERY_STR = "sdb -s %s shell \"ps aux|grep '%s'|grep -v grep\"|awk '{print $2}'"
 APP_KILL_STR = "sdb -s %s shell kill -9 %s"
 WRT_QUERY_STR = "sdb -s %s shell wrt-launcher -l | grep '%s'|awk '{print $2\":\"$NF}'"
 WRT_START_STR = "sdb -s %s shell wrt-launcher -s %s"
-WRT_KILL_STR = "sdb -s %s shell wrt-launcher -k %s"
 WRT_INSTALL_STR = "sdb -s %s shell wrt-installer -i %s"
 WRT_UNINSTL_STR = "sdb -s %s shell wrt-installer -un %s"
 DLOG_CLEAR = "sdb -s %s shell dlogutil -c"
@@ -86,6 +85,7 @@ def _get_device_ids():
 
 
 class TizenMobile:
+
     """
     Implementation for transfer data
     between Host and Tizen Mobile Device
@@ -100,7 +100,8 @@ class TizenMobile:
         return shell_command(cmdline, timeout)
 
     def check_process(self, process_name):
-        exit_code, ret = shell_command(APP_QUERY_STR % (self.deviceid, process_name))
+        exit_code, ret = shell_command(
+            APP_QUERY_STR % (self.deviceid, process_name))
         return len(ret)
 
     def check_widget_process(self, wgt_name):
@@ -122,7 +123,8 @@ class TizenMobile:
                       boutput=False,
                       stdout_file=None,
                       stderr_file=None):
-        cmdline = "sdb -s %s shell '%s; echo returncode=$?'" % (self.deviceid, cmd)
+        cmdline = "sdb -s %s shell '%s; echo returncode=$?'" % (
+            self.deviceid, cmd)
         return shell_command_ext(cmdline, timeout, boutput, stdout_file, stderr_file)
 
     def get_device_info(self):
@@ -136,7 +138,8 @@ class TizenMobile:
         os_version_str = ""
 
         # get resolution and screen size
-        exit_code, ret = shell_command("sdb -s %s shell xrandr" % self.deviceid)
+        exit_code, ret = shell_command(
+            "sdb -s %s shell xrandr" % self.deviceid)
         pattern = re.compile("connected (\d+)x(\d+).* (\d+mm) x (\d+mm)")
         for line in ret:
             match = pattern.search(line)
@@ -145,12 +148,14 @@ class TizenMobile:
                 screen_size_str = "%s x %s" % (match.group(3), match.group(4))
 
         # get architecture
-        exit_code, ret = shell_command("sdb -s %s shell uname -m" % self.deviceid)
+        exit_code, ret = shell_command(
+            "sdb -s %s shell uname -m" % self.deviceid)
         if len(ret) > 0:
             device_model_str = ret[0]
 
         # get hostname
-        exit_code, ret = shell_command("sdb -s %s shell uname -n" % self.deviceid)
+        exit_code, ret = shell_command(
+            "sdb -s %s shell uname -n" % self.deviceid)
         if len(ret) > 0:
             device_name_str = ret[0]
 
@@ -209,14 +214,13 @@ class TizenMobile:
         url_forward = "http://%s:%s" % (host, host_port)
         return url_forward
 
-
     def download_file(self, remote_path, local_path):
         """download file from device"""
         cmd = "sdb -s %s pull %s %s" % (self.deviceid, remote_path, local_path)
         exit_code, ret = shell_command(cmd)
         if exit_code != 0:
             error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
-            LOGGER.info("[ Download file \"%s\" from target failed, error: %s ]"
+            LOGGER.info("[ Download file \"%s\" failed, error: %s ]"
                         % (remote_path, error))
             return False
         else:
@@ -314,14 +318,13 @@ class TizenMobile:
         debug_flag = False
         metux.release()
 
-    def install_widget(self, wgt_path):
+    def install_widget(self, wgt_path="", timeout=90):
         cmd = WRT_INSTALL_STR % (self.deviceid, wgt_path)
-        exit_code, ret = shell_command(cmd)
+        exit_code, ret = shell_command(cmd, timeout)
         if exit_code == -1:
-            cmd = APP_QUERY_STR % (self.deviceid, "wrt-installer -i")
-            exit_code, ret = shell_command(cmd, 90)
+            cmd = APP_QUERY_STR % (self.deviceid, wgt_path)
+            exit_code, ret = shell_command(cmd)
             for line in ret:
-                print line
                 cmd = APP_KILL_STR % (self.deviceid, line.strip('\r\n'))
                 exit_code, ret = shell_command(cmd)
             return False
