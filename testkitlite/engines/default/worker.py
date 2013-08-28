@@ -81,7 +81,7 @@ class TestSetResut(object):
             for case_it in cases_result:
                 LOGGER.info(self._progress %
                             (self._suite_name, case_it['case_id'], case_it['result']))
-                if case_it['result'].lower() in ['fail', 'block']:
+                if case_it['result'].lower() in ['fail', 'block'] and 'stdout' in case_it:
                     LOGGER.info(case_it['stdout'])
         self._mutex.release()
 

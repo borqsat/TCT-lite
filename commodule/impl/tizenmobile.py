@@ -27,10 +27,7 @@ import time
 import socket
 import threading
 import re
-import uuid
-import ConfigParser
 
-from datetime import datetime
 from commodule.log import LOGGER
 from commodule.autoexec import shell_command, shell_command_ext
 from commodule.killall import killall
