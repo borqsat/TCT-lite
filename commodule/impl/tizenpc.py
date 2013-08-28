@@ -25,11 +25,13 @@
 import os
 import time
 import socket
+import threading
 import re
 from shutil import copyfile
 
 from commodule.log import LOGGER
 from commodule.autoexec import shell_command, shell_command_ext
+from commodule.killall import killall
 
 
 HOST_NS = "127.0.0.1"

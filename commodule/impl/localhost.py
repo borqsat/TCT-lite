@@ -120,6 +120,12 @@ class LocalHost:
         test_opt["suite_id"] = test_suite
         return test_opt
 
+    def start_debug(self, dlogfile):
+        pass
+
+    def stop_debug(self):
+        pass
+
 
 def get_target_conn():
     """ Get connection for Test Target"""
