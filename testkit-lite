@@ -51,6 +51,8 @@ except ImportError, err:
 'export PYTHONPATH=/usr/share/pyshared/' to resolve this issue")
     sys.exit(1)
 
+# get platform version info
+os_ver = platform.system()
 JOIN = os.path.join
 EXISTS = os.path.exists
 DIRNAME = os.path.dirname
@@ -60,7 +62,7 @@ SPLIT = os.path.split
 ISLINK = os.path.islink
 
 TESTKIT_DIR = "/opt/testkit/lite"
-if not platform.system() == "Linux":
+if not os_ver == "Linux" and not os_ver == "Darwin":
     TESTKIT_DIR = DIRNAME(ABSPATH(__file__))
     sys.path += [JOIN(TESTKIT_DIR)]
     TESTKIT_DIR = JOIN(TESTKIT_DIR, "results")
@@ -80,12 +82,11 @@ COMMON_FILTERS = {
 down_status = False
 remote_test = False
 can_merge_result = False
-# get platform version info
-os_ver = platform.system()
+
 # start testkit-lite in Singleton mode
 kill_testkit_lite(PID_FILE)
 
-if not os_ver == "Linux" and not not os_ver == "Darwin":
+if not os_ver == "Linux" and not os_ver == "Darwin":
     try:
         if not EXISTS(LOG_DIR):
             os.makedirs(LOG_DIR)

@@ -69,8 +69,6 @@ def shell_command_ext(cmd="",
     if stderr_file is None:
         stderr_file = os.path.expanduser("~") + os.sep + "shell_stderr"
 
-    time_val = timeout
-    loop_delta = 0.1
     exit_code = None
     wbuffile1 = file(stdout_file, "w")
     wbuffile2 = file(stderr_file, "w")
@@ -95,9 +93,9 @@ def shell_command_ext(cmd="",
             break
         if boutput:
             print_log()
-        if time_val is not None:
-            time_val -= loop_delta
-            if time_val <= 0:
+        if timeout is not None:
+            timeout -= 0.1
+            if timeout <= 0:
                 try:
                     exit_code = "timeout"
                     cmd_open.terminate()
@@ -105,7 +103,7 @@ def shell_command_ext(cmd="",
                 except OSError:
                     killall(cmd_open.pid)
                 break
-        time.sleep(loop_delta)
+        time.sleep(0.1)
 
     if boutput:
         print_log()
@@ -115,8 +113,7 @@ def shell_command_ext(cmd="",
     stderr_log = str2str(rbuffile2.read())
     if 'returncode=' in stdout_log:
         index = stdout_log.find('returncode=') + 11
-        retruncode = str(stdout_log[index:])
-        exit_code = retruncode.strip('\r\n')
+        exit_code = str(stdout_log[index:]).strip('\r\n')
     stdout_log = '<![CDATA[' + stdout_log + ']]>'
     stderr_log = '<![CDATA[' + stderr_log + ']]>'
 
