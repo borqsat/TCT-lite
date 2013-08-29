@@ -556,17 +556,20 @@ class TRunner:
     def __get_environment(self):
         """ get environment """
         device_info = self.connector.get_device_info()
+        build_infos = get_buildinfo()
         # add environment node
         environment = etree.Element('environment')
         environment.attrib['device_id'] = device_info["device_id"]
         environment.attrib['device_model'] = device_info["device_model"]
         environment.attrib['device_name'] = device_info["device_name"]
-        environment.attrib['build_id'] = get_buildinfo()
+        environment.attrib['build_id'] = build_infos['buildid']
         environment.attrib['host'] = platform.platform()
         environment.attrib['os_version'] = device_info["os_version"]
         environment.attrib['resolution'] = device_info["resolution"]
         environment.attrib['screen_size'] = device_info["screen_size"]
         environment.attrib['cts_version'] = get_version_info()
+        environment.attrib['device_model'] = build_infos['model']
+        environment.attrib['manufacturer'] = build_infos['manufacturer']
         other = etree.Element('other')
         other.text = ""
         environment.append(other)
@@ -1120,6 +1123,11 @@ def get_buildinfo():
     cmd = 'sdb pull /opt/usr/media/Documents/tct/buildinfo.xml /opt/testkit/lite/buildinfo.xml'
     shell_command(cmd)
     builfinfo_file = '/opt/testkit/lite/buildinfo.xml'
+    build_info = {}
+    build_info['buildid'] = ''
+    build_info['manufacturer'] = ''
+    build_info['model'] = ''
+    
     if EXISTS(builfinfo_file):
         root = etree.parse(builfinfo_file).getroot()
         for element in root.findall("buildinfo"):
@@ -1128,4 +1136,17 @@ def get_buildinfo():
                     child = etree.Element.getchildren(element)
                     if child and child[0].text:
                         buildid = child[0].text
-    return buildid
+                        build_info['buildid'] = buildid
+                if element.get("name").lower() == 'manufacturer':
+                    child = etree.Element.getchildren(element)
+                    if child and child[0].text:
+                        manufacturer = child[0].text
+                        build_info['manufacturer'] = manufacturer
+                if element.get("name").lower() == 'model':
+                    child = etree.Element.getchildren(element)
+                    if child and child[0].text:
+                        model = child[0].text
+                        build_info['model'] = model
+    os.remove(builfinfo_file)
+    return build_info
+
