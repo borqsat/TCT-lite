@@ -556,7 +556,7 @@ class TRunner:
     def __get_environment(self):
         """ get environment """
         device_info = self.connector.get_device_info()
-        build_infos = get_buildinfo()
+        build_infos = get_buildinfo(self.connector)
         # add environment node
         environment = etree.Element('environment')
         environment.attrib['device_id'] = device_info["device_id"]
@@ -1117,18 +1117,16 @@ def write_json_result(set_result_xml, set_result):
             "[ Error: fail to write cases result, error: %s ]\n" % error)
 
 
-def get_buildinfo():
+def get_buildinfo(conn):
     """ get builf info"""
-    buildid = ''
-    cmd = 'sdb pull /opt/usr/media/Documents/tct/buildinfo.xml /opt/testkit/lite/buildinfo.xml'
-    shell_command(cmd)
+    device_file = '/opt/usr/media/Documents/tct/buildinfo.xml'
     builfinfo_file = '/opt/testkit/lite/buildinfo.xml'
     build_info = {}
     build_info['buildid'] = ''
     build_info['manufacturer'] = ''
     build_info['model'] = ''
-    
-    if EXISTS(builfinfo_file):
+
+    if conn.download_file(device_file, builfinfo_file):
         root = etree.parse(builfinfo_file).getroot()
         for element in root.findall("buildinfo"):
             if element is not None:
@@ -1147,6 +1145,6 @@ def get_buildinfo():
                     if child and child[0].text:
                         model = child[0].text
                         build_info['model'] = model
-    os.remove(builfinfo_file)
+        os.remove(builfinfo_file)
     return build_info
 
