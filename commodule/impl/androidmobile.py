@@ -39,6 +39,9 @@ APK_UNINSTALL = "adb -s %s shell pm uninstall %s"
 APK_LIST = "adb -s %s shell pm list packages |grep '%s'|cut -d ':' -f2"
 DLOG_CLEAR = "adb -s %s shell logcat -c"
 DLOG_WRT = "adb -s %s shell logcat -v time"
+APP_START = "adb -s %s shell am start -n %s"
+APP_STOP = "adb -s %s shell am force-stop %s"
+XWALK_APP = "org.xwalk.%s/.%sActivity"
 
 
 def debug_trace(cmdline, logfile):
@@ -80,7 +83,6 @@ class AndroidMobile:
     """ Implementation for transfer data
         between Host and Android Mobile Device
     """
-    get_device_ids = _get_device_ids
 
     def __init__(self, device_id=None):
         self.deviceid = device_id
@@ -145,9 +147,10 @@ class AndroidMobile:
         test_opt = {}
         test_opt["suite_name"] = test_suite
         test_opt["launcher"] = test_launcher
-        test_opt["suite_id"] = test_suite
+        test_opt["test_app_id"] = test_suite
         if test_launcher.startswith('xwalk'):
-            test_opt["suite_id"] = 'org.xwalk.app.template'
+            test_suite = test_suite.replace('-', '_')
+            test_opt["test_app_id"] = XWALK_APP % (test_suite, test_suite)
         return test_opt
 
     def get_server_url(self, remote_port="8000"):
@@ -217,6 +220,31 @@ class AndroidMobile:
         metux.acquire()
         debug_flag = False
         metux.release()
+
+    def launch_app(self, wgt_name):
+        timecnt = 0
+        blauched = False
+        pkg_name = wgt_name.split('/')[0]
+        cmdline = APP_STOP % (self.deviceid, pkg_name)
+        exit_code, ret = shell_command(cmdline)        
+        cmdline = APP_START % (self.deviceid, wgt_name)
+        while timecnt < 3:
+            exit_code, ret = shell_command(cmdline)
+            if len(ret) > 0 and ret[0].find('Starting') != -1:
+                blauched = True
+                break
+            timecnt += 1
+            time.sleep(3)
+        return blauched
+
+    def kill_app(self, wgt_name):
+        pkg_name = wgt_name.split('/')[0]
+        cmdline = APP_STOP % (self.deviceid, pkg_name)
+        exit_code, ret = shell_command(cmdline)        
+        return True
+
+    install_app = install_package
+    uninstall_app = uninstall_package
 
 
 def get_target_conn(device_id=None):

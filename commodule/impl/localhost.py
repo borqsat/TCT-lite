@@ -117,7 +117,7 @@ class LocalHost:
         test_opt = {}
         test_opt["suite_name"] = test_suite
         test_opt["launcher"] = test_launcher
-        test_opt["suite_id"] = test_suite
+        test_opt["test_app_id"] = test_suite
         return test_opt
 
     def start_debug(self, dlogfile):

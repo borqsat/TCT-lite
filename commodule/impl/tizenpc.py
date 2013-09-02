@@ -42,6 +42,7 @@ APP_QUERY_STR = "ps aux |grep '%s'|grep -v grep|awk '{print $2}'"
 APP_KILL_STR = "kill -9 %s"
 WRT_QUERY_STR = "wrt-launcher -l|grep '%s'|grep -v grep|awk '{print $2\":\"$NF}'"
 WRT_START_STR = "wrt-launcher -s %s"
+WRT_STOP_STR = "wrt-launcher -k %s"
 WRT_INSTALL_STR = "wrt-installer -i %s"
 WRT_UNINSTL_STR = "wrt-installer -un %s"
 DLOG_CLEAR = "dlogutil -c"
@@ -85,19 +86,6 @@ class tizenpcPC:
     def check_process(self, process_name):
         exit_code, ret = shell_command(APP_QUERY_STR % process_name)
         return len(ret)
-
-    def check_widget_process(self, wgt_name):
-        timecnt = 0
-        blauched = False
-        cmdline = WRT_START_STR % wgt_name
-        while timecnt < 3:
-            exit_code, ret = shell_command(cmdline)
-            if len(ret) > 0 and ret[0].find('launched') != -1:
-                blauched = True
-                break
-            timecnt += 1
-            time.sleep(3)
-        return blauched
 
     def shell_cmd_ext(self,
                       cmd="",
@@ -206,17 +194,18 @@ class tizenpcPC:
     def get_launcher_opt(self, test_launcher, test_suite, test_set, fuzzy_match, auto_iu):
         """get test option dict """
         test_opt = {}
-        cmd = ""
         test_opt["suite_name"] = test_suite
         test_opt["launcher"] = test_launcher
-        suite_id = None
+        test_opt["test_app_id"] = test_suite
         if test_launcher.find('WRTLauncher') != -1:
+            cmd = ""
+            test_app_id = None
             test_opt["launcher"] = "wrt-launcher"
             # test suite need to be installed
             if auto_iu:
                 test_wgt = test_set
                 test_wgt_path = "/opt/%s/%s.wgt" % (test_suite, test_set)
-                if not self.install_widget(test_wgt_path):
+                if not self.install_app(test_wgt_path):
                     LOGGER.info("[ failed to install widget \"%s\" in target ]"
                                 % test_wgt)
                     return None
@@ -233,15 +222,15 @@ class tizenpcPC:
                 if len(items) < 1:
                     continue
                 if (fuzzy_match and items[0].find(test_wgt) != -1) or items[0] == test_wgt:
-                    suite_id = items[1].strip('\r\n')
+                    test_app_id = items[1].strip('\r\n')
                     break
 
-            if suite_id is None:
+            if test_app_id is None:
                 LOGGER.info("[ test widget \"%s\" not found in target ]"
                             % test_wgt)
                 return None
             else:
-                test_opt["suite_id"] = suite_id
+                test_opt["test_app_id"] = test_app_id
 
         return test_opt
 
@@ -260,7 +249,28 @@ class tizenpcPC:
         debug_flag = False
         metux.release()
 
-    def install_widget(self, wgt_path="", timeout=90):
+    def launch_app(self, wgt_name):
+        # timecnt = 0
+        # blauched = False
+        # cmdline = WRT_STOP_STR % wgt_name
+        # exit_code, ret = shell_command(cmdline)
+        # cmdline = WRT_START_STR % wgt_name
+        # while timecnt < 3:
+        #     exit_code, ret = shell_command(cmdline)
+        #     if len(ret) > 0 and ret[0].find('launched') != -1:
+        #         blauched = True
+        #         break
+        #     timecnt += 1
+        #     time.sleep(3)
+        # return blauched
+        return True
+
+    def kill_app(self, wgt_name):
+        # cmdline = WRT_STOP_STR % wgt_name
+        # exit_code, ret = shell_command(cmdline)
+        return True
+
+    def install_app(self, wgt_path="", timeout=90):
         cmd = WRT_INSTALL_STR % wgt_path
         exit_code, ret = shell_command(cmd, timeout)
         if exit_code == -1:
@@ -273,7 +283,7 @@ class tizenpcPC:
         else:
             return True
 
-    def uninstall_widget(self, wgt_name):
+    def uninstall_app(self, wgt_name):
         cmd = WRT_UNINSTL_STR % wgt_name
         exit_code, ret = shell_command(cmd)
         return True

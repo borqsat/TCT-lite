@@ -225,7 +225,7 @@ def _core_test_exec(conn, test_set_name, exetype, cases_queue, result_obj):
     result_obj.set_status(1)
 
 
-def _web_test_exec(server_url, exetype, cases_queue, result_obj):
+def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_obj):
     if cases_queue is None:
         return
 
@@ -235,19 +235,23 @@ def _web_test_exec(server_url, exetype, cases_queue, result_obj):
     for test_group in cases_queue:
         if test_set_finished:
             break
+
         ret = http_request(
             get_url(server_url, "/set_testcase"), "POST", test_group, 30)
         if ret is None or "error_code" in ret:
             LOGGER.error(
-                "[ set testcases time out,"
-                "please confirm target is available ]")
+                "[ set testcases error, please check device! ]")
             result_obj.set_status(1)
             break
 
+        if not conn.launch_app(test_web_app):
+            result_obj.set_status(1)
+            break
+
+        LOGGER.info('web app,' + test_web_app)
         while True:
             if result_obj.get_status() == 1:
                 break
-
             ret = http_request(
                 get_url(server_url, "/check_server_status"), "GET", {})
             if ret is None or "error_code" in ret:
@@ -328,8 +332,8 @@ class TestWorker(object):
                           'fuzzy_match': False,
                           'self_exec': False,
                           'self_repeat': False,
-                          'debug_mode': False,
-                          'test_wgt': None})
+                          'debug_mode': False
+                          })
 
     def __init_test_stub(self, stub_app, stub_port, debug_opt):
         # init testkit-stub deamon process
@@ -394,25 +398,17 @@ class TestWorker(object):
         self.opts['self_repeat'] = wrt_tag.find('r') != -1
         self.opts['debug_mode'] = params.get("debug", False)
 
-        # uifw, this suite is duplicated
-        if self.opts['self_repeat']:
-            self.opts['test_type'] = "jqunit"
-            return session_id
-
-        # uifw, this suite is self execution
-        if self.opts['self_exec']:
-            self.opts['test_type'] = "jqunit"
-
         test_opt = self.conn.get_launcher_opt(
             test_launcher, testsuite_name, testset_name, fuzzy_match, auto_iu)
         if test_opt is None:
             LOGGER.info("[ init the test options, get failed ]")
             return None
+        else:
+            self.opts.update(test_opt)
 
-        self.opts['test_wgt'] = test_opt['suite_id']
-
-        # self executed test suite don't need stub server
-        if self.opts['self_exec']:
+        # uifw, this suite don't need stub
+        if self.opts['self_exec'] or self.opts['self_repeat']:
+            self.opts['test_type'] = "jqunit"
             return session_id
 
         # enable debug information
@@ -467,7 +463,7 @@ class TestWorker(object):
             process the execution for Qunit testing
         """
         if self.opts['self_exec']:
-            if self.conn.check_widget_process(self.opts['test_wgt']):
+            if self.conn.launch_app(self.opts['test_app_id']):
                 self.opts['async_th'] = threading.Thread(
                     target=_webuifw_test_exec,
                     args=(
@@ -476,7 +472,7 @@ class TestWorker(object):
                 self.opts['async_th'].start()
             else:
                 LOGGER.info(
-                    "[ launch widget \"%s\" failed! ]" % self.opts['test_wgt'])
+                    "[ launch test app \"%s\" failed! ]" % self.opts['test_app_id'])
                 self.result_obj.set_result({"resultfile": ""})
                 self.result_obj.set_status(1)
             return True
@@ -527,7 +523,7 @@ class TestWorker(object):
         self.opts['async_th'] = threading.Thread(
             target=_web_test_exec,
             args=(
-                self.server_url, exetype, test_set_queues, self.result_obj)
+                self.conn, self.server_url, self.opts['test_app_id'], exetype, test_set_queues, self.result_obj)
         )
         self.opts['async_th'].start()
         return True
@@ -587,9 +583,11 @@ class TestWorker(object):
 
         self.result_obj.set_status(1)
 
-        # uninstall widget
-        if self.opts['test_type'] == "webapi" and self.opts['auto_iu']:
-            self.conn.uninstall_widget(self.opts['test_wgt'])
+        # stop and uninstall widget
+        if self.opts['test_type'] == "webapi":
+            self.conn.kill_app(self.opts['test_app_id'])
+            if self.opts['auto_iu']:
+                self.conn.uninstall_app(self.opts['test_app_id'])
 
         # stop debug thread
         self.conn.stop_debug()
