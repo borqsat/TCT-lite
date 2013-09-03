@@ -27,6 +27,7 @@ import time
 import socket
 import threading
 import re
+import shutil
 
 from commodule.log import LOGGER
 from commodule.autoexec import shell_command, shell_command_ext
@@ -200,7 +201,11 @@ class TizenMobile:
 
     def download_file(self, remote_path, local_path):
         """download file from device"""
-        cmd = "sdb -s %s pull %s %s" % (self.deviceid, remote_path, local_path)
+        local_path_dir = os.path.dirname(local_path)
+        if not os.path.exists(local_path_dir):
+            os.makedirs(local_path_dir)
+        filename = os.path.basename(remote_path)
+        cmd = "sdb -s %s pull %s %s" % (self.deviceid, remote_path, local_path_dir)
         exit_code, ret = shell_command(cmd)
         if exit_code != 0:
             error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
@@ -208,6 +213,9 @@ class TizenMobile:
                         % (remote_path, error))
             return False
         else:
+            src_path = os.path.join(local_path_dir, filename)
+            if src_path != local_path:
+                shutil.move(src_path, local_path)
             return True
 
     def upload_file(self, remote_path, local_path):
