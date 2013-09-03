@@ -232,45 +232,55 @@ def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_
     exetype = exetype.lower()
     test_set_finished = False
     err_cnt = 0
+    relaunch_cnt = 0
     for test_group in cases_queue:
         if test_set_finished:
             break
 
         ret = http_request(
             get_url(server_url, "/set_testcase"), "POST", test_group, 30)
-        if ret is None or "error_code" in ret:
+        if ret is None:
             LOGGER.error(
-                "[ set testcases error, please check device! ]")
+                "[ set testcases timeout, please check device! ]")
             result_obj.set_status(1)
             break
 
-        if not conn.launch_app(test_web_app):
-            result_obj.set_status(1)
-            break
+        # if not conn.launch_app(test_web_app):
+        #     result_obj.set_status(1)
+        #     break
 
-        LOGGER.info('web app,' + test_web_app)
         while True:
             if result_obj.get_status() == 1:
+                test_set_finished = True
                 break
             ret = http_request(
                 get_url(server_url, "/check_server_status"), "GET", {})
-            if ret is None or "error_code" in ret:
+            if ret is None:
                 err_cnt += 1
                 if err_cnt >= CNT_RETRY:
                     LOGGER.error(
-                        "[ check server status time out,"
-                        " please confirm device is available ]")
+                        "[ check server status time out, please check deivce! ]")
                     test_set_finished = True
                     result_obj.set_status(1)
                     break
+            else:
+                if "error_code" in ret:
+                    relaunch_cnt += 1
+                    if relaunch_cnt >= 3:
+                        test_set_finished = True
+                        result_obj.set_status(1)
+                        break
+                    # if not conn.launch_app(test_web_app):
+                    #     break
+                else:
+                    err_cnt = 0
+                    relaunch_cnt = 0
 
-            elif "finished" in ret:
-                err_cnt = 0
-                if 'cases' in ret and ret["cases"] is not None and len(ret["cases"]):
-                    result_obj.extend_result(ret["cases"])
+                result_cases = ret.get("cases", [])
+                if result_cases is not None and len(result_cases):
+                    result_obj.extend_result(result_cases)
                 elif exetype == 'manual':
-                    LOGGER.info(
-                        "[ executing manual cases, please check device! ]\r\n")
+                    LOGGER.info("[ executing manual cases, please check device! ]\r\n")
 
                 if ret["finished"] == 1:
                     test_set_finished = True
@@ -339,7 +349,7 @@ class TestWorker(object):
         # init testkit-stub deamon process
         timecnt = 0
         blaunched = False
-        while timecnt < 3:
+        while timecnt < CNT_RETRY:
             if not self.conn.check_process(stub_app):
                 LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
                 cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
@@ -403,8 +413,10 @@ class TestWorker(object):
         if test_opt is None:
             LOGGER.info("[ init the test options, get failed ]")
             return None
-        else:
-            self.opts.update(test_opt)
+
+        # to be removed in later version
+        test_opt["suite_id"] = test_opt["test_app_id"]
+        self.opts.update(test_opt)
 
         # uifw, this suite don't need stub
         if self.opts['self_exec'] or self.opts['self_repeat']:
@@ -463,6 +475,7 @@ class TestWorker(object):
             process the execution for Qunit testing
         """
         if self.opts['self_exec']:
+            self.conn.kill_app(self.opts['test_app_id'])
             if self.conn.launch_app(self.opts['test_app_id']):
                 self.opts['async_th'] = threading.Thread(
                     target=_webuifw_test_exec,

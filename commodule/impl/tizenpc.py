@@ -250,24 +250,23 @@ class tizenpcPC:
         metux.release()
 
     def launch_app(self, wgt_name):
-        # timecnt = 0
-        # blauched = False
-        # cmdline = WRT_STOP_STR % wgt_name
-        # exit_code, ret = shell_command(cmdline)
-        # cmdline = WRT_START_STR % wgt_name
-        # while timecnt < 3:
-        #     exit_code, ret = shell_command(cmdline)
-        #     if len(ret) > 0 and ret[0].find('launched') != -1:
-        #         blauched = True
-        #         break
-        #     timecnt += 1
-        #     time.sleep(3)
-        # return blauched
-        return True
+        timecnt = 0
+        blauched = False
+        cmdline = WRT_STOP_STR % wgt_name
+        exit_code, ret = shell_command(cmdline)
+        cmdline = WRT_START_STR % wgt_name
+        while timecnt < 3:
+            exit_code, ret = shell_command(cmdline)
+            if len(ret) > 0 and ret[0].find('launched') != -1:
+                blauched = True
+                break
+            timecnt += 1
+            time.sleep(3)
+        return blauched
 
     def kill_app(self, wgt_name):
-        # cmdline = WRT_STOP_STR % wgt_name
-        # exit_code, ret = shell_command(cmdline)
+        cmdline = WRT_STOP_STR % wgt_name
+        exit_code, ret = shell_command(cmdline)
         return True
 
     def install_app(self, wgt_path="", timeout=90):

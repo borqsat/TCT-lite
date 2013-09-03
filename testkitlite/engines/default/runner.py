@@ -363,8 +363,8 @@ class TRunner:
     def __split_xml_to_set(self, webapi_file):
         """split xml by <set>"""
 
-        LOGGER.info("[ split xml: %s by <set> ]" % webapi_file)
-        LOGGER.info("[ this might take some time, please wait ]")
+        LOGGER.debug("[ split xml: %s by <set> ]" % webapi_file)
+        LOGGER.debug("[ this might take some time, please wait ]")
         set_number = 1
         test_xml_set_list = []
         self.resultfiles.discard(webapi_file)
@@ -386,7 +386,7 @@ class TRunner:
         for test_xml_set in test_xml_set_list:
             test_xml_set_tmp = etree.parse(test_xml_set)
             set_keep_number = 1
-            LOGGER.info("[ process set: %s ]" % test_xml_set)
+            LOGGER.debug("[ process set: %s ]" % test_xml_set)
             for temp_suite in test_xml_set_tmp.getiterator('suite'):
                 for test_xml_set_temp_set in temp_suite.getiterator('set'):
                     if set_keep_number != set_number:
@@ -398,7 +398,7 @@ class TRunner:
             set_number -= 1
             test_xml_set_tmp.write(test_xml_set)
         for empty_set in test_xml_set_list_empty:
-            LOGGER.info("[ remove empty set: %s ]" % empty_set)
+            LOGGER.debug("[ remove empty set: %s ]" % empty_set)
             test_xml_set_list.remove(empty_set)
             self.resultfiles.discard(empty_set)
 
@@ -414,9 +414,9 @@ class TRunner:
         mergefile = JOIN(latest_dir, mergefile)
         end_time = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
         LOGGER.info("\n[ test complete at time: %s ]" % end_time)
-        # LOGGER.info("[ start merging test result xml files, "\
-        #    "this might take some time, please wait ]")
-        # LOGGER.info("[ merge result files into %s ]" % mergefile)
+        LOGGER.debug("[ start merging test result xml files, "\
+           "this might take some time, please wait ]")
+        LOGGER.debug("[ merge result files into %s ]" % mergefile)
         root = etree.Element('test_definition')
         root.tail = "\n"
         totals = set()
@@ -606,8 +606,8 @@ class TRunner:
         parameters = {}
         xml_set_tmp = resultfile
         # split set_xml by <case> get case parameters
-        LOGGER.info("[ split xml: %s by <case> ]" % xml_set_tmp)
-        LOGGER.info("[ this might take some time, please wait ]")
+        LOGGER.debug("[ split xml: %s by <case> ]" % xml_set_tmp)
+        LOGGER.debug("[ this might take some time, please wait ]")
         try:
             parse_tree = etree.parse(xml_set_tmp)
             root_em = parse_tree.getroot()

@@ -327,8 +327,8 @@ default.runner', \
                 TEST_PACKAGES_DIR, tmp_remote_test_xml)
             down_status = RUNNER.connector.download_file(remote_file, local_test_package)
             if not down_status:
-                LOGGER.error('remote file can not find, "\
-                    "pls check the install test packages:%s' % remote_file)
+                LOGGER.error("can not get test definition file, pls check file on device:%s"
+                             % remote_file)
                 sys.exit(1)
             LOCALARRY.append(local_test_package)
         OPTIONS.testxml = LOCALARRY
