@@ -37,6 +37,8 @@ CNT_RETRY = 10
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 UIFW_MAX_TIME = 600
 UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
+LAUNCH_ERROR = 1
+BLOCK_ERROR = 3
 
 
 class TestSetResut(object):
@@ -245,9 +247,9 @@ def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_
             result_obj.set_status(1)
             break
 
-        # if not conn.launch_app(test_web_app):
-        #     result_obj.set_status(1)
-        #     break
+        if not conn.launch_app(test_web_app):
+            result_obj.set_status(1)
+            break
 
         while True:
             if result_obj.get_status() == 1:
@@ -265,13 +267,19 @@ def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_
                     break
             else:
                 if "error_code" in ret:
-                    relaunch_cnt += 1
-                    if relaunch_cnt >= 3:
+                    error_code = ret["error_code"]
+                    if not conn.launch_app(test_web_app):
                         test_set_finished = True
                         result_obj.set_status(1)
                         break
-                    # if not conn.launch_app(test_web_app):
-                    #     break
+                    if error_code == LAUNCH_ERROR:
+                        relaunch_cnt += 1
+                        if relaunch_cnt >= 3:
+                            test_set_finished = True
+                            result_obj.set_status(1)
+                            break
+                    elif error_code == BLOCK_ERROR:
+                        relaunch_cnt = 0
                 else:
                     err_cnt = 0
                     relaunch_cnt = 0
