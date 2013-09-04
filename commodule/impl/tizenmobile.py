@@ -205,7 +205,8 @@ class TizenMobile:
         if not os.path.exists(local_path_dir):
             os.makedirs(local_path_dir)
         filename = os.path.basename(remote_path)
-        cmd = "sdb -s %s pull %s %s" % (self.deviceid, remote_path, local_path_dir)
+        cmd = "sdb -s %s pull %s %s" % (
+            self.deviceid, remote_path, local_path_dir)
         exit_code, ret = shell_command(cmd)
         if exit_code != 0:
             error = ret[0].strip('\r\n') if len(ret) else "sdb shell timeout"
@@ -314,6 +315,8 @@ class TizenMobile:
     def launch_app(self, wgt_name):
         timecnt = 0
         blauched = False
+        cmdline = WRT_STOP_STR % (self.deviceid, wgt_name)
+        exit_code, ret = shell_command(cmdline)
         cmdline = WRT_START_STR % (self.deviceid, wgt_name)
         while timecnt < 3:
             exit_code, ret = shell_command(cmdline)

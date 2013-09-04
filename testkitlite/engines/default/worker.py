@@ -306,12 +306,11 @@ def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype,
     status_cnt = 0
     if exetype == "auto":
         LOGGER.info('[webuifw] start test executing')
-        self.conn.kill_app(test_web_app)
-        if not self.conn.launch_app(test_web_app):
+        if not conn.launch_app(test_web_app):
             LOGGER.info("[ launch test app \"%s\" failed! ]" %
                         self.opts['test_app_id'])
-            self.result_obj.set_result({"resultfile": ""})
-            self.result_obj.set_status(1)
+            result_obj.set_result({"resultfile": ""})
+            result_obj.set_status(1)
 
         while time_out > 0:
             if result_obj.get_status() == 1:
@@ -488,7 +487,7 @@ class TestWorker(object):
         self.opts['async_th'] = threading.Thread(
             target=_webuifw_test_exec,
             args=(
-                self.conn, sessionid, test_set_name, exetype, cases, self.result_obj)
+                self.conn, self.opts['test_app_id'], sessionid, test_set_name, exetype, cases, self.result_obj)
         )
         self.opts['async_th'].start()
         return True
@@ -589,7 +588,7 @@ class TestWorker(object):
         # stop test app
         if self.opts['test_type'] == "webapi":
             self.conn.kill_app(self.opts['test_app_id'])
-        # uninstall test app
+            # uninstall test app
             if self.opts['auto_iu']:
                 self.conn.uninstall_app(self.opts['test_app_id'])
 
