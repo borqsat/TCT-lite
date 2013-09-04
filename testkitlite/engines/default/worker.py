@@ -43,7 +43,7 @@ BLOCK_ERROR = 3
 
 class TestSetResut(object):
 
-    """test result """
+    """ test result """
 
     _progress = "execute case: %s # %s...(%s)"
     _mutex = threading.Lock()
@@ -105,10 +105,7 @@ def _print_dlog(dlog_file):
 
 
 def _core_test_exec(conn, test_set_name, exetype, cases_queue, result_obj):
-    """run core tests"""
-    if cases_queue is None:
-        return
-
+    """function for running core tests"""
     exetype = exetype.lower()
     total_count = len(cases_queue)
     current_idx = 0
@@ -228,9 +225,7 @@ def _core_test_exec(conn, test_set_name, exetype, cases_queue, result_obj):
 
 
 def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_obj):
-    if cases_queue is None:
-        return
-
+    """function for running web tests"""
     exetype = exetype.lower()
     test_set_finished = False
     err_cnt = 0
@@ -266,8 +261,9 @@ def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_
                     result_obj.set_status(1)
                     break
             else:
-                if "error_code" in ret:
-                    error_code = ret["error_code"]
+                result_cases = ret.get("cases")
+                error_code = ret.get("error_code")
+                if error_code is not None:
                     if not conn.launch_app(test_web_app):
                         test_set_finished = True
                         result_obj.set_status(1)
@@ -284,11 +280,11 @@ def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_
                     err_cnt = 0
                     relaunch_cnt = 0
 
-                result_cases = ret.get("cases", [])
                 if result_cases is not None and len(result_cases):
                     result_obj.extend_result(result_cases)
                 elif exetype == 'manual':
-                    LOGGER.info("[ executing manual cases, please check device! ]\r\n")
+                    LOGGER.info(
+                        "[ executing manual cases, please check device! ]\r\n")
 
                 if ret["finished"] == 1:
                     test_set_finished = True
@@ -299,9 +295,8 @@ def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_
             time.sleep(2)
 
 
-def _webuifw_test_exec(conn, test_session, test_set_name, cases_queue, result_obj):
-    if cases_queue is None:
-        return
+def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype, cases_queue, result_obj):
+    """function for running webuifw tests"""
 
     result_obj.set_status(0)
     result_obj.set_result({"resultfile": ""})
@@ -309,29 +304,36 @@ def _webuifw_test_exec(conn, test_session, test_set_name, cases_queue, result_ob
     time_stamp = prev_stamp = ""
     time_out = UIFW_MAX_TIME
     status_cnt = 0
-    LOGGER.info('[webuifw] start test execution...')
-    while time_out > 0:
-        if result_obj.get_status() == 1:
-            break
-        LOGGER.info('[webuifw] waiting for test completed...')
-        time.sleep(2)
-        time_out -= 2
-        exit_code, ret = conn.shell_cmd(ls_cmd)
-        time_stamp = ret[0] if len(ret) > 0 else ""
-        if time_stamp == prev_stamp:
-            continue
-        prev_stamp = time_stamp
-        status_cnt += 1
-        if status_cnt >= 2:
-            result_file = os.path.expanduser(
-                "~") + os.sep + test_session + "_uifw.xml"
-            if conn.download_file(UIFW_RESULT, result_file):
-                result_obj.set_result({"resultfile": result_file})
-            for test_case in cases_queue:
-                LOGGER.info("[webuifw] execute case: %s # %s" %
-                            (test_set_name, test_case['case_id']))
-            break
-    LOGGER.info('[webuifw] end test execution...')
+    if exetype == "auto":
+        LOGGER.info('[webuifw] start test executing')
+        self.conn.kill_app(test_web_app)
+        if not self.conn.launch_app(test_web_app):
+            LOGGER.info("[ launch test app \"%s\" failed! ]" %
+                        self.opts['test_app_id'])
+            self.result_obj.set_result({"resultfile": ""})
+            self.result_obj.set_status(1)
+
+        while time_out > 0:
+            if result_obj.get_status() == 1:
+                break
+            LOGGER.info('[webuifw] waiting for test completed...')
+            time.sleep(2)
+            time_out -= 2
+            exit_code, ret = conn.shell_cmd(ls_cmd)
+            time_stamp = ret[0] if len(ret) > 0 else ""
+            if time_stamp == prev_stamp:
+                continue
+            prev_stamp = time_stamp
+            status_cnt += 1
+            if status_cnt >= 2:
+                break
+        LOGGER.info('[webuifw] end test executing')
+    result_file = os.path.expanduser("~") + os.sep + test_session + "_uifw.xml"
+    if conn.download_file(UIFW_RESULT, result_file):
+        result_obj.set_result({"resultfile": result_file})
+    for test_case in cases_queue:
+        LOGGER.info("[webuifw] execute case: %s # %s" %
+                    (test_set_name, test_case['case_id']))
     result_obj.set_status(1)
 
 
@@ -482,34 +484,14 @@ class TestWorker(object):
         """
             process the execution for Qunit testing
         """
-        if self.opts['self_exec']:
-            self.conn.kill_app(self.opts['test_app_id'])
-            if self.conn.launch_app(self.opts['test_app_id']):
-                self.opts['async_th'] = threading.Thread(
-                    target=_webuifw_test_exec,
-                    args=(
-                        self.conn, sessionid, test_set_name, cases, self.result_obj)
-                )
-                self.opts['async_th'].start()
-            else:
-                LOGGER.info(
-                    "[ launch test app \"%s\" failed! ]" % self.opts['test_app_id'])
-                self.result_obj.set_result({"resultfile": ""})
-                self.result_obj.set_status(1)
-            return True
-
-        elif self.opts['self_repeat']:
-            result_file = os.path.expanduser(
-                "~") + os.sep + sessionid + "_uifw.xml"
-            for test_case in cases:
-                LOGGER.info("[webuifw] execute case: %s # %s"
-                            % (test_set_name, test_case['case_id']))
-
-            if not self.conn.download_file(UIFW_RESULT, result_file):
-                result_file = ""
-            self.result_obj.set_result({"resultfile": result_file})
-            self.result_obj.set_status(1)
-            return True
+        exetype = "auto" if self.opts['self_exec'] else ""
+        self.opts['async_th'] = threading.Thread(
+            target=_webuifw_test_exec,
+            args=(
+                self.conn, sessionid, test_set_name, exetype, cases, self.result_obj)
+        )
+        self.opts['async_th'].start()
+        return True
 
     def __run_web_test(self, sessionid, test_set_name, exetype, ctype, cases):
         """
@@ -559,7 +541,7 @@ class TestWorker(object):
         if not "cases" in test_set:
             return False
 
-        # start debug thread
+        # start debug trace thread
         dlogfile = test_set['current_set_name'].replace('.xml', '.dlog')
         self.opts['dlog_file'] = dlogfile
         self.conn.start_debug(dlogfile)
@@ -604,9 +586,10 @@ class TestWorker(object):
 
         self.result_obj.set_status(1)
 
-        # stop and uninstall widget
+        # stop test app
         if self.opts['test_type'] == "webapi":
             self.conn.kill_app(self.opts['test_app_id'])
+        # uninstall test app
             if self.opts['auto_iu']:
                 self.conn.uninstall_app(self.opts['test_app_id'])
 
