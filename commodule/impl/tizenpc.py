@@ -35,6 +35,7 @@ from commodule.killall import killall
 
 
 HOST_NS = "127.0.0.1"
+os.environ['no_proxy'] = HOST_NS
 RPM_INSTALL = "rpm -ivh %s"
 RPM_UNINSTALL = "rpm -e %s"
 RPM_LIST = "sdb -s %s shell rpm -qa | grep tct"
@@ -74,9 +75,11 @@ def debug_trace(cmdline, logfile):
 
 
 class tizenpcPC:
+
     """ Implementation for transfer data
         between Host and tizenpc PC
     """
+
     def __init__(self):
         self.deviceid = "localhost"
 

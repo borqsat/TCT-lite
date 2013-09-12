@@ -33,6 +33,7 @@ from commodule.autoexec import shell_command, shell_command_ext
 
 
 HOST_NS = "127.0.0.1"
+os.environ['no_proxy'] = HOST_NS
 APP_QUERY_STR = "ps aux | grep %s | grep -v grep"
 
 
@@ -104,8 +105,9 @@ class LocalHost:
 
     def download_file(self, remote_path, local_path):
         """download file"""
-        copyfile(remote_path, local_path)
-        return True
+        # copyfile(remote_path, local_path)
+        # return True
+        return False
 
     def upload_file(self, remote_path, local_path):
         """upload file"""
