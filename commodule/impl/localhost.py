@@ -111,16 +111,23 @@ class LocalHost:
 
     def upload_file(self, remote_path, local_path):
         """upload file"""
-        copyfile(local_path, remote_path)
-        return True
+        # copyfile(local_path, remote_path)
+        return False
 
     def get_launcher_opt(self, test_launcher, test_suite, test_set, fuzzy_match, auto_iu):
         """get test option dict """
         test_opt = {}
         test_opt["suite_name"] = test_suite
         test_opt["launcher"] = test_launcher
-        test_opt["test_app_id"] = test_suite
+        test_opt["test_app_id"] = test_launcher
         return test_opt
+
+    def launch_app(self, wgt_name):
+        exit_code, ret = shell_command(wgt_name + '&')
+        return True
+
+    def kill_app(self, wgt_name):
+        return True
 
     def start_debug(self, dlogfile):
         pass
