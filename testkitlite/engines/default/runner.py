@@ -383,10 +383,12 @@ class TRunner:
 
         # only keep one set in each xml file and remove empty set
         test_xml_set_list_empty = []
+        if len(test_xml_set_list) > 1:
+            test_xml_set_list.reverse()
         for test_xml_set in test_xml_set_list:
             test_xml_set_tmp = etree.parse(test_xml_set)
             set_keep_number = 1
-            LOGGER.debug("[ process set: %s ]" % test_xml_set)
+            # LOGGER.debug("[ process set: %s ]" % test_xml_set)
             for temp_suite in test_xml_set_tmp.getiterator('suite'):
                 for test_xml_set_temp_set in temp_suite.getiterator('set'):
                     if set_keep_number != set_number:
@@ -401,7 +403,8 @@ class TRunner:
             LOGGER.debug("[ remove empty set: %s ]" % empty_set)
             test_xml_set_list.remove(empty_set)
             self.resultfiles.discard(empty_set)
-
+        if len(test_xml_set_list) > 1:
+            test_xml_set_list.reverse()
         return test_xml_set_list
 
     def merge_resultfile(self, start_time, latest_dir):
@@ -415,7 +418,7 @@ class TRunner:
         end_time = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
         LOGGER.info("\n[ test complete at time: %s ]" % end_time)
         LOGGER.debug("[ start merging test result xml files, "\
-           "this might take some time, please wait ]")
+            "this might take some time, please wait ]")
         LOGGER.debug("[ merge result files into %s ]" % mergefile)
         root = etree.Element('test_definition')
         root.tail = "\n"
@@ -1147,4 +1150,3 @@ def get_buildinfo(conn):
                         build_info['model'] = model
         os.remove(builfinfo_file)
     return build_info
-
