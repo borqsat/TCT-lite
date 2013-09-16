@@ -36,7 +36,8 @@ from commodule.httprequest import get_url, http_request
 CNT_RETRY = 10
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 UIFW_MAX_TIME = 600
-UIFW_RESULT = "/opt/media/Documents/tcresult.xml"
+UIFW_RESULT = "/opt/media/Documents/tcresult"
+UIFW_SET_NUM = 0
 LAUNCH_ERROR = 1
 BLOCK_ERROR = 3
 
@@ -297,14 +298,17 @@ def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_
 
 def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype, cases_queue, result_obj):
     """function for running webuifw tests"""
-
+    global UIFW_SET_NUM
+    UIFW_SET_NUM = UIFW_SET_NUM + 1
+    set_UIFW_RESULT = UIFW_RESULT + "_" + str(UIFW_SET_NUM) +".xml"
     result_obj.set_status(0)
     result_obj.set_result({"resultfile": ""})
-    ls_cmd = "ls -l %s" % UIFW_RESULT
+    ls_cmd = "ls -l %s" % set_UIFW_RESULT
     time_stamp = prev_stamp = ""
     time_out = UIFW_MAX_TIME
     status_cnt = 0
     if exetype == "auto":
+        UIFW_SET_NUM = 1
         LOGGER.info('[webuifw] start test executing')
         if not conn.launch_app(test_web_app):
             LOGGER.info("[ launch test app \"%s\" failed! ]" %
@@ -328,7 +332,8 @@ def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype,
                 break
         LOGGER.info('[webuifw] end test executing')
     result_file = os.path.expanduser("~") + os.sep + test_session + "_uifw.xml"
-    if conn.download_file(UIFW_RESULT, result_file):
+
+    if conn.download_file(set_UIFW_RESULT, result_file):
         result_obj.set_result({"resultfile": result_file})
     for test_case in cases_queue:
         LOGGER.info("[webuifw] execute case: %s # %s" %
