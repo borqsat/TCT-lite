@@ -385,11 +385,6 @@ class TestWorker(object):
                 LOGGER.info("[ check server status, not ready yet! ]")
                 timecnt += 1
                 time.sleep(1)
-                continue
-            if "error_code" in ret:
-                LOGGER.info(
-                    "[ check server status, get error code %d ! ]" % ret["error_code"])
-                break
             else:
                 blaunched = True
                 break
@@ -453,7 +448,7 @@ class TestWorker(object):
                                    "POST", capability_opt)
             return session_id
         else:
-            LOGGER.info("[ Init test stub failed ! ]")
+            LOGGER.info("[ Init test failed ! ]")
             return None
 
     def init_test(self, params):
