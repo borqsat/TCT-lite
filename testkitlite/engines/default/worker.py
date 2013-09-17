@@ -304,9 +304,8 @@ def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype,
     result_obj.set_status(0)
     result_obj.set_result({"resultfile": ""})
     ls_cmd = "ls -l %s" % set_UIFW_RESULT
-    time_stamp = prev_stamp = ""
     time_out = UIFW_MAX_TIME
-    status_cnt = 0
+
     if exetype == "auto":
         UIFW_SET_NUM = 1
         LOGGER.info('[webuifw] start test executing')
@@ -316,23 +315,19 @@ def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype,
             result_obj.set_result({"resultfile": ""})
             result_obj.set_status(1)
 
-        while time_out > 0:
-            if result_obj.get_status() == 1:
-                break
-            LOGGER.info('[webuifw] waiting for test completed...')
-            time.sleep(2)
-            time_out -= 2
-            exit_code, ret = conn.shell_cmd(ls_cmd)
-            time_stamp = ret[0] if len(ret) > 0 else ""
-            if time_stamp == prev_stamp:
-                continue
-            prev_stamp = time_stamp
-            status_cnt += 1
-            if status_cnt >= 2:
-                break
-        LOGGER.info('[webuifw] end test executing')
     result_file = os.path.expanduser("~") + os.sep + test_session + "_uifw.xml"
 
+    while time_out > 0:
+        LOGGER.info('[webuifw] waiting for test completed...')
+        exit_code, ret = conn.shell_cmd(ls_cmd)
+        if 'No such file or directory' in ret[0]:
+            continue
+        else:
+            break
+        time.sleep(2)
+        time_out -= 2
+
+    LOGGER.info('[webuifw] end test executing')
     if conn.download_file(set_UIFW_RESULT, result_file):
         result_obj.set_result({"resultfile": result_file})
     for test_case in cases_queue:
