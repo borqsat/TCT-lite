@@ -102,6 +102,11 @@ class TizenMobile:
             APP_QUERY_STR % (self.deviceid, process_name))
         return len(ret)
 
+    def launch_stub(self, stub_app, stub_port="8000", debug_opt=""):
+        cmdline = "/opt/home/developer/%s --port:%s %s" % (stub_app, stub_port, debug_opt)
+        exit_code, ret = self.shell_cmd(cmdline)
+        time.sleep(2)
+
     def shell_cmd_ext(self,
                       cmd="",
                       timeout=None,
@@ -246,7 +251,7 @@ class TizenMobile:
             # test suite need to be installed by commodule
             if auto_iu:
                 test_wgt = test_set
-                test_wgt_path = "/opt/%s/%s.wgt" % (test_suite, test_wgt)
+                test_wgt_path = "/opt/usr/media/tct/opt/%s/%s.wgt" % (test_suite, test_wgt)
                 if not self.install_app(test_wgt_path):
                     LOGGER.info("[ failed to install widget \"%s\" in target ]"
                                 % test_wgt)

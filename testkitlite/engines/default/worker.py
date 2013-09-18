@@ -360,18 +360,16 @@ class TestWorker(object):
         blaunched = False
         while timecnt < CNT_RETRY:
             if not self.conn.check_process(stub_app):
-                LOGGER.info("[ attempt to launch stub: %s ]" % stub_app)
-                cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
-                exit_code, ret = self.conn.shell_cmd(cmdline)
-                time.sleep(2)
+                LOGGER.info("[ no stub process activated, now try to launch %s ]" % stub_app)
+                self.conn.launch_stub(stub_app, stub_port, debug_opt)
                 timecnt += 1
             else:
                 blaunched = True
                 break
 
         if not blaunched:
-            LOGGER.info("[ init test stub failed, please check target! ]")
-            return blaunched
+            LOGGER.info("[ launch stub process failed! ]")
+            return False
 
         if self.server_url is None:
             self.server_url = self.conn.get_server_url(stub_port)

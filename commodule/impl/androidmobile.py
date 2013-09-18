@@ -96,6 +96,9 @@ class AndroidMobile:
             APP_QUERY_STR % (self.deviceid, process_name))
         return len(ret)
 
+    def launch_stub(self, stub_app, stub_port="8000", debug_opt=""):
+        self.launch_app("testkit.stub/.TestkitStub")
+
     def shell_cmd_ext(self,
                       cmd="",
                       timeout=None,
