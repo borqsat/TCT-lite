@@ -305,8 +305,10 @@ def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype,
     result_obj.set_result({"resultfile": ""})
     ls_cmd = "ls -l %s" % set_UIFW_RESULT
     time_out = UIFW_MAX_TIME
+    rm_cmd = "rm /opt/media/Documents/tcresult*.xml"
 
     if exetype == "auto":
+        conn.shell_cmd(rm_cmd)
         UIFW_SET_NUM = 1
         LOGGER.info('[webuifw] start test executing')
         if not conn.launch_app(test_web_app):
