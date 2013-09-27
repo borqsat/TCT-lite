@@ -36,7 +36,7 @@ from commodule.httprequest import get_url, http_request
 CNT_RETRY = 10
 DATE_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 UIFW_MAX_TIME = 600
-UIFW_RESULT = "/opt/media/Documents/tcresult"
+UIFW_RESULT = "/opt/usr/media/Documents/tcresult"
 UIFW_SET_NUM = 0
 LAUNCH_ERROR = 1
 BLOCK_ERROR = 3
@@ -285,7 +285,7 @@ def _web_test_exec(conn, server_url, test_web_app, exetype, cases_queue, result_
                     result_obj.extend_result(result_cases)
                 elif exetype == 'manual':
                     LOGGER.info(
-                        "[ executing manual cases, please check device! ]\r\n")
+                        "[ please execute manual cases ]\r\n")
 
                 if ret["finished"] == 1:
                     test_set_finished = True
@@ -305,7 +305,7 @@ def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype,
     result_obj.set_result({"resultfile": ""})
     ls_cmd = "ls -l %s" % set_UIFW_RESULT
     time_out = UIFW_MAX_TIME
-    rm_cmd = "rm /opt/media/Documents/tcresult*.xml"
+    rm_cmd = "rm /opt/usr/media/Documents/tcresult*.xml"
 
     if exetype == "auto":
         conn.shell_cmd(rm_cmd)

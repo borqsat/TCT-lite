@@ -92,9 +92,10 @@ class TizenMobile:
 
     def __init__(self, device_id=None):
         self.deviceid = device_id
+        self._wrt = False
 
     def shell_cmd(self, cmd="", timeout=15):
-        cmdline = "sdb -s %s shell %s" % (self.deviceid, cmd)
+        cmdline = "sdb -s %s shell \"%s\" " % (self.deviceid, cmd)
         return shell_command(cmdline, timeout)
 
     def check_process(self, process_name):
@@ -243,8 +244,10 @@ class TizenMobile:
         test_opt = {}
         test_opt["suite_name"] = test_suite
         test_opt["launcher"] = test_launcher
-        test_opt["test_app_id"] = test_suite
+        test_opt["test_app_id"] = test_launcher
+        self._wrt = False
         if test_launcher.find('WRTLauncher') != -1:
+            self._wrt = True
             cmd = ""
             test_app_id = None
             test_opt["launcher"] = "wrt-launcher"
@@ -318,6 +321,9 @@ class TizenMobile:
         metux.release()
 
     def launch_app(self, wgt_name):
+        if not self._wrt:
+            exit_code,ret = self.shell_cmd(wgt_name)
+            return True
         timecnt = 0
         blauched = False
         cmdline = WRT_STOP_STR % (self.deviceid, wgt_name)
@@ -333,6 +339,8 @@ class TizenMobile:
         return blauched
 
     def kill_app(self, wgt_name):
+        if not self._wrt:
+            return True
         cmdline = WRT_STOP_STR % (self.deviceid, wgt_name)
         exit_code, ret = shell_command(cmdline)
         return True

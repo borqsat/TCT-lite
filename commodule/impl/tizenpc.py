@@ -91,7 +91,7 @@ class tizenpcPC:
         return len(ret)
 
     def launch_stub(self, stub_app, stub_port="8000", debug_opt=""):
-        cmdline = "/opt/home/developer/%s --port:%s %s" % (stub_app, stub_port, debug_opt)
+        cmdline = "%s --port:%s %s" % (stub_app, stub_port, debug_opt)
         exit_code, ret = self.shell_cmd(cmdline)
         time.sleep(2)
 
