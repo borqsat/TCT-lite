@@ -303,7 +303,7 @@ def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype,
     set_UIFW_RESULT = UIFW_RESULT + "_" + str(UIFW_SET_NUM) +".xml"
     result_obj.set_status(0)
     result_obj.set_result({"resultfile": ""})
-    ls_cmd = "ls -l %s" % set_UIFW_RESULT
+    ls_cmd = "ls -l %s 2>/dev/null" % set_UIFW_RESULT
     time_out = UIFW_MAX_TIME
     rm_cmd = "rm /opt/usr/media/Documents/tcresult*.xml"
 
@@ -322,9 +322,7 @@ def _webuifw_test_exec(conn, test_web_app, test_session, test_set_name, exetype,
     while time_out > 0:
         LOGGER.info('[webuifw] waiting for test completed...')
         exit_code, ret = conn.shell_cmd(ls_cmd)
-        if 'No such file or directory' in ret[0]:
-            continue
-        else:
+        if len(ret):
             break
         time.sleep(2)
         time_out -= 2

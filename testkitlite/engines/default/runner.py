@@ -93,6 +93,7 @@ class TRunner:
         self.capabilities = {}
         self.has_capability = False
         self.rerun = False
+        self.test_prefix = ""
 
     def set_global_parameters(self, options):
         "get all options "
@@ -112,6 +113,8 @@ class TRunner:
             self.debug = options.debug
         if options.rerun:
             self.rerun = options.rerun
+        if options.test_prefix:
+            self.test_prefix = options.test_prefix
 
     def set_pid_log(self, pid_log):
         """ get pid_log file """
@@ -636,8 +639,11 @@ class TRunner:
                     case_detail_tmp.setdefault("onload_delay", "3")
 
                     if tcase.find('description/test_script_entry') is not None:
-                        case_detail_tmp["entry"] = tcase.find(
+                        tc_entry = tcase.find(
                             'description/test_script_entry').text
+                        if not tc_entry:
+                            tc_entry = ""
+                        case_detail_tmp["entry"] = self.test_prefix + tc_entry
                         if tcase.find(
                                 'description/test_script_entry').get('timeout'):
                             case_detail_tmp["timeout"] = tcase.find(
@@ -849,6 +855,7 @@ class TRunner:
             if self.external_test is not None:
                 starup_parameters['external-test'] = self.external_test
             starup_parameters['debug'] = self.debug
+            starup_parameters['test_prefix'] = self.test_prefix
             if self.rerun:
                 starup_parameters['rerun'] = self.rerun
             if len(self.capabilities) > 0:

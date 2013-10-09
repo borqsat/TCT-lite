@@ -229,7 +229,7 @@ class AndroidMobile:
         blauched = False
         pkg_name = wgt_name.split('/')[0]
         cmdline = APP_STOP % (self.deviceid, pkg_name)
-        exit_code, ret = shell_command(cmdline)        
+        exit_code, ret = shell_command(cmdline)
         cmdline = APP_START % (self.deviceid, wgt_name)
         while timecnt < 3:
             exit_code, ret = shell_command(cmdline)
