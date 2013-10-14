@@ -36,8 +36,7 @@ class RunnerTestCase(unittest.TestCase):
     """main class"""
 
     def setUp(self):
-        self.connector = Connector({
-                                   "testremote": "tizenmobile"}).get_connector()
+        self.connector = Connector({"testmode": "tizenmobile"}).get_connector()
         self.connector.init_test = MagicMock(return_value='123456')
         self.connector.run_case = MagicMock(return_value=True)
         self.connector.get_test_status = MagicMock(
@@ -50,7 +49,7 @@ class RunnerTestCase(unittest.TestCase):
             "os_version": "None", "resolution": "None", 
             "screen_size": "None"})
         self.runner = TRunner(self.connector)
-        self.log_dir = os.path.join(os.path.expandvars('$HOME'), "testresult")
+        self.log_dir = os.path.join(os.path.expanduser("~"), "testresult")
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
@@ -59,8 +58,9 @@ class RunnerTestCase(unittest.TestCase):
 
     def test_set_pid_log(self):
         """test set pid_log"""
-        self.runner.set_pid_log('/home/test/autotest')
-        self.assertEqual(self.runner.pid_log, '/home/test/autotest')
+        tmp_pid_file = os.path.join(os.path.expanduser("~"), "test_pid")
+        self.runner.set_pid_log(tmp_pid_file)
+        self.assertEqual(self.runner.pid_log, tmp_pid_file)
 
     def test_set_global_parameters(self):
         """test set global_parameters"""
@@ -85,7 +85,8 @@ class RunnerTestCase(unittest.TestCase):
             help="run in debug mode,more log information print out")
         parser.add_option("--rerun", dest="rerun", action="store_true",
             help="check if rerun test mode")
-
+        parser.add_option("--testprefix", dest="test_prefix", action="store",
+            help="set prefix for test case entry")
         args = ["--output", self.log_dir, "-e", "WRTLauncher",
                 "--non-active", "none",
                 "--deviceid", "123"]
@@ -108,17 +109,13 @@ class RunnerTestCase(unittest.TestCase):
         wfilters = {}
         wfilters['execution_type'] = ["auto"]
         self.runner.add_filter_rules(**wfilters)
-        prepare_rs = self.runner.prepare_run(
-            './tct-alarm-tizen-tests/tests.xml', self.log_dir)
+        prepare_rs = self.runner.prepare_run(os.path.join(
+            os.path.dirname(__file__), 'tct-alarm-tizen-tests/tests.xml'), self.log_dir)
         self.assertEqual(prepare_rs, True)
 
     def test_run_case(self):
         """test run example xml"""
         self.test_prepare_run()
-        # self.runner.external_test = 'WRTLauncher'
-        # self.runner.exe_sequence = ['tct-alarm-tizen-tests.auto']
-        # self.runner.testsuite_dict = {'tct-alarm-tizen-tests.auto':
-        # ['/home/test/testresult/tct-time-tizen-tests.auto.suite_1_set_1.xml']}
         self.runner.run_case(self.log_dir)
 
     def test_merge_resultfile(self):
@@ -139,5 +136,4 @@ def suite():
 
 # run test
 if __name__ == "__main__":
-    # unittest.main(defaultTest = 'suite')
     unittest.main()
