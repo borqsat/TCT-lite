@@ -1,0 +1,907 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        <?xml-stylesheet type="text/xsl" href="testresult.xsl"?>
+<test_definition><environment build_id="Tizen_Ref.Device-PQ_20131019.0223" cts_version="TCT2.2" device_id="4df7c4843ef43000" device_model="RD-PQ" device_name="TRATS2&#10;" host="Linux-3.2.0-29-generic-pae-i686-with-Ubuntu-12.04-precise" manufacturer="samsung" os_version=" &#10; ************************************************************&#10; *                 SAMSUNG LINUX PLATFORM                   *&#10; ************************************************************&#10; " resolution="720 x 1280" screen_size="58mm x 103mm"><other /></environment>
+<summary test_plan_name="Empty test_plan_name"><start_at>2013-10-21_22_43_03</start_at><end_at>2013-10-21_22_46_33</end_at></summary>
+  <suite category="Tizen Web Device APIs" launcher="WRTLauncher" name="tct-messaging-sms-tizen-tests">
+    <set name="Messaging-sms" set_debug_msg="tct-messaging-sms-tizen-tests.auto.suite_1_set_1.dlog">
+      <capabilities>
+        <capability name="telephony" />
+      </capabilities>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="ConversationArraySuccessCallback_onsuccess_checking" onload_delay="90" purpose="Check ConversationArraySuccessCallback callback for sms" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/ConversationArraySuccessCallback_onsuccess_checking.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:19</start><end>2013-10-21 10:41:20</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="FolderArraySuccessCallback_onsuccess_checking" onload_delay="90" purpose="Check if FolderArraySuccessCallback.onsuccess callback works properly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/FolderArraySuccessCallback_onsuccess_checking.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:20</start><end>2013-10-21 10:41:20</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageArraySuccessCallback_onsuccess_checking" onload_delay="90" purpose="Check if MessageArraySuccessCallback.onsuccess callback works properly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageArraySuccessCallback_onsuccess_checking.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:20</start><end>2013-10-21 10:41:21</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageBody_sms_extend" purpose="Check if instance of interface MessageBody (SMS) can be extended with new property" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageBody_sms_extend.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:21</start><end>2013-10-21 10:41:21</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageBody_sms_loaded_attribute" purpose="Check if attribute loaded of MessageBody (SMS) exists, has type Boolean and is readonly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageBody_sms_loaded_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:21</start><end>2013-10-21 10:41:21</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageBody_sms_messageId_attribute" onload_delay="90" purpose="Check if attribute messageId of MessageBody (SMS) exists, has type MessageId and is readonly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageBody_sms_messageId_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:21</start><end>2013-10-21 10:41:22</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageBody_sms_plainBody_attribute" purpose="Check if attribute plainBody of MessageBody (SMS) exists, has type DOMString" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageBody_sms_plainBody_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:22</start><end>2013-10-21 10:41:22</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageConversationArraySuccessCallback_onsuccess_exist" onload_delay="90" purpose="Check if MessageConversationArraySuccessCallback.onsuccess callback works properly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageConversationArraySuccessCallback_onsuccess_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:22</start><end>2013-10-21 10:41:27</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageConversation_sendFindRemove" onload_delay="90" purpose="Check scenario: send a message(sms), find conversation and then remove it" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageConversation_sendFindRemove.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:27</start><end>2013-10-21 10:41:32</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageConversationsChangeCallback_conversationsadded_withfilter" onload_delay="90" purpose="Check if MessageConversationsChangeCallback's conversationsadded callback works properly (listener added with filter)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageConversationsChangeCallback_conversationsadded_withfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:32</start><end>2013-10-21 10:41:33</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageConversationsChangeCallback_conversationsadded_withoutfilter" onload_delay="90" purpose="Check if MessageConversationsChangeCallback's conversationsadded callback works properly (listener added without filter)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageConversationsChangeCallback_conversationsadded_withoutfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:33</start><end>2013-10-21 10:41:34</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageConversationsChangeCallback_conversationsupdated_withfilter" onload_delay="90" purpose="Check if MessageConversationsChangeCallback's conversationsupdated callback works properly (listener added with filter)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageConversationsChangeCallback_conversationsupdated_withfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:34</start><end>2013-10-21 10:41:39</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageConversationsChangeCallback_conversationsupdated_withoutfilter" onload_delay="90" purpose="Check if MessageConversationsChangeCallback's conversationsupdated callback works properly (listener added without filter)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageConversationsChangeCallback_conversationsupdated_withoutfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:39</start><end>2013-10-21 10:41:47</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageConversationsChangeCallback_conversationsremoved_withoutfilter" onload_delay="90" purpose="Check if callback is called and if its arguments have proper type - MessageConversationsChangeCallback.conversationsremoved, no filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageConversationsChangeCallback_conversationsremoved_withoutfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:47</start><end>2013-10-21 10:41:48</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageConversationsChangeCallback_conversationsremoved_withfilter" onload_delay="90" purpose="Check if callback is called and if its arguments have proper type - MessageConversationsChangeCallback.conversationsremoved, with filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageConversationsChangeCallback_conversationsremoved_withfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:48</start><end>2013-10-21 10:41:49</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageServiceArraySuccessCallback_sms_onsuccess" onload_delay="90" purpose="Check if MessageServiceArraySuccessCallback is called and if its arguments have proper type for sms" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageServiceArraySuccessCallback_sms_onsuccess.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:49</start><end>2013-10-21 10:41:49</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_id_exist" onload_delay="90" purpose="Check if attribute id in MessageService" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_id_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:49</start><end>2013-10-21 10:41:50</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_loadBodySMS" onload_delay="90" purpose="Check if MessageService.loadMessageBody method works for sms" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_loadBodySMS.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:50</start><end>2013-10-21 10:41:56</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_name_exist" onload_delay="90" purpose="Check if name attribute exists in MessageService" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_name_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:56</start><end>2013-10-21 10:41:56</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sendMessage_exist" onload_delay="90" purpose="Check if sendMessage exist in MessageService" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sendMessage_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:56</start><end>2013-10-21 10:41:57</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sendMessage_valid_argument" onload_delay="90" purpose="Check if MessageService.sendMessage method works properly with valid argument (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sendMessage_valid_argument.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:41:57</start><end>2013-10-21 10:42:01</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_extend" onload_delay="90" purpose="Check if instance of interface MessageService (SMS) can be extended with new property" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_extend.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:02</start><end>2013-10-21 10:42:03</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_loadMessageBody_exist" onload_delay="90" purpose="Check if method loadMessageBody of MessageService (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_loadMessageBody_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:03</start><end>2013-10-21 10:42:03</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_loadMessageBody_message_TypeMismatch" onload_delay="90" purpose="Check type conversions for message argument of MessageService.loadMessageBody method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_loadMessageBody_message_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:03</start><end>2013-10-21 10:42:03</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_loadMessageBody_message_invalid_obj" onload_delay="90" purpose="Check if MessageService.loadMessageBody method throws exception when message is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_loadMessageBody_message_invalid_obj.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:03</start><end>2013-10-21 10:42:04</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_loadMessageBody_missarg_message" onload_delay="90" purpose="Check with missing non-optional argument - MessageService.loadMessageBody (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_loadMessageBody_missarg_message.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:04</start><end>2013-10-21 10:42:05</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_messageStorage_attribute" onload_delay="90" purpose="Check if attribute messageStorage of MessageService (SMS) exists, has type MessageStorage and is readonly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_messageStorage_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:05</start><end>2013-10-21 10:42:05</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage" onload_delay="90" purpose="Check if MessageService.sendMessage method works properly (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:05</start><end>2013-10-21 10:42:10</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage_errorCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for errorCallback argument of MessageService.sendMessage method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage_errorCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:10</start><end>2013-10-21 10:42:11</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage_errorCallback_invalid_cb" onload_delay="90" purpose="Check if MessageService.sendMessage method throws exception when errorCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage_errorCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:11</start><end>2013-10-21 10:42:11</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage_exist" onload_delay="90" purpose="Check if method sendMessage of MessageService (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:11</start><end>2013-10-21 10:42:12</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage_message_TypeMismatch" onload_delay="90" purpose="Check type conversions for message argument of MessageService.sendMessage method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage_message_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:12</start><end>2013-10-21 10:42:12</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage_message_invalid_obj" onload_delay="90" purpose="Check if MessageService.sendMessage method throws exception when message is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage_message_invalid_obj.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:12</start><end>2013-10-21 10:42:13</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage_missarg" onload_delay="90" purpose="Check with missing non-optional argument - MessageService.sendMessage (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage_missarg.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:13</start><end>2013-10-21 10:42:14</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage_successCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for successCallback argument of MessageService.sendMessage method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage_successCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:14</start><end>2013-10-21 10:42:14</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage_successCallback_invalid_cb" onload_delay="90" purpose="Check if MessageService.sendMessage method throws exception when successCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage_successCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:14</start><end>2013-10-21 10:42:15</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_sendMessage_without_errorCallback" onload_delay="90" purpose="Check if MessageService.sendMessage method works properly without errorCallback argument (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_sendMessage_without_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:15</start><end>2013-10-21 10:42:21</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_type_exist" onload_delay="90" purpose="Check if attribute type in MessageService" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_type_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:21</start><end>2013-10-21 10:42:22</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_addCCLAddMRemoveCRemoveCCL" onload_delay="90" purpose="Check scenario: add a conversation listener, add a message, remove the conversation related with the added message, remove the listener" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_addCCLAddMRemoveCRemoveCCL.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:22</start><end>2013-10-21 10:42:23</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_addConversationsChangeListener_withoutfilter" onload_delay="90" purpose="Check if MessageStorage.addConversationsChangeListener method works properly without filter (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_addConversationsChangeListener_withoutfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:23</start><end>2013-10-21 10:42:23</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_addMCLaddM" onload_delay="90" purpose="Check if MessageStorage.addMessagesChangeListener method works properly for sms" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_addMCLaddM.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:23</start><end>2013-10-21 10:42:24</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_addMessagesChangeListener_withfilter" onload_delay="90" purpose="Check if MessageStorage.addMessagesChangeListener method works properly with filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_addMessagesChangeListener_withfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:24</start><end>2013-10-21 10:42:25</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_addMessagesChangeListener_withoutfilter" onload_delay="90" purpose="Check if MessageStorage.addMessagesChangeListener method works properly without filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_addMessagesChangeListener_withoutfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:25</start><end>2013-10-21 10:42:25</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:25</start><end>2013-10-21 10:42:26</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages_errorCallback_TypeMismatch_1" onload_delay="90" purpose="Check MessageStorage.findMessages method when errorCallback is a number (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages_errorCallback_TypeMismatch_1.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:26</start><end>2013-10-21 10:42:27</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages_errorCallback_null" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with null as errorCallback argument (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages_errorCallback_null.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:27</start><end>2013-10-21 10:42:28</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages_exist" onload_delay="90" purpose="Check if method findMessages in MessageStorage" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:28</start><end>2013-10-21 10:42:28</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages_filter_sms_valid" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by type (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages_filter_sms_valid.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:28</start><end>2013-10-21 10:42:29</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages_limit_valid" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with limit" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages_limit_valid.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:29</start><end>2013-10-21 10:42:30</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages_missarg" onload_delay="90" purpose="Check with missing non-optional argument - MessageStorage.findMessages (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages_missarg.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:30</start><end>2013-10-21 10:42:30</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages_noarg" onload_delay="90" purpose="Check without arguments - MessageStorage.findMessages (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages_noarg.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:30</start><end>2013-10-21 10:42:31</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages_offset_valid" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with valid offset" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages_offset_valid.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:31</start><end>2013-10-21 10:42:32</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_findMessages_sort_valid" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with sort" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_findMessages_sort_valid.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:32</start><end>2013-10-21 10:42:32</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeChangeListener_exist" onload_delay="90" purpose="Check if method removeChangeListener in MessageStorage" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeChangeListener_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:32</start><end>2013-10-21 10:42:33</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeChangeListener_forconversations" onload_delay="90" purpose="Check if MessageStorage.removeChangeListener method works properly - for conversation listener (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeChangeListener_forconversations.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:33</start><end>2013-10-21 10:42:34</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeChangeListener_forfolder" onload_delay="90" purpose="Check if removeChangeListener method removes listener added by addFoldersChangeListener method" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeChangeListener_forfolder.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:34</start><end>2013-10-21 10:42:35</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeChangeListener_formessages" onload_delay="90" purpose="Check if removeChangeListener method removes listener added by addMessagesChangeListener method" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeChangeListener_formessages.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:35</start><end>2013-10-21 10:42:35</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeChangeListener_valid_argument" onload_delay="90" purpose="Check if MessageStorage.removeChangeListener method works properly with valid arguments - for folder listener (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeChangeListener_valid_argument.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:35</start><end>2013-10-21 10:42:36</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeChangeListener_with_watchId" onload_delay="90" purpose="Check if MessageStorage.removeChangeListener method remove listener added by addFoldersChangeListener for sms" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeChangeListener_with_watchId.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:36</start><end>2013-10-21 10:42:37</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeConversations_arg_null" onload_delay="90" purpose="Check MessageStorage.removeConversations method when conversations argument is null (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeConversations_arg_null.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:37</start><end>2013-10-21 10:42:37</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeConversations_arg_undefined" onload_delay="90" purpose="Check MessageStorage.removeConversations method when conversations argument is undefined (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeConversations_arg_undefined.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:37</start><end>2013-10-21 10:42:38</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeConversations_conversations_number" onload_delay="90" purpose="Check MessageStorage.removeConversations method when conversations argument is a number (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeConversations_conversations_number.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:38</start><end>2013-10-21 10:42:39</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeConversations_forsms" onload_delay="90" purpose="Check if MessageStorage.removeConversations method works properly with all callbacks (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeConversations_forsms.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:39</start><end>2013-10-21 10:42:40</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeConversations_invalid_arg" onload_delay="90" purpose="Check MessageStorage.removeConversations method when conversations argument is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeConversations_invalid_arg.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:40</start><end>2013-10-21 10:42:41</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeConversations_missarg_TypeMismatch" onload_delay="90" purpose="Check with missing non-optional argument - MessageStorage.removeConversations (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeConversations_missarg_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:41</start><end>2013-10-21 10:42:41</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeConversations_sms" onload_delay="90" purpose="Check if MessageStorage.removeConversations method works properly (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeConversations_sms.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:41</start><end>2013-10-21 10:42:47</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_removeConversations_successCallback_number" onload_delay="90" purpose="Check MessageStorage.removeConversations method when successCallback is a number (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_removeConversations_successCallback_number.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:47</start><end>2013-10-21 10:42:53</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addConversationsChangeListener_conversationsChangeCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for conversationsChangeCallback argument of MessageStorage.addConversationsChangeListener method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addConversationsChangeListener_conversationsChangeCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:53</start><end>2013-10-21 10:42:53</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addConversationsChangeListener_conversationsChangeCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.addConversationsChangeListener method throws exception when conversationsChangeCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addConversationsChangeListener_conversationsChangeCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:53</start><end>2013-10-21 10:42:54</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addConversationsChangeListener_exist" onload_delay="90" purpose="Check if method addConversationsChangeListener of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addConversationsChangeListener_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:54</start><end>2013-10-21 10:42:55</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage" onload_delay="90" purpose="Check if MessageStorage.addDraftMessage method works properly (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:55</start><end>2013-10-21 10:42:56</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_errorCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for errorCallback argument of MessageStorage.addDraftMessage method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_errorCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:56</start><end>2013-10-21 10:42:56</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_errorCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.addDraftMessage method throws exception when errorCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_errorCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:56</start><end>2013-10-21 10:42:57</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_exist" onload_delay="90" purpose="Check if method addDraftMessage of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:57</start><end>2013-10-21 10:42:57</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_message_TypeMismatch" onload_delay="90" purpose="Check type conversions for message argument of MessageStorage.addDraftMessage method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_message_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:57</start><end>2013-10-21 10:42:58</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_message_invalid_obj" onload_delay="90" purpose="Check if MessageStorage.addDraftMessage method throws exception when message is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_message_invalid_obj.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:58</start><end>2013-10-21 10:42:58</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_missarg" onload_delay="90" purpose="Check with missing non-optional argument - MessageStorage.addDraftMessage (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_missarg.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:58</start><end>2013-10-21 10:42:58</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_successCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for successCallback argument of MessageStorage.addDraftMessage method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_successCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:58</start><end>2013-10-21 10:42:59</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_successCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.addDraftMessage method throws exception when successCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_successCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:59</start><end>2013-10-21 10:42:59</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_without_errorCallback" onload_delay="90" purpose="Check if MessageStorage.addDraftMessage method works properly without errorCallback argument (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_without_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:42:59</start><end>2013-10-21 10:43:00</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addDraftMessage_without_successCallback" onload_delay="90" purpose="Check if MessageStorage.addDraftMessage method works properly without successCallback argument (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addDraftMessage_without_successCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:00</start><end>2013-10-21 10:43:01</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addFoldersChangeListener_exist" onload_delay="90" purpose="Check if method addFoldersChangeListener of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addFoldersChangeListener_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:01</start><end>2013-10-21 10:43:01</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addMessagesChangeListener_exist" onload_delay="90" purpose="Check if method addMessagesChangeListener of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addMessagesChangeListener_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:01</start><end>2013-10-21 10:43:02</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addMessagesChangeListener_filter_TypeMismatch" onload_delay="90" purpose="Check type conversions for filter argument of MessageStorage.addMessagesChangeListener method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addMessagesChangeListener_filter_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:02</start><end>2013-10-21 10:43:03</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addMessagesChangeListener_messagesChangeCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for messagesChangeCallback argument of MessageStorage.addMessagesChangeListener method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addMessagesChangeListener_messagesChangeCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:03</start><end>2013-10-21 10:43:04</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addMessagesChangeListener_messagesChangeCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.addMessagesChangeListener method throws exception when messagesChangeCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addMessagesChangeListener_messagesChangeCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:04</start><end>2013-10-21 10:43:04</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addMessagesChangeListener_missarg" onload_delay="90" purpose="Check with missing non-optional argument - MessageStorage.addMessagesChangeListener (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addMessagesChangeListener_missarg.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:04</start><end>2013-10-21 10:43:05</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addMessagesChangeListener_with_filter" onload_delay="90" purpose="Check if MessageStorage.addMessagesChangeListener method works properly with filter (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addMessagesChangeListener_with_filter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:05</start><end>2013-10-21 10:43:06</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_addMessagesChangeListener_without_filter" onload_delay="90" purpose="Check if MessageStorage.addMessagesChangeListener method works properly without filter (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_addMessagesChangeListener_without_filter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:06</start><end>2013-10-21 10:43:06</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_extend" onload_delay="90" purpose="Check if instance of interface MessageStorage (SMS) can be extended with new property" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_extend.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:06</start><end>2013-10-21 10:43:07</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations" onload_delay="90" purpose="Check if MessageStorage.findConversations method works properly (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:07</start><end>2013-10-21 10:43:08</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_errorCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for errorCallback argument of MessageStorage.findConversations method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_errorCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:08</start><end>2013-10-21 10:43:09</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_errorCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.findConversations method throws exception when errorCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_errorCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:09</start><end>2013-10-21 10:43:09</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_exist" onload_delay="90" purpose="Check if method findConversations of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:09</start><end>2013-10-21 10:43:10</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_filter_TypeMismatch" onload_delay="90" purpose="Check type conversions for filter argument of MessageStorage.findConversations method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_filter_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:10</start><end>2013-10-21 10:43:10</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_filter_id" onload_delay="90" purpose="Check if MessageStorage.findConversations method works properly with filter by id (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_filter_id.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:10</start><end>2013-10-21 10:43:11</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_filter_invalid_obj" onload_delay="90" purpose="Check if MessageStorage.findConversations method throws exception when filter is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_filter_invalid_obj.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:11</start><end>2013-10-21 10:43:12</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_filter_to" onload_delay="90" purpose="Check if MessageStorage.findConversations method works properly with filter by to (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_filter_to.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:12</start><end>2013-10-21 10:43:18</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_filter_type" onload_delay="90" purpose="Check if MessageStorage.findConversations method works properly with filter by type (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_filter_type.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:18</start><end>2013-10-21 10:43:24</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_missarg" onload_delay="90" purpose="Check with missing non-optional argument - MessageStorage.findConversations (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_missarg.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:24</start><end>2013-10-21 10:43:25</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_sort_TypeMismatch" onload_delay="90" purpose="Check type conversions for sort argument of MessageStorage.findConversations method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_sort_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:25</start><end>2013-10-21 10:43:26</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_sort_invalid_obj" onload_delay="90" purpose="Check if MessageStorage.findConversations method throws exception when sort is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_sort_invalid_obj.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:26</start><end>2013-10-21 10:43:26</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_successCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for successCallback argument of MessageStorage.findConversations method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_successCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:26</start><end>2013-10-21 10:43:27</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_successCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.findConversations method throws exception when successCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_successCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:27</start><end>2013-10-21 10:43:28</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_with_limit" onload_delay="90" purpose="Check if MessageStorage.findConversations method works properly with limit (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_with_limit.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:28</start><end>2013-10-21 10:43:28</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_with_offset" onload_delay="90" purpose="Check if MessageStorage.findConversations method works properly with offset (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_with_offset.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:28</start><end>2013-10-21 10:43:29</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findConversations_with_sort_to" onload_delay="90" purpose="Check if MessageStorage.findConversations method works properly with filter and sort by to (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findConversations_with_sort_to.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:29</start><end>2013-10-21 10:43:30</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findFolders_exist" onload_delay="90" purpose="Check if method findFolders of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findFolders_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:30</start><end>2013-10-21 10:43:30</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:30</start><end>2013-10-21 10:43:31</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_errorCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for errorCallback argument of MessageStorage.findMessages method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_errorCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:31</start><end>2013-10-21 10:43:32</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_errorCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.findMessages method throws exception when errorCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_errorCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:32</start><end>2013-10-21 10:43:33</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_exist" onload_delay="90" purpose="Check if method findMessages of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:33</start><end>2013-10-21 10:43:33</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_filter_TypeMismatch" onload_delay="90" purpose="Check type conversions for filter argument of MessageStorage.findMessages method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_filter_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:33</start><end>2013-10-21 10:43:34</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_folderId_with_errorCallback" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by folderId (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_folderId_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:34</start><end>2013-10-21 10:43:35</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_from_with_errorCallback" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by from (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_from_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:35</start><end>2013-10-21 10:43:36</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_id_with_errorCallback" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by id (sms)" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_id_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:43:36</start><end>2013-10-21 10:43:36</end><stdout>[Message] *MessageStorage_sms_findMessages_id_with_errorCallback: assert_array_equals: to is not equal lengths differ, expected 1 got 0(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_array_equals@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:726\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_id_with_errorCallback.html:58\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\n[native code])</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_isRead_with_errorCallback" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by isRead (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_isRead_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:36</start><end>2013-10-21 10:43:37</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_missarg" onload_delay="90" purpose="Check without arguments - MessageStorage.findMessages" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_missarg.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:37</start><end>2013-10-21 10:43:38</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_plainBody_and_id_with_errorCallback" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by plainBody and to (sms)" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_plainBody_and_id_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:43:38</start><end>2013-10-21 10:43:38</end><stdout>[Message] *MessageStorage_sms_findMessages_plainBody_and_id_with_errorCallback: assert_array_equals: to is not equal lengths differ, expected 1 got 0(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_array_equals@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:726\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_plainBody_and_id_with_errorCallback.html:57\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\n[native code])</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_plainBody_with_errorCallback" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by plainBody (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_plainBody_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:38</start><end>2013-10-21 10:43:39</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_sort_TypeMismatch" onload_delay="90" purpose="Check type conversions for sort argument of MessageStorage.findMessages method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_sort_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:39</start><end>2013-10-21 10:43:40</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_sort_invalid_obj" onload_delay="90" purpose="Check if MessageStorage.findMessages method throws exception when sort is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_sort_invalid_obj.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:40</start><end>2013-10-21 10:43:40</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_successCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for successCallback argument of MessageStorage.findMessages method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_successCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:40</start><end>2013-10-21 10:43:41</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_successCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.findMessages method throws exception when successCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_successCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:41</start><end>2013-10-21 10:43:42</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_timestamp_with_errorCallback" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by timestamp (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_timestamp_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:42</start><end>2013-10-21 10:43:42</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_to_with_errorCallback" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by to (sms)" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_to_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:43:43</start><end>2013-10-21 10:43:43</end><stdout>[Message] *MessageStorage_sms_findMessages_to_with_errorCallback: assert_greater_than: Recipient empty array expected a number greater than 0 but got 0(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_greater_than@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:790\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_to_with_errorCallback.html:59\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\n[native code])</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_type_with_errorCallback" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with filter by type" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_type_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:43</start><end>2013-10-21 10:43:44</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_with_limit" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with limit (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_with_limit.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:44</start><end>2013-10-21 10:43:46</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_with_offset" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with offset (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_with_offset.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:46</start><end>2013-10-21 10:43:47</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_findMessages_with_sort" onload_delay="90" purpose="Check if MessageStorage.findMessages method works properly with sort (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_findMessages_with_sort.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:47</start><end>2013-10-21 10:43:47</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_removeChangeListener_exist" onload_delay="90" purpose="Check if method removeChangeListener of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_removeChangeListener_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:47</start><end>2013-10-21 10:43:48</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_removeConversations_exist" onload_delay="90" purpose="Check if method removeConversations of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_removeConversations_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:48</start><end>2013-10-21 10:43:49</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_removeMessages_exist" onload_delay="90" purpose="Check if method removeMessages of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_removeMessages_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:49</start><end>2013-10-21 10:43:49</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages" onload_delay="90" purpose="Check if MessageStorage.updateMessages method works properly (sms)" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:43:49</start><end>2013-10-21 10:43:50</end><stdout>[Message] *MessageStorage_sms_updateMessages: assert_array_equals: CONST to attribute. lengths differ, expected 1 got 0(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_array_equals@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:726\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages.html:61\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages.html:117\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\n[native code])</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages_errorCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for errorCallback argument of MessageStorage.updateMessages method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_errorCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:50</start><end>2013-10-21 10:43:51</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages_errorCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.updateMessages method throws exception when errorCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_errorCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:51</start><end>2013-10-21 10:43:52</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages_exist" onload_delay="90" purpose="Check if method updateMessages of MessageStorage (SMS) exists" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_exist.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:52</start><end>2013-10-21 10:43:52</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages_messages_TypeMismatch" onload_delay="90" purpose="Check type conversions for messages argument of MessageStorage.updateMessages method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_messages_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:53</start><end>2013-10-21 10:43:53</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages_missarg" onload_delay="90" purpose="Check with missing non-optional argument - MessageStorage.updateMessages (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_missarg.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:53</start><end>2013-10-21 10:43:54</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages_successCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for successCallback argument of MessageStorage.updateMessages method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_successCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:54</start><end>2013-10-21 10:43:55</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages_successCallback_invalid_cb" onload_delay="90" purpose="Check if MessageStorage.updateMessages method throws exception when successCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_successCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:55</start><end>2013-10-21 10:43:55</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages_without_errorCallback" onload_delay="90" purpose="Check if MessageStorage.updateMessages method works properly without errorCallback argument (sms)" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_without_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:43:55</start><end>2013-10-21 10:43:56</end><stdout>[Message] *MessageStorage_sms_updateMessages_without_errorCallback: assert_array_equals: CONST to attribute. lengths differ, expected 1 got 0(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_array_equals@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:726\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_without_errorCallback.html:60\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_without_errorCallback.html:116\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\n[native code])</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_sms_updateMessages_without_successCallback" onload_delay="90" purpose="Check if MessageStorage.updateMessages method works properly without successCallback argument (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_sms_updateMessages_without_successCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:56</start><end>2013-10-21 10:43:57</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageStorage_updateMessages" onload_delay="90" purpose="Check if MessageStorage.updateMessages method works correctly wihtout error callback" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageStorage_updateMessages.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:43:57</start><end>2013-10-21 10:44:01</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_body_attribute" purpose="Check if attribute body of Message (SMS) exists, has type MessageBody" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_body_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:01</start><end>2013-10-21 10:44:02</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_constructor" purpose="Check if Message's constructor works properly (sms)" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_constructor.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:44:02</start><end>2013-10-21 10:44:02</end><stdout>[Message] *Message_sms_constructor: assert_array_equals: 'to' should be [18662711695]  property 0, expected "18662711695" but got ""(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_array_equals@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:738\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_constructor.html:55\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\ntest@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:414\nglobal code@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_constructor.html:57)</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_constructor_messageInitDict_function" purpose="Check if Message's constructor works properly with function (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_constructor_messageInitDict_function.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:02</start><end>2013-10-21 10:44:02</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_constructor_messageInitDict_object" purpose="Check if Message's constructor works properly with empty object (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_constructor_messageInitDict_object.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:02</start><end>2013-10-21 10:44:03</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_constructor_minargs" purpose="Check if Message's constructor works properly with minimum arguments (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_constructor_minargs.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:03</start><end>2013-10-21 10:44:03</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_conversationId_attribute" onload_delay="90" purpose="Check if attribute conversationId of Message (SMS) exists, has type MessageConvId and is readonly" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_conversationId_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:44:03</start><end>2013-10-21 10:44:04</end><stdout>[Message] *Message_sms_conversationId_attribute: assert_unreached: sendMessage() error callback: name:UnknownError, msg:UnknownError Reached unreachable code(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_unreached@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1031\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_conversationId_attribute.html:75\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\n[native code])</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_extend" purpose="Check if instance of interface Message (SMS) can be extended with new property" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_extend.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:04</start><end>2013-10-21 10:44:04</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_folderId_attribute" onload_delay="90" purpose="Check if attribute folderId of Message (SMS) exists, has type MessageFolderId and is readonly" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_folderId_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:44:04</start><end>2013-10-21 10:44:05</end><stdout>[Message] *Message_sms_folderId_attribute: assert_unreached: sendMessage() error callback: name:UnknownError, msg:UnknownError Reached unreachable code(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_unreached@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1031\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_folderId_attribute.html:61\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\n[native code])</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_from_attribute" onload_delay="90" purpose="Check if attribute from of Message (SMS) exists, has type DOMString and is readonly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_from_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:05</start><end>2013-10-21 10:44:05</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_id_attribute" onload_delay="90" purpose="Check if attribute id of Message (SMS) exists, has type MessageId and is readonly" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_id_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:44:05</start><end>2013-10-21 10:44:06</end><stdout>[Message] *Message_sms_id_attribute: assert_unreached: sendMessage() error callback: name:UnknownError, msg:UnknownError Reached unreachable code(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_unreached@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1031\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_id_attribute.html:62\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\n[native code])</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_inResponseTo_attribute" purpose="Check if attribute inResponseTo of Message (SMS) exists, has type MessageId" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_inResponseTo_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:06</start><end>2013-10-21 10:44:06</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_isRead_attribute" purpose="Check if attribute isRead of Message (SMS) exists, has type Boolean" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_isRead_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:06</start><end>2013-10-21 10:44:06</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_messageStatus_attribute" purpose="Check if attribute messageStatus of Message (SMS) exists, has type DOMString and is readonly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_messageStatus_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:06</start><end>2013-10-21 10:44:07</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_timestamp_attribute" onload_delay="90" purpose="Check if attribute timestamp of Message (SMS) exists, has type Date and is readonly" result="FAIL">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_timestamp_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>FAIL</actual_result><start>2013-10-21 10:44:07</start><end>2013-10-21 10:44:08</end><stdout>[Message] *Message_sms_timestamp_attribute: assert_unreached: sendMessage() error callback: name:UnknownError, msg:UnknownError Reached unreachable code(stack: assert@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:2022\nassert_unreached@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1031\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_timestamp_attribute.html:62\nstep@file:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1121\nfile:///opt/usr/apps/api1msg001/res/wgt/opt/tct-messaging-sms-tizen-tests/resources/testharness.js:1159\n[native code])</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_to_attribute" purpose="Check if attribute to of Message (SMS) exists, has type Array" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_to_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:08</start><end>2013-10-21 10:44:08</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Message_sms_type_attribute" purpose="Check if attribute type of Message (SMS) exists, has type MessageServiceTag and is readonly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Message_sms_type_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:08</start><end>2013-10-21 10:44:08</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_messagesadded_withfilter" onload_delay="90" purpose="Check if MessagesChangeCallback's messagesadded callback works properly (listener added with filter)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_messagesadded_withfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:08</start><end>2013-10-21 10:44:09</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_messagesadded_withoutfilter" onload_delay="90" purpose="Check if MessagesChangeCallback's messagesadded callback works properly (listener added without filter)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_messagesadded_withoutfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:09</start><end>2013-10-21 10:44:10</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_messagesupdated_withfilter" onload_delay="90" purpose="Check if MessagesChangeCallback's messagesupdated callback works properly (listener added with filter)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_messagesupdated_withfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:10</start><end>2013-10-21 10:44:23</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_messagesupdated_withoutfilter" onload_delay="90" purpose="Check if MessagesChangeCallback's messagesupdated callback works properly (listener added without filter)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_messagesupdated_withoutfilter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:23</start><end>2013-10-21 10:44:28</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_sms_messagesadded_with_filter" onload_delay="90" purpose="Check if MessagesChangeCallback.messagesadded works properly - sms, filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_sms_messagesadded_with_filter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:28</start><end>2013-10-21 10:44:29</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_sms_messagesadded_without_filter" onload_delay="90" purpose="Check if MessagesChangeCallback.messagesadded works properly - sms, no filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_sms_messagesadded_without_filter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:29</start><end>2013-10-21 10:44:30</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_sms_messagesremoved_with_filter" onload_delay="90" purpose="Check if MessagesChangeCallback.messagesremoved works properly - sms, filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_sms_messagesremoved_with_filter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:30</start><end>2013-10-21 10:44:31</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_sms_messagesremoved_without_filter" onload_delay="90" purpose="Check if MessagesChangeCallback.messagesremoved works properly - sms, no filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_sms_messagesremoved_without_filter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:31</start><end>2013-10-21 10:44:31</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_sms_messagesupdated_with_filter" onload_delay="90" purpose="Check if MessagesChangeCallback.messagesupdated works properly - sms, filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_sms_messagesupdated_with_filter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:31</start><end>2013-10-21 10:44:32</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessagesChangeCallback_sms_messagesupdated_without_filter" onload_delay="90" purpose="Check if MessagesChangeCallback.messagesupdated works properly - sms, no filter" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessagesChangeCallback_sms_messagesupdated_without_filter.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:32</start><end>2013-10-21 10:44:33</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Messaging_sms_getMessageServices" onload_delay="90" purpose="Check if MessageService.getMessageServices method works properly (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Messaging_sms_getMessageServices.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:33</start><end>2013-10-21 10:44:33</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Messaging_sms_getMessageServices_errorCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for errorCallback argument of MessageService.getMessageServices method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Messaging_sms_getMessageServices_errorCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:33</start><end>2013-10-21 10:44:33</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Messaging_sms_getMessageServices_errorCallback_invalid_cb" onload_delay="90" purpose="Check if MessageService.getMessageServices method throws exception when errorCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Messaging_sms_getMessageServices_errorCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:33</start><end>2013-10-21 10:44:34</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Messaging_sms_getMessageServices_successCallback_TypeMismatch" onload_delay="90" purpose="Check type conversions for successCallback argument of MessageService.getMessageServices method (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Messaging_sms_getMessageServices_successCallback_TypeMismatch.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:34</start><end>2013-10-21 10:44:34</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Messaging_sms_getMessageServices_successCallback_invalid_cb" onload_delay="90" purpose="Check if MessageService.getMessageServices method throws exception when successCallback is invalid (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Messaging_sms_getMessageServices_successCallback_invalid_cb.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:34</start><end>2013-10-21 10:44:34</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="Messaging_sms_getMessageServices_with_errorCallback" onload_delay="90" purpose="Check if MessageService.getMessageServices method works properly with errorCallback argument (sms)" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/Messaging_sms_getMessageServices_with_errorCallback.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:34</start><end>2013-10-21 10:44:35</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageInit_MessageInit_valid_argument_sms" purpose="Checks various message attributes upon message (sms) creation" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageInit_MessageInit_valid_argument_sms.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:35</start><end>2013-10-21 10:44:36</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sendMessage_invalid_argument" onload_delay="90" purpose="Check whether invoking sendMessage method with improper argument throws exception properly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sendMessage_invalid_argument.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:36</start><end>2013-10-21 10:44:36</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+      <testcase component="TizenAPI/Communication/Messaging" execution_type="auto" id="MessageService_sms_type_attribute" onload_delay="90" purpose="Check if attribute type of MessageService (SMS) exists, has type MessageServiceTag and is readonly" result="PASS">
+        <description>
+          <test_script_entry>/opt/tct-messaging-sms-tizen-tests/messaging/MessageService_sms_type_attribute.html</test_script_entry>
+        </description>
+      <result_info><actual_result>PASS</actual_result><start>2013-10-21 10:44:36</start><end>2013-10-21 10:44:37</end><stdout>[Message]</stdout><stderr /></result_info></testcase>
+    </set>
+  </suite>
+</test_definition>
