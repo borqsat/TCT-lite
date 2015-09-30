@@ -30,6 +30,7 @@ import os
 import sys
 sys.path.append("../../")
 from testkitlite.engines.default.runner import TRunner
+from testkitlite.engines.default.worker import TestWorker
 from commodule.connector import Connector
 
 class RunnerTestCase(unittest.TestCase):
@@ -37,11 +38,6 @@ class RunnerTestCase(unittest.TestCase):
 
     def setUp(self):
         self.connector = Connector({"testmode": "tizenmobile"}).get_connector()
-        self.connector.init_test = MagicMock(return_value='123456')
-        self.connector.run_case = MagicMock(return_value=True)
-        self.connector.get_test_status = MagicMock(
-            return_value={'finished': "1"})
-        self.connector.get_test_result = MagicMock(return_value={"cases": {}})
         self.connector.get_device_info = MagicMock(
             return_value={
             "device_id": "None", "device_model": "None", 
@@ -49,6 +45,14 @@ class RunnerTestCase(unittest.TestCase):
             "os_version": "None", "resolution": "None", 
             "screen_size": "None"})
         self.runner = TRunner(self.connector)
+        self.runner.testworker = TestWorker(self.connector)
+        # self.testworker.__init_webtest_opt = MagicMock(return_value='123456')
+        self.runner.testworker.init_test = MagicMock(return_value='123456')
+        self.runner.testworker.run_test = MagicMock(return_value=True)
+        self.runner.testworker.get_test_status = MagicMock(
+            return_value={'finished': "1"})
+        self.runner.testworker.get_test_result = MagicMock(return_value={"cases": {}})
+        self.runner.testworker.finalize_test = MagicMock(return_value=True)
         self.log_dir = os.path.join(os.path.expanduser("~"), "testresult")
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
@@ -61,6 +65,7 @@ class RunnerTestCase(unittest.TestCase):
         tmp_pid_file = os.path.join(os.path.expanduser("~"), "test_pid")
         self.runner.set_pid_log(tmp_pid_file)
         self.assertEqual(self.runner.pid_log, tmp_pid_file)
+
 
     def test_set_global_parameters(self):
         """test set global_parameters"""
@@ -93,16 +98,19 @@ class RunnerTestCase(unittest.TestCase):
         (options, args) = parser.parse_args(args)
         self.runner.set_global_parameters(options)
 
+
     def test_set_session_id(self):
         """test set session_id"""
         self.runner.set_session_id('12345')
         self.assertEqual(self.runner.session_id, '12345')
+
 
     def test_add_filter_rules(self):
         """test add filter rules"""
         wfilters = {}
         wfilters['execution_type'] = ["manual"]
         self.runner.add_filter_rules(**wfilters)
+
 
     def test_prepare_run(self):
         """test prepare run example xml"""
@@ -128,12 +136,14 @@ class RunnerTestCase(unittest.TestCase):
             os.path.dirname(__file__), "merge_result"))
 
 
+
 def suite():
     """Specify a case to test"""
     suite = unittest.TestSuite()
-    suite.addTest(RunnerTestCase("test_merge_resultfile"))
+    suite.addTest(RunnerTestCase("test_run_case"))
     return suite
 
 # run test
 if __name__ == "__main__":
     unittest.main()
+    # unittest.main(defaultTest = 'suite')
